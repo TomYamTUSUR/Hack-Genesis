@@ -1,5 +1,8 @@
 *.gem
 *.rbc
+
+# Сгенерированная SQLite-БД (создаётся db/create_tables.rb) - не коммитим бинарник.
+db/*.db
 /.config
 /coverage/
 /InstalledFiles

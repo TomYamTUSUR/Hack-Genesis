@@ -44,7 +44,7 @@
 | available_requisites | Integer | Доступное количество реквизитов |
 | conversion_24h | Float | Конверсия за 24 часа |
 | avg_latency_sec | Integer | Средняя задержка |
-| banks | String | Список поддерживаемых банков |
+| banks | String | Список поддерживаемых банков, JSON-массив (например `["sberbank","tinkoff"]`); `[]` - без ограничений |
 | exclude_banks | Boolean | Исключать или включать банки |
 | provider_margin_pct | Float | Маржа провайдера |
 | merchant_margin_pct | Float | Маржа мерчанта |
@@ -73,19 +73,18 @@
 
 ### Требования
 - Ruby 2.7 или выше
-- SQLite3
-- Gem 'sequel'
+- Bundler (`gem install bundler`)
 
 ### Шаги установки
 
-1. Установите необходимые гемы:
+1. Установите зависимости проекта:
 
-gem install sequel sqlite3
+bundle install
 
 2. Создайте базу данных:
 
-ruby create_tables.rb
+bundle exec ruby db/create_tables.rb
 
-3. Проверьте создаие таблиц:
+3. Проверьте создание таблиц (файл появится в db/operations.db):
 
-sqlite3 operations.db ".tables"
+sqlite3 db/operations.db ".tables"

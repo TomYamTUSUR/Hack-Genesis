@@ -1,6 +1,10 @@
 require 'sequel'
 
-DB = Sequel.connect('sqlite://operations.db')
+# Путь считается от расположения файла, а не от текущей директории запуска -
+# `bundle exec ruby db/create_tables.rb` из любого места кладёт БД в db/operations.db.
+# Sequel.sqlite (а не Sequel.connect с sqlite://URI) нужен, чтобы путь с буквой
+# диска Windows (E:/...) не ломал разбор URI.
+DB = Sequel.sqlite(File.join(__dir__, 'operations.db'))
 
 # Таблица operations_queue
 DB.create_table? :operations_queue do
@@ -31,7 +35,7 @@ DB.create_table? :providers do
   Integer :available_requisites
   Float :conversion_24h
   Integer :avg_latency_sec
-  String :banks
+  String :banks, text: true, default: '[]'
   TrueClass :exclude_banks, default: false
   Float :provider_margin_pct
   Float :merchant_margin_pct
@@ -41,7 +45,7 @@ DB.create_table? :providers do
   Float :requests_per_minute_limit
   Integer :daily_turnover_min
   Integer :daily_turnover_max
-  
+
   index :payment_system, unique: true
   index :status
   index :priority
@@ -54,10 +58,10 @@ DB.create_table? :operations_history do
   Integer :amount, null: false
   String :bank, null: false
   String :card_brand
-  Integer :payment_system_id, null: false
+  foreign_key :payment_system_id, :providers, null: false
   String :status, null: false
   Integer :latency_sec
-  
+
   index :payment_system_id
   index :status
   index :created_at
@@ -66,11 +70,13 @@ end
 # Таблица routing_decisions
 DB.create_table? :routing_decisions do
   String :operation_id, primary_key: true
-  Integer :selected_payment_system_id
-  String :simulated_result
-  Integer :latency_sec
+  # Обязательные поля по формату ответа (см. ТЗ, "Формат результата роутинга"):
+  # выбранный провайдер и симулированный результат должны быть у каждого решения.
+  foreign_key :selected_payment_system_id, :providers, null: false
+  String :simulated_result, null: false
+  Integer :latency_sec, null: false
   DateTime :created_at, null: false
-  
+
   index :selected_payment_system_id
   index :created_at
 end
@@ -79,15 +85,15 @@ end
 DB.create_table? :routing_attempts do
   primary_key :attempt_id
   String :operation_id, null: false
-  Integer :payment_system_id, null: false
+  foreign_key :payment_system_id, :providers, null: false
   Integer :attempt_number, null: false
   String :decision, null: false
   String :reason
   DateTime :created_at, null: false
-  
+
   unique [:operation_id, :payment_system_id]
   unique [:operation_id, :attempt_number]
-  
+
   index :operation_id
   index :payment_system_id
   index :attempt_number
@@ -98,12 +104,12 @@ end
 # Таблица eligible_providers
 DB.create_table? :eligible_providers do
   String :operation_id, null: false
-  Integer :payment_system_id, null: false
+  foreign_key :payment_system_id, :providers, null: false
   TrueClass :is_eligible, null: false
   DateTime :checked_at, null: false
-  
+
   primary_key [:operation_id, :payment_system_id]
-  
+
   index :operation_id
   index :payment_system_id
   index :is_eligible
@@ -113,12 +119,12 @@ end
 DB.create_table? :provider_skip_reasons do
   primary_key :skip_reason_id
   String :operation_id, null: false
-  Integer :payment_system_id, null: false
+  foreign_key :payment_system_id, :providers, null: false
   String :reason, null: false
   DateTime :created_at, null: false
-  
+
   unique [:operation_id, :payment_system_id, :reason]
-  
+
   index :operation_id
   index :payment_system_id
   index :created_at
@@ -127,7 +133,7 @@ end
 # Таблица reference_decisions
 DB.create_table? :reference_decisions do
   String :operation_id, primary_key: true
-  Integer :required_payment_system_id
+  foreign_key :required_payment_system_id, :providers, null: false
   String :reason, :text => true
 end
 
