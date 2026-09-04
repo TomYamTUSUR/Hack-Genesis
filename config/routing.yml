@@ -8,11 +8,6 @@ data:
 
 strategies_file: config/strategies.yml
 
-# Ключи стратегий, активных прямо сейчас (см. config/strategies.yml).
-# 1 ключ -> solo-веса, 2+ -> combo-веса (см. StrategyWeightCalculator).
-active_strategies:
-  - priority
-
 # payment_system'ы, которые участвуют в рейтинге. Явный список вместо неявного
 # "все активные провайдеры" - потому что providers также содержит self-provider
 # (fallback), который в рейтинге не участвует (пока нет hard-constraints,

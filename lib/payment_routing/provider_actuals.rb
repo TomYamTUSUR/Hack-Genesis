@@ -1,8 +1,9 @@
 module PaymentRouting
   # Фактические показатели провайдера "на сейчас", нужные soft-goal нормам.
   # Сегодня count_share_actual/volume_share_actual/turnover_actual считаются
-  # из operations_history.csv (см. HistoricalActualsProvider); в будущем этот
-  # же объект будет собираться из БД/рантайм-состояния — интерфейс не изменится.
+  # агрегацией по operations_history в БД (см. HistoricalActualsProvider); когда
+  # появится рантайм-состояние (после каждой операции, а не только из истории),
+  # источник сменится, а этот интерфейс — нет.
   #
   # count_share_actual/volume_share_actual — в тех же единицах, что и
   # Provider#traffic_percentage/#volume_share_pct (проценты 0..100).

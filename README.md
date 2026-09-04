@@ -1,13 +1,35 @@
-# Operations Database Schema
+# Умный роутинг выплат
 
-База данных для управления операциями выплат через СБП (Система быстрых платежей) с маршрутизацией через провайдеров.
+Механизм распределения выплат между провайдерами (СБП): блок стратегий и рейтинга на Ruby + БД (SQLite/Sequel) для хранения провайдеров, очереди операций, истории и результатов роутинга.
 
-## Описание
+## Структура проекта
 
-Проект содержит схему базы данных для хранения:
-- Очереди операций на выплату
-- Информации о провайдерах платежных систем
-- Истории выполненных операций
+- `lib/payment_routing/` — доменная логика: провайдеры/операции, блок стратегий (`strategies/`), блок рейтинга (`rating/`), загрузчики из БД (`ProviderRegistry`, `HistoricalActualsProvider`, `OperationQueueLoader`), импортёры `data/* → БД` (`importers/`).
+- `db/` — схема SQLite (`database.rb`) и скрипт её создания (`create_tables.rb`).
+- `config/` — `routing.yml` (пути к данным для импорта, список рейтингуемых провайдеров), `strategies.yml` (коэффициенты стратегий).
+- `data/` — исходные файлы для первичного импорта в БД (`providers.json`, `operations_history.csv`, `operations_queue_10.json`).
+- `bin/` — исполняемые скрипты: `import_data.rb` (импорт data/* в БД), `demo_rating.rb` (демонстрация рейтинга на нескольких стратегиях).
+- `test/` — Minitest, зеркалирует структуру `lib/`.
+
+Рейтинг и стратегии читают только БД (`db/operations.db`) — файлы в `data/` участвуют один раз, на этапе импорта.
+
+## Установка и запуск
+
+### Требования
+- Ruby (проверено на 4.0)
+- Bundler (`gem install bundler`)
+
+### Шаги
+
+```
+bundle install                          # зависимости (sequel, sqlite3, rake, minitest, csv)
+bundle exec ruby db/create_tables.rb    # создать схему в db/operations.db
+bundle exec ruby bin/import_data.rb     # загрузить data/* в БД (провайдеры - до history)
+bundle exec ruby bin/demo_rating.rb     # прогнать несколько стратегий и посмотреть ранжирование
+bundle exec rake test                   # тесты (или просто `rake test`, без bundler)
+```
+
+Импорт можно делать по частям: `bundle exec ruby bin/import_data.rb providers history`.
 
 ## Структура базы данных
 
@@ -29,34 +51,32 @@
 
 | Поле | Тип | Описание |
 |------|-----|----------|
-| payment_system | String | Название платежной системы (PK) |
+| payment_system_id | Integer | PK, autoincrement |
+| payment_system | String | Название платёжной системы (unique) |
 | status | String | Статус |
-| traffic_percentage | Integer | Процент трафика |
-| priority | Integer | Приоритет |
-| limit_amount_min | Integer | Минимальная сумма операции |
-| limit_amount_max | Integer | Максимальная сумма операции |
-| daily_amount_limit | Integer | Дневной лимит по сумме |
-| daily_approved_amount | Integer | Одобренная сумма за день |
-| in_progress_count_limit | Integer | Лимит операций в обработке |
-| in_progress_count | Integer | Текущее количество в обработке |
-| in_progress_amount_limit | Integer | Лимит суммы в обработке |
-| in_progress_amount | Integer | Текущая сумма в обработке |
+| traffic_percentage | Integer | Целевая доля по количеству заявок |
+| priority | Integer | Приоритет в каскаде |
+| limit_amount_min / limit_amount_max | Integer | Диапазон суммы чека (hard-constraint) |
+| daily_amount_limit / daily_approved_amount | Integer | Дневной лимит по сумме / текущий оборот |
+| in_progress_count_limit / in_progress_count | Integer | Лимит и текущее число заявок в обработке |
+| in_progress_amount_limit / in_progress_amount | Integer | Лимит и текущая сумма заявок в обработке |
 | available_requisites | Integer | Доступное количество реквизитов |
 | conversion_24h | Float | Конверсия за 24 часа |
 | avg_latency_sec | Integer | Средняя задержка |
 | banks | String | Список поддерживаемых банков, JSON-массив (например `["sberbank","tinkoff"]`); `[]` - без ограничений |
-| exclude_banks | Boolean | Исключать или включать банки |
-| provider_margin_pct | Float | Маржа провайдера |
-| merchant_margin_pct | Float | Маржа мерчанта |
-| allow_negative_agreement | Boolean | Разрешить отрицательный баланс |
+| exclude_banks | Boolean | Исключать (blacklist) или включать (whitelist) банки из `banks` |
+| provider_margin_pct / merchant_margin_pct | Float | Маржа провайдера / мерчанта |
+| allow_negative_agreement | Boolean | Разрешить провайдеру маржу выше мерчантской |
 | note | String | Примечание |
-| volume_share_pct | Float | Доля объема операций |
-| requests_per_minute_limit | Float | Лимит запросов в минуту |
-| daily_turnover_min | Integer | Минимальный дневной оборот |
-| daily_turnover_max | Integer | Максимальный дневной оборот |
+| volume_share_pct | Float | Целевая доля по объёму (soft-goal) |
+| requests_per_minute_limit | Float | Rate limit (заявок/мин) |
+| daily_turnover_min / daily_turnover_max | Integer | Мин./макс. дневной оборот (фин. обязательства) |
+| preferred_range_min / preferred_range_max | Integer | Приоритетный диапазон суммы для стратегии "по сумме чека" (soft-goal, не путать с limit_amount_min/max) |
+
+`volume_share_pct`, `requests_per_minute_limit`, `daily_turnover_min/max`, `preferred_range_min/max` не приходят из `data/providers.json` - импортёр их не трогает (остаются `null`), дополняются отдельно.
 
 ### 3. operations_history
-История выполненных операций.
+История выполненных операций (источник для актуалов рейтинга - см. `HistoricalActualsProvider`).
 
 | Поле | Тип | Описание |
 |------|-----|----------|
@@ -65,26 +85,60 @@
 | amount | Integer | Сумма операции |
 | bank | String | Банк получателя |
 | card_brand | String | Бренд карты |
-| payment_system | String | Использованная платежная система |
-| status | String | Статус |
+| payment_system_id | Integer | FK → providers |
+| status | String | approved / rejected / expired |
 | latency_sec | Integer | Время обработки |
 
-## Установка
+### 4. routing_decisions
+Итоговое решение роутинга по операции.
 
-### Требования
-- Ruby 2.7 или выше
-- Bundler (`gem install bundler`)
+| Поле | Тип | Описание |
+|------|-----|----------|
+| operation_id | String | PK, FK → operations_queue |
+| selected_payment_system_id | Integer | FK → providers |
+| simulated_result | String | approved / rejected / expired |
+| latency_sec | Integer | |
+| created_at | DateTime | |
 
-### Шаги установки
+### 5. routing_attempts
+Попытки провайдеров в рамках одного решения (для объяснимости).
 
-1. Установите зависимости проекта:
+| Поле | Тип | Описание |
+|------|-----|----------|
+| attempt_id | Integer | PK, autoincrement |
+| operation_id | String | FK → routing_decisions |
+| payment_system_id | Integer | FK → providers |
+| attempt_number | Integer | Порядковый номер попытки |
+| decision | String | selected / skipped |
+| reason | String | |
+| created_at | DateTime | |
 
-bundle install
+### 6. eligible_providers
+Провайдеры, прошедшие (или нет) hard-constraints для операции.
 
-2. Создайте базу данных:
+| Поле | Тип | Описание |
+|------|-----|----------|
+| operation_id | String | FK → operations_queue (составной PK с payment_system_id) |
+| payment_system_id | Integer | FK → providers |
+| is_eligible | Boolean | |
+| checked_at | DateTime | |
 
-bundle exec ruby db/create_tables.rb
+### 7. provider_skip_reasons
+Причины исключения провайдера для операции.
 
-3. Проверьте создание таблиц (файл появится в db/operations.db):
+| Поле | Тип | Описание |
+|------|-----|----------|
+| skip_reason_id | Integer | PK, autoincrement |
+| operation_id | String | FK → operations_queue |
+| payment_system_id | Integer | FK → providers |
+| reason | String | |
+| created_at | DateTime | |
 
-sqlite3 db/operations.db ".tables"
+### 8. reference_decisions
+Эталонные решения для самопроверки (единственный допустимый провайдер по детерминированным кейсам).
+
+| Поле | Тип | Описание |
+|------|-----|----------|
+| operation_id | String | PK, FK → operations_queue |
+| required_payment_system_id | Integer | FK → providers |
+| reason | Text | |

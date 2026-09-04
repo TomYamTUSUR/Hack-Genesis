@@ -1,7 +1,4 @@
 require_relative "../../test_helper"
-require_relative "../../../db/database"
-require_relative "../../../lib/payment_routing/importers/upsert"
-require_relative "../../../lib/payment_routing/importers/providers_importer"
 
 module PaymentRouting
   module Importers

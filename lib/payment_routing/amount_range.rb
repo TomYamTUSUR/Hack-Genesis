@@ -1,7 +1,7 @@
 module PaymentRouting
   # "Предпочтительная" сумма чека для провайдера (используется стратегией range_fit).
   # Не путать с жёстким limit_amount_min/max — это отдельная бизнес-настройка (soft-goal),
-  # задаётся в config/providers_overlay.yml.
+  # хранится в providers.preferred_range_min/max (db/operations.db).
   class AmountRange
     attr_reader :min, :max
 

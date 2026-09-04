@@ -26,10 +26,6 @@ module PaymentRouting
       resolve(@raw["strategies_file"])
     end
 
-    def active_strategies
-      @raw["active_strategies"].map(&:to_sym)
-    end
-
     def rated_providers
       @raw["rated_providers"]
     end
