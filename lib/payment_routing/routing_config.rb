@@ -21,6 +21,14 @@ module PaymentRouting
       resolve(@raw["data"]["operations_history_file"])
     end
 
+    def operations_queue_file
+      resolve(@raw["data"]["operations_queue_file"])
+    end
+
+    def reference_decisions_file
+      resolve(@raw["data"]["reference_decisions_file"])
+    end
+
     def strategies_file
       resolve(@raw["strategies_file"])
     end

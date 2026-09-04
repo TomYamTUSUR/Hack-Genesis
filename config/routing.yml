@@ -5,6 +5,8 @@ data:
   providers_file: data/providers.json
   providers_overlay_file: config/providers_overlay.yml
   operations_history_file: data/operations_history.csv
+  operations_queue_file: data/operations_queue_10.json
+  reference_decisions_file: data/reference_decisions.json
 
 strategies_file: config/strategies.yml
 
