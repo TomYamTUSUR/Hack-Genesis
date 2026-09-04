@@ -1,0 +1,23 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    bigdecimal (4.1.2)
+    sequel (5.108.0)
+      bigdecimal
+    sqlite3 (2.9.6-x64-mingw-ucrt)
+
+PLATFORMS
+  x64-mingw-ucrt
+
+DEPENDENCIES
+  sequel
+  sqlite3
+
+CHECKSUMS
+  bigdecimal (4.1.2) sha256=53d217666027eab4280346fba98e7d5b66baaae1b9c3c1c0ffe89d48188a3fbd
+  bundler (4.0.20) sha256=7978a8ac648767f5e635bc522445b79e80a52b907a39a36c2d8085ed6bc762ae
+  sequel (5.108.0) sha256=ae5996d1196775427916a2fa36e02f99762ead9affb8ea9b1aec2c0b16bdb3a3
+  sqlite3 (2.9.6-x64-mingw-ucrt) sha256=1f2b88f417fd0a8c1d5ef19c7e817d8b9c61bee6e33b6b36255fb6e40148e6f8
+
+BUNDLED WITH
+  4.0.20
