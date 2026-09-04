@@ -33,7 +33,10 @@ module PaymentRouting
       total_count = counts.values.sum
       total_volume = volumes.values.sum
 
-      counts.keys.each_with_object({}) do |payment_system, result|
+      # Все провайдеры, не только те, у кого есть approved-история - иначе
+      # провайдер без единого approved-платежа выпал бы из результата, а
+      # RatingPool#actuals_for упал бы на нём с KeyError при следующем ранжировании.
+      @db[:providers].select_map(:payment_system).each_with_object({}) do |payment_system, result|
         result[payment_system] = ProviderActuals.new(
           count_share_actual: percentage_of(counts[payment_system], total_count),
           volume_share_actual: percentage_of(volumes[payment_system], total_volume),
