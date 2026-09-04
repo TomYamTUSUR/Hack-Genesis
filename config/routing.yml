@@ -1,0 +1,14 @@
+# Пути к входным данным (относительно корня репозитория) и активная конфигурация
+# стратегий рейтинга. Меняется без правки кода. Единственное место, где эти пути
+# перечислены, - см. PaymentRouting::RoutingConfig.
+data:
+  providers_file: data/providers.json
+  providers_overlay_file: config/providers_overlay.yml
+  operations_history_file: data/operations_history.csv
+
+strategies_file: config/strategies.yml
+
+# Ключи стратегий, активных прямо сейчас (см. config/strategies.yml).
+# 1 ключ -> solo-веса, 2+ -> combo-веса (см. StrategyWeightCalculator).
+active_strategies:
+  - priority

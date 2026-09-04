@@ -1,0 +1,20 @@
+# Бизнес-параметры провайдеров, которых нет в providers.json (снимке состояния).
+# Значения - примерные, выведены из формулировок ТЗ (раздел "Стратегии распределения"),
+# подлежат уточнению у бизнеса. daily_turnover_max сюда не входит - это hard-constraint
+# (ограничение-потолок), появится вместе с блоком hard-constraints.
+providers:
+  vipay:
+    preferred_range: { min: 50001, max: 100000 }
+    requests_per_minute_limit: 20
+    daily_turnover_min: null
+    volume_share_pct: 50
+  payflow:
+    preferred_range: { min: 500, max: 50000 }
+    requests_per_minute_limit: 15
+    daily_turnover_min: 2000000
+    volume_share_pct: 25
+  quickpay:
+    preferred_range: { min: 100001, max: 200000 }
+    requests_per_minute_limit: 25
+    daily_turnover_min: null
+    volume_share_pct: 25

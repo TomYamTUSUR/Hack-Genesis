@@ -1,0 +1,18 @@
+# Реестр всех стратегий рейтинга и их "коэффициент веса" для combo-режима
+# (используется только когда активны 2+ стратегии, см. StrategyWeightCalculator).
+# В solo-режиме коэффициент не участвует - там действует SOLO_TARGET_WEIGHT/SOLO_OTHER_MIN_WEIGHT.
+strategies:
+  - key: count_share
+    combo_coefficient: 1.0
+  - key: volume_share
+    combo_coefficient: 1.0
+  - key: priority
+    combo_coefficient: 1.6
+  - key: range_fit
+    combo_coefficient: 0.8
+  - key: conversion
+    combo_coefficient: 1.1
+  - key: intensity
+    combo_coefficient: 0.6
+  - key: turnover
+    combo_coefficient: 1.2
