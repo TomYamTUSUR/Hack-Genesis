@@ -1,49 +1,48 @@
 module PaymentRouting
-  # Собирает Provider из двух источников: data/providers.json (снимок состояния)
-  # и config/providers_overlay.yml (бизнес-политика, см. Constants и docs).
+  # Строит [Provider] из таблицы providers (db/operations.db) - единственный
+  # источник данных о провайдерах для strategies/rating, файлы не читает.
   #
-  # В рейтинге участвуют только провайдеры, для которых задан оверлей -
-  # self-provider (fallback) политику стратегий не имеет и в этот список не должен попадать,
-  # поэтому явно перечислять его имя в коде не нужно: список провайдеров определяется конфигом.
+  # rated_providers - явный список payment_system, которые вообще участвуют
+  # в рейтинге (self-provider/fallback туда не входит - см. config/routing.yml).
   class ProviderRegistry
-    def initialize(providers_file:, overlay_file:)
-      @providers_file = providers_file
-      @overlay_file = overlay_file
+    def initialize(db:, rated_providers:)
+      @db = db
+      @rated_providers = rated_providers
     end
 
     def load
-      overlay_by_system = load_overlay
-      raw_providers = JSON.parse(File.read(@providers_file))["providers"]
-
-      raw_providers.filter_map do |raw|
-        overlay = overlay_by_system[raw["payment_system"]]
-        next unless overlay
-
-        build_provider(raw, overlay)
-      end
+      @db[:providers].where(payment_system: @rated_providers).map { |row| build_provider(row) }
     end
 
     private
 
-    def load_overlay
-      YAML.safe_load(File.read(@overlay_file))["providers"]
+    def build_provider(row)
+      Provider.new(
+        payment_system: row[:payment_system],
+        priority: row[:priority],
+        conversion_24h: row[:conversion_24h],
+        traffic_percentage: row[:traffic_percentage],
+        volume_share_pct: row[:volume_share_pct],
+        preferred_range: preferred_range_for(row),
+        requests_per_minute_limit: row[:requests_per_minute_limit],
+        daily_turnover_min: row[:daily_turnover_min],
+        in_progress_count: row[:in_progress_count],
+        in_progress_count_limit: row[:in_progress_count_limit],
+        in_progress_amount: row[:in_progress_amount],
+        in_progress_amount_limit: row[:in_progress_amount_limit]
+      )
     end
 
-    def build_provider(raw, overlay)
-      Provider.new(
-        payment_system: raw["payment_system"],
-        priority: raw["priority"],
-        conversion_24h: raw["conversion_24h"],
-        traffic_percentage: raw["traffic_percentage"],
-        volume_share_pct: overlay["volume_share_pct"],
-        preferred_range: AmountRange.new(**overlay["preferred_range"].transform_keys(&:to_sym)),
-        requests_per_minute_limit: overlay["requests_per_minute_limit"],
-        daily_turnover_min: overlay["daily_turnover_min"],
-        in_progress_count: raw["in_progress_count"],
-        in_progress_count_limit: raw["in_progress_count_limit"],
-        in_progress_amount: raw["in_progress_amount"],
-        in_progress_amount_limit: raw["in_progress_amount_limit"]
-      )
+    # preferred_range_min/max - приоритетный диапазон для стратегии "по сумме
+    # чека" (см. Rating::Norms::RangeFitNorm). limit_amount_min/max сюда не
+    # подставляется - это отдельный hard-constraint (допуск провайдера к
+    # операции), а не ориентир для рейтинга. Пока preferred_range не заполнен
+    # (null) - у провайдера просто нет предпочтения по сумме (RangeFitNorm
+    # относится к этому нейтрально).
+    def preferred_range_for(row)
+      return nil if row[:preferred_range_min].nil? || row[:preferred_range_max].nil?
+
+      AmountRange.new(min: row[:preferred_range_min], max: row[:preferred_range_max])
     end
   end
 end

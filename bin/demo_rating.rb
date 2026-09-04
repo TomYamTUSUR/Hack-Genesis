@@ -1,9 +1,11 @@
 #!/usr/bin/env ruby
-# Демонстрация блока стратегий + блока рейтинга на реальных данных репозитория
-# (data/providers.json, data/operations_history.csv). Не участвует в hard-constraints -
-# показывает только, как смена активной стратегии меняет ранжирование провайдеров.
+# Демонстрация блока стратегий + блока рейтинга на данных из db/operations.db
+# (запустите bin/import_data.rb заранее, если БД пустая или отсутствует).
+# Не участвует в hard-constraints - показывает только, как смена активной
+# стратегии меняет ранжирование провайдеров.
 
 require_relative "../lib/payment_routing"
+require_relative "../db/database"
 
 module PaymentRouting
   # Прогоняет несколько наборов активных стратегий через реальные конфиги и
@@ -20,13 +22,12 @@ module PaymentRouting
 
     def initialize
       config = RoutingConfig.new
+      db = Db.connect
 
-      @providers = ProviderRegistry.new(
-        providers_file: config.providers_file,
-        overlay_file: config.providers_overlay_file
-      ).load
+      @providers = ProviderRegistry.new(db: db, rated_providers: config.rated_providers).load
+      raise "db/operations.db пуста - сначала запустите bin/import_data.rb" if @providers.empty?
 
-      @actuals_by_provider = HistoricalActualsProvider.new(history_file: config.operations_history_file).load
+      @actuals_by_provider = HistoricalActualsProvider.new(db: db).load
 
       @strategy_calculator = Strategies::StrategyWeightCalculator.new(
         registry: Strategies::StrategyRegistry.new(strategies_file: config.strategies_file)

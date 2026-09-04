@@ -1,9 +1,8 @@
-require "csv"
-
 module PaymentRouting
   # Считает "фактические" показатели провайдера (count/volume-share, оборот) из
-  # data/operations_history.csv. Учитываются только approved-операции - именно они
-  # формируют реальную долю/оборот, а не все поданные заявки.
+  # таблицы operations_history (db/operations.db), а не из CSV напрямую.
+  # Учитываются только approved-операции - именно они формируют реальную
+  # долю/оборот, а не все поданные заявки.
   #
   # rpm_used в истории не восстановить (это скользящее окно "прямо сейчас",
   # а не агрегат за день) - до появления рантайм rate-limiter'а отдаётся 0
@@ -11,18 +10,24 @@ module PaymentRouting
   class HistoricalActualsProvider
     APPROVED_STATUS = "approved"
 
-    def initialize(history_file:)
-      @history_file = history_file
+    def initialize(db:)
+      @db = db
     end
 
     def load
-      approved_rows = CSV.read(@history_file, headers: true).select { |row| row["status"] == APPROVED_STATUS }
+      approved_rows = @db[:operations_history]
+                      .join(:providers, payment_system_id: :payment_system_id)
+                      .where(Sequel[:operations_history][:status] => APPROVED_STATUS)
+                      .select(
+                        Sequel[:providers][:payment_system].as(:payment_system),
+                        Sequel[:operations_history][:amount].as(:amount)
+                      )
 
       counts = Hash.new(0)
       volumes = Hash.new(0.0)
       approved_rows.each do |row|
-        counts[row["payment_system"]] += 1
-        volumes[row["payment_system"]] += row["amount"].to_f
+        counts[row[:payment_system]] += 1
+        volumes[row[:payment_system]] += row[:amount].to_f
       end
 
       total_count = counts.values.sum

@@ -34,5 +34,20 @@ module PaymentRouting
         actuals_by_provider: provider_actuals_pairs.to_h { |p, a| [p.payment_system, a] }
       )
     end
+
+    # In-memory БД с реальными data/* поверх схемы - для тестов, которым нужен
+    # настоящий ProviderRegistry/HistoricalActualsProvider/OperationQueueLoader
+    # (они читают только БД, файлы не читают).
+    def seeded_db
+      db = Db.connect(nil)
+      Db.create_schema!(db)
+      config = RoutingConfig.new
+
+      Importers::ProvidersImporter.new(db: db, providers_file: config.providers_file).import
+      Importers::OperationsQueueImporter.new(db: db, queue_file: config.operations_queue_file).import
+      Importers::OperationsHistoryImporter.new(db: db, history_file: config.operations_history_file).import
+
+      db
+    end
   end
 end

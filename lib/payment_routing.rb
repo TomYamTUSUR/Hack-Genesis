@@ -18,8 +18,6 @@ require_relative "payment_routing/operation_queue_loader"
 require_relative "payment_routing/provider_actuals"
 require_relative "payment_routing/provider_registry"
 require_relative "payment_routing/historical_actuals_provider"
-require_relative "payment_routing/reference_decisions"
-require_relative "payment_routing/reference_decisions_loader"
 
 require_relative "payment_routing/strategies/strategy_definition"
 require_relative "payment_routing/strategies/strategy_registry"

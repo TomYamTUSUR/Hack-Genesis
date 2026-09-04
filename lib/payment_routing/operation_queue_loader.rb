@@ -1,15 +1,15 @@
 module PaymentRouting
-  # Разбирает data/operations_queue_10.json (и, позже, operations_queue_test.json)
-  # в [Operation] - единственный путь превращения "сырой" заявки в доменный
-  # объект, которым уже пользуются strategies/rating и будущий Router.
+  # Строит [Operation] из таблицы operations_queue (db/operations.db) -
+  # единственный путь превращения заявки в доменный объект для strategies/rating
+  # и будущего Router'а. Файлы не читает.
   class OperationQueueLoader
-    def initialize(queue_file:)
-      @queue_file = queue_file
+    def initialize(db:)
+      @db = db
     end
 
     def load
-      JSON.parse(File.read(@queue_file)).map do |raw|
-        Operation.new(operation_id: raw["operation_id"], amount: raw["amount"], bank: raw["bank"])
+      @db[:operations_queue].map do |row|
+        Operation.new(operation_id: row[:operation_id], amount: row[:amount], bank: row[:bank])
       end
     end
   end

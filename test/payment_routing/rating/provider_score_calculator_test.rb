@@ -2,17 +2,17 @@ require_relative "../../test_helper"
 
 module PaymentRouting
   module Rating
-    # Интеграционный тест на реальных data/providers.json - показывает, что
+    # Интеграционный тест на реальных данных, загруженных в БД - показывает, что
     # смена активной стратегии (solo) меняет победителя ранжирования, как и
     # задумано формулой (её ключевой критерий получает вес 0.70).
     class ProviderScoreCalculatorTest < Minitest::Test
+      include TestFactories
+
       def setup
         config = RoutingConfig.new
+        db = seeded_db
 
-        @providers = ProviderRegistry.new(
-          providers_file: config.providers_file,
-          overlay_file: config.providers_overlay_file
-        ).load
+        @providers = ProviderRegistry.new(db: db, rated_providers: config.rated_providers).load
 
         # Нейтральные actuals: каждый провайдер точно на своей целевой доле/обороте,
         # чтобы deviation-нормы не искажали сравнение конкретно проверяемой стратегии.
@@ -29,8 +29,8 @@ module PaymentRouting
         @registry = Strategies::StrategyRegistry.new(strategies_file: config.strategies_file)
       end
 
-      def test_solo_priority_strategy_ranks_the_lowest_priority_provider_first
-        assert_equal "vipay", top_provider(active_keys: [:priority]).payment_system
+      def test_solo_intensity_strategy_ranks_the_least_loaded_provider_first
+        assert_equal "quickpay", top_provider(active_keys: [:intensity]).payment_system
       end
 
       def test_solo_conversion_strategy_ranks_the_highest_conversion_provider_first

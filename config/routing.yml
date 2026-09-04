@@ -1,12 +1,10 @@
-# Пути к входным данным (относительно корня репозитория) и активная конфигурация
-# стратегий рейтинга. Меняется без правки кода. Единственное место, где эти пути
-# перечислены, - см. PaymentRouting::RoutingConfig.
+# Пути нужны только для первичного импорта data/* в БД (см. bin/import_data.rb,
+# lib/payment_routing/importers) - сам рейтинг/стратегии эти файлы не читают,
+# они работают только с db/operations.db.
 data:
   providers_file: data/providers.json
-  providers_overlay_file: config/providers_overlay.yml
   operations_history_file: data/operations_history.csv
   operations_queue_file: data/operations_queue_10.json
-  reference_decisions_file: data/reference_decisions.json
 
 strategies_file: config/strategies.yml
 
@@ -14,3 +12,12 @@ strategies_file: config/strategies.yml
 # 1 ключ -> solo-веса, 2+ -> combo-веса (см. StrategyWeightCalculator).
 active_strategies:
   - priority
+
+# payment_system'ы, которые участвуют в рейтинге. Явный список вместо неявного
+# "все активные провайдеры" - потому что providers также содержит self-provider
+# (fallback), который в рейтинге не участвует (пока нет hard-constraints,
+# отличить его иначе, чем по имени, нечем).
+rated_providers:
+  - vipay
+  - payflow
+  - quickpay

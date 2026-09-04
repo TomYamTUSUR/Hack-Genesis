@@ -2,11 +2,13 @@ require_relative "../test_helper"
 
 module PaymentRouting
   class OperationQueueLoaderTest < Minitest::Test
+    include TestFactories
+
     def setup
-      @operations = OperationQueueLoader.new(queue_file: RoutingConfig.new.operations_queue_file).load
+      @operations = OperationQueueLoader.new(db: seeded_db).load
     end
 
-    def test_loads_every_operation_from_the_queue_file
+    def test_loads_every_operation_from_the_queue_table
       assert_equal 10, @operations.size
     end
 

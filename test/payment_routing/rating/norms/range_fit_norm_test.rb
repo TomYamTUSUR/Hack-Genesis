@@ -29,6 +29,13 @@ module PaymentRouting
 
           assert_equal 0.0, @norm.call(provider: @provider, operation: op, pool: @pool)
         end
+
+        def test_provider_without_a_preferred_range_is_neutral
+          p = provider(preferred_range: nil)
+          pool = rating_pool(p => actuals)
+
+          assert_equal 1.0, @norm.call(provider: p, operation: operation, pool: pool)
+        end
       end
     end
   end
