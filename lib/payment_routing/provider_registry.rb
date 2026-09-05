@@ -17,6 +17,8 @@ module PaymentRouting
     private
 
     def build_provider(row)
+      validate_turnover_bounds!(row)
+
       Provider.new(
         payment_system: row[:payment_system],
         priority: row[:priority],
@@ -43,6 +45,36 @@ module PaymentRouting
       return nil if row[:preferred_range_min].nil? || row[:preferred_range_max].nil?
 
       AmountRange.new(min: row[:preferred_range_min], max: row[:preferred_range_max])
+    end
+
+    # daily_turnover_min (soft-goal) и daily_turnover_max (hard-constraint,
+    # см. описание задания) - согласованные ограничения оборота. Значения
+    # приходят из конфигурации бизнеса, а не из data/providers.json, поэтому
+    # опечатку в них (отрицательное число, потолок выше daily_amount_limit,
+    # min выше max - недостижимое обязательство) нужно ловить сразу при
+    # загрузке, а не давать ей молча испортить рейтинг/фильтрацию.
+    def validate_turnover_bounds!(row)
+      daily_amount_limit = row[:daily_amount_limit]
+
+      { daily_turnover_min: row[:daily_turnover_min], daily_turnover_max: row[:daily_turnover_max] }.each do |field, value|
+        next if value.nil?
+
+        raise_turnover_error(row, "#{field} (#{value}) не может быть отрицательным") if value.negative?
+
+        if daily_amount_limit && value > daily_amount_limit
+          raise_turnover_error(row, "#{field} (#{value}) не может превышать daily_amount_limit (#{daily_amount_limit})")
+        end
+      end
+
+      turnover_min = row[:daily_turnover_min]
+      turnover_max = row[:daily_turnover_max]
+      return unless turnover_min && turnover_max && turnover_min > turnover_max
+
+      raise_turnover_error(row, "daily_turnover_min (#{turnover_min}) не может быть больше daily_turnover_max (#{turnover_max})")
+    end
+
+    def raise_turnover_error(row, message)
+      raise "Провайдер '#{row[:payment_system]}': #{message}"
     end
   end
 end
