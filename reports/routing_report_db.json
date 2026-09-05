@@ -4,10 +4,10 @@
     "from": "2026-07-29T08:00:00+03:00",
     "to": "2026-07-29T12:41:18+03:00"
   },
-  "generated_at": "2026-09-05T15:59:51+07:00",
+  "generated_at": "2026-09-05T18:25:25+07:00",
   "source": {
     "type": "sqlite",
-    "database": "D:/CodesNodes_2/GENEZIS_hack_2026/DB/operations.db",
+    "database": "E:/Hack-Genesis/db/operations.db",
     "integrity_check": "ok",
     "foreign_key_definitions": 11,
     "table_rows": {
@@ -18,7 +18,7 @@
       "routing_attempts": 0,
       "eligible_providers": 0,
       "provider_skip_reasons": 0,
-      "reference_decisions": 4
+      "reference_decisions": 0
     },
     "orphans": {
       "history_unknown_provider": 0,
@@ -322,7 +322,7 @@
       "routing_attempts": 0,
       "eligible_providers": 0,
       "provider_skip_reasons": 0,
-      "reference_decisions": 4
+      "reference_decisions": 0
     },
     "database_orphans": {
       "history_unknown_provider": 0,

@@ -6,52 +6,27 @@ require 'json'
 require 'minitest/autorun'
 require 'tmpdir'
 require_relative '../lib/routing_analytics'
+require_relative '../lib/payment_routing'
+require_relative '../db/database'
+require_relative '../lib/payment_routing/importers/upsert'
+require_relative '../lib/payment_routing/importers/provider_lookup'
+require_relative '../lib/payment_routing/importers/providers_importer'
+require_relative '../lib/payment_routing/importers/operations_queue_importer'
+require_relative '../lib/payment_routing/importers/operations_history_importer'
 
 class RoutingAnalyticsTest < Minitest::Test
-  PROJECT_ROOT = File.expand_path('..', __dir__)
-  DATABASE_TEMPLATE = File.join(PROJECT_ROOT, 'DB', 'operations.db')
-  TABLES = %w[
-    analytics_metadata eligible_providers provider_skip_reasons routing_attempts routing_decisions
-    reference_decisions operations_history operations_queue providers
-  ].freeze
-
-  def provider_data
-    RoutingAnalytics::Loader.providers(File.join(PROJECT_ROOT, 'data', 'providers.json'))
-  end
-
-  def history_rows
-    RoutingAnalytics::Loader.history(File.join(PROJECT_ROOT, 'data', 'operations_history.csv'))
-  end
-
-  def pending_operations
-    RoutingAnalytics::Loader.json_array(File.join(PROJECT_ROOT, 'data', 'operations_queue_10.json'))
-  end
-
-  def reference_data
-    RoutingAnalytics::Loader.json_value(File.join(PROJECT_ROOT, 'data', 'reference_decisions.json'))
-  end
-
-  def with_empty_database
+  def with_seeded_database(providers: true, queue: true, history: true)
     Dir.mktmpdir do |directory|
       path = File.join(directory, 'operations.db')
-      FileUtils.cp(DATABASE_TEMPLATE, path)
-      database = SQLite3::Database.new(path)
-      TABLES.each { |table| database.execute("DELETE FROM #{table}") }
-      database.close
+      config = PaymentRouting::RoutingConfig.new
+      db = PaymentRouting::Db.connect(path)
+      PaymentRouting::Db.create_schema!(db)
+      PaymentRouting::Importers::ProvidersImporter.new(db: db, providers_file: config.providers_file).import if providers
+      PaymentRouting::Importers::OperationsQueueImporter.new(db: db, queue_file: config.operations_queue_file).import if queue
+      PaymentRouting::Importers::OperationsHistoryImporter.new(db: db, history_file: config.operations_history_file).import if history
+      db.disconnect
       yield path
     end
-  end
-
-  def import_sources(path, history: history_rows, queue: pending_operations, references: reference_data)
-    writer = RoutingAnalytics::DatabaseWriter.new(path)
-    writer.import_sources(
-      provider_data: provider_data,
-      history_rows: history,
-      queue_operations: queue,
-      reference_data: references
-    )
-  ensure
-    writer&.close
   end
 
   def report_from(path)
@@ -63,11 +38,9 @@ class RoutingAnalyticsTest < Minitest::Test
   end
 
   def test_database_import_and_existing_history_report
-    with_empty_database do |path|
-      counts = import_sources(path)
+    with_seeded_database do |path|
       report = report_from(path)
 
-      assert_equal({ metadata: 3, providers: 4, history: 100, queue: 10, references: 4 }, counts)
       assert_equal 100, report['total_operations']
       assert_equal 10, report['pending_operations']
       assert_equal 110, report['all_operations_seen']
@@ -75,8 +48,10 @@ class RoutingAnalyticsTest < Minitest::Test
       assert_equal 3_391_500, report['total_amount']
       assert_equal 100, report.dig('daily_distribution', '2026-07-29', 'total_operations')
       assert_equal '2026-07-29', report['recommendation_period']
-      assert_equal 'RUB_SBP_WITHDRAW', report['gateway']
-      assert_equal 'alpha_market', report['merchant']
+      # snapshot_at/gateway/merchant не хранятся в канонической схеме (нет для них колонок) -
+      # см. DatabaseSource#provider_data / CanonicalDatabaseSource#provider_data.
+      assert_nil report['gateway']
+      assert_nil report['merchant']
       assert_equal 41, report.dig('distribution', 'vipay', 'count')
       assert_equal 19, report.dig('distribution', 'payflow', 'count')
       assert_equal 40, report.dig('distribution', 'quickpay', 'count')
@@ -90,8 +65,7 @@ class RoutingAnalyticsTest < Minitest::Test
   end
 
   def test_database_logging_replaces_current_operation_state
-    with_empty_database do |path|
-      import_sources(path, history: [], queue: [], references: {})
+    with_seeded_database(queue: false, history: false) do |path|
       operation = {
         'operation_id' => 'op_new',
         'created_at' => '2026-07-30T10:00:00+03:00',
@@ -99,6 +73,17 @@ class RoutingAnalyticsTest < Minitest::Test
         'bank' => 'sberbank',
         'payout_requisite' => { 'sbp' => { 'phone' => '79000000000' } }
       }
+      # routing_decisions.operation_id -> operations_queue.operation_id (см. ER-диаграмму) -
+      # операция должна быть в operations_queue до того, как на неё сошлётся
+      # решение; log_operations не удаляет её оттуда (см. комментарий в самом
+      # методе) - "обработанность" видна по наличию записи в
+      # operations_history/routing_decisions, а не по отсутствию в очереди.
+      seed_db = SQLite3::Database.new(path)
+      seed_db.execute(
+        'INSERT INTO operations_queue (operation_id, created_at, amount, bank) VALUES (?, ?, ?, ?)',
+        [operation['operation_id'], operation['created_at'], operation['amount'], operation['bank']]
+      )
+      seed_db.close
       first_decision = {
         'operation_id' => 'op_new',
         'selected_provider' => 'vipay',
@@ -132,7 +117,9 @@ class RoutingAnalyticsTest < Minitest::Test
       assert_equal 0, report.dig('distribution', 'vipay', 'count')
       assert_equal 1, report.dig('skip_reasons', 'provider_timeout')
       assert_equal 2, database.get_first_value('SELECT COUNT(*) FROM routing_attempts')
-      assert_equal 0, database.get_first_value('SELECT COUNT(*) FROM operations_queue')
+      # operations_queue не чистится (см. комментарий в log_operations) - "не в
+      # ожидании" видно по report['pending_operations'] выше, а не по этой таблице.
+      assert_equal 1, database.get_first_value('SELECT COUNT(*) FROM operations_queue')
       refute database.execute("SELECT name FROM sqlite_master WHERE sql LIKE '%phone%' AND name = 'operations_history'").any?
       database.close
     ensure
@@ -142,8 +129,7 @@ class RoutingAnalyticsTest < Minitest::Test
   end
 
   def test_database_source_is_read_only
-    with_empty_database do |path|
-      import_sources(path)
+    with_seeded_database do |path|
       before = Digest::SHA256.file(path).hexdigest
       report_from(path)
       after = Digest::SHA256.file(path).hexdigest

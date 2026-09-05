@@ -6,17 +6,44 @@ require 'json'
 require 'minitest/autorun'
 require 'tmpdir'
 require_relative '../lib/canonical_database_analytics'
+require_relative '../lib/payment_routing'
+require_relative '../db/database'
+require_relative '../lib/payment_routing/importers/upsert'
+require_relative '../lib/payment_routing/importers/provider_lookup'
+require_relative '../lib/payment_routing/importers/providers_importer'
+require_relative '../lib/payment_routing/importers/operations_queue_importer'
+require_relative '../lib/payment_routing/importers/operations_history_importer'
 
 class CanonicalDatabaseAnalyticsTest < Minitest::Test
-  PROJECT_ROOT = File.expand_path('..', __dir__)
-  DATABASE_PATH = File.join(PROJECT_ROOT, 'DB', 'operations.db')
+  def setup
+    @directory = Dir.mktmpdir('canonical-database-analytics-')
+    @database_path = File.join(@directory, 'operations.db')
+    seed!
+  end
+
+  def teardown
+    FileUtils.remove_entry(@directory)
+  end
+
+  # Строит настоящую БД из data/* тем же путём, что и bin/import_data.rb -
+  # так числа в этом тесте всегда соответствуют текущим data/*, а не
+  # рассинхронизированному заранее закоммиченному бинарнику.
+  def seed!
+    config = PaymentRouting::RoutingConfig.new
+    db = PaymentRouting::Db.connect(@database_path)
+    PaymentRouting::Db.create_schema!(db)
+    PaymentRouting::Importers::ProvidersImporter.new(db: db, providers_file: config.providers_file).import
+    PaymentRouting::Importers::OperationsQueueImporter.new(db: db, queue_file: config.operations_queue_file).import
+    PaymentRouting::Importers::OperationsHistoryImporter.new(db: db, history_file: config.operations_history_file).import
+    db.disconnect
+  end
 
   def test_report_uses_canonical_database_without_modifying_it
-    before = Digest::SHA256.file(DATABASE_PATH).hexdigest
-    analytics = RoutingAnalytics::CanonicalDatabaseAnalytics.new(DATABASE_PATH)
+    before = Digest::SHA256.file(@database_path).hexdigest
+    analytics = RoutingAnalytics::CanonicalDatabaseAnalytics.new(@database_path)
     report = analytics.report(generated_at: Time.iso8601('2026-09-05T12:00:00+07:00'))
     analytics.close
-    after = Digest::SHA256.file(DATABASE_PATH).hexdigest
+    after = Digest::SHA256.file(@database_path).hexdigest
 
     assert_equal before, after
     assert_equal 'sqlite', report.dig('source', 'type')
@@ -40,7 +67,7 @@ class CanonicalDatabaseAnalyticsTest < Minitest::Test
   end
 
   def test_report_remains_valid_json
-    analytics = RoutingAnalytics::CanonicalDatabaseAnalytics.new(DATABASE_PATH)
+    analytics = RoutingAnalytics::CanonicalDatabaseAnalytics.new(@database_path)
     report = analytics.report
 
     Dir.mktmpdir do |directory|
@@ -56,10 +83,10 @@ class CanonicalDatabaseAnalyticsTest < Minitest::Test
   end
 
   def test_noncanonical_schema_is_rejected_without_touching_source_database
-    source_hash = Digest::SHA256.file(DATABASE_PATH).hexdigest
+    source_hash = Digest::SHA256.file(@database_path).hexdigest
     Dir.mktmpdir do |directory|
       copy_path = File.join(directory, 'operations.db')
-      FileUtils.cp(DATABASE_PATH, copy_path)
+      FileUtils.cp(@database_path, copy_path)
       copy = SQLite3::Database.new(copy_path)
       copy.execute('PRAGMA foreign_keys = OFF')
       copy.execute('DROP TABLE reference_decisions')
@@ -72,6 +99,6 @@ class CanonicalDatabaseAnalyticsTest < Minitest::Test
     ensure
       copy&.close
     end
-    assert_equal source_hash, Digest::SHA256.file(DATABASE_PATH).hexdigest
+    assert_equal source_hash, Digest::SHA256.file(@database_path).hexdigest
   end
 end

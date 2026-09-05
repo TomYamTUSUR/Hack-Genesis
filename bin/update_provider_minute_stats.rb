@@ -11,8 +11,12 @@ require_relative '../lib/provider_minute_metrics'
 # All statuses count. This is not an HTTP request/retry counter: the existing
 # history contains only one provider per operation, not a complete request log.
 # Window: (at - 60 seconds, at], using SQLite timestamps including UTC offsets.
-# By request, in_progress_count/amount now hold ALL applications in that window,
-# regardless of status. They are not the total number/value of active operations.
+# Per-minute request count/amount (all statuses) are report-only (see
+# 'requests_last_minute' and periods.minute in the JSON) - they are NOT written
+# to in_progress_count/in_progress_amount. Those columns mean concurrently
+# in-flight requests elsewhere in this project (hard-constraint capacity,
+# PaymentRouting::Rating load factor); a per-minute arrival count is a
+# different thing and would silently corrupt that meaning if persisted there.
 # Never changes the schema. Writes requests_last_minute only if it already exists.
 # Also updates conversion_24h (ratio over all statuses) and avg_latency_sec (minute,
 # all known latencies, rounded to seconds). Missing observations produce NULL.
@@ -40,7 +44,7 @@ class ProviderMinuteStats
       at = (@at || Time.now).getutc
       result = build_report(database, at: at)
       columns = database.execute('PRAGMA table_info(providers)').map { |row| row['name'] }
-      fields = %w[in_progress_count in_progress_amount conversion_24h avg_latency_sec]
+      fields = %w[conversion_24h avg_latency_sec]
       missing = fields - columns
       raise Error, "providers: missing columns #{missing.join(', ')}" unless missing.empty?
 
@@ -179,14 +183,15 @@ class ProviderMinuteStats
 end
 
 if $PROGRAM_NAME == __FILE__
-  options = { database: File.expand_path('../DB/operations.db', __dir__) }
+  options = { database: File.expand_path('../db/operations.db', __dir__) }
   begin
     OptionParser.new do |parser|
       parser.banner = 'Usage: ruby bin/update_provider_minute_stats.rb [options]'
       parser.separator 'Updates providers from operations_history for (now - 60 seconds, now], all statuses.'
-      parser.separator 'Writes existing in_progress_count, in_progress_amount, conversion_24h and avg_latency_sec.'
+      parser.separator 'Writes conversion_24h and avg_latency_sec. Never writes in_progress_count/in_progress_amount'
+      parser.separator '(those mean concurrently in-flight requests elsewhere in this project, not per-minute arrivals).'
       parser.separator 'Writes requests_last_minute only if present. Never changes the schema. Other metrics are JSON-only.'
-      parser.on('--database PATH', 'Existing SQLite database (default: DB/operations.db)') { |value| options[:database] = value }
+      parser.on('--database PATH', 'Existing SQLite database (default: db/operations.db)') { |value| options[:database] = value }
       parser.on('--dry-run', 'Read-only JSON report; do not update provider fields') { options[:dry_run] = true }
       parser.on('--at ISO8601', 'Window end with timezone, e.g. 2026-07-29T08:01:00+03:00 (default: now)') do |value|
         raise OptionParser::InvalidArgument, '--at must include Z or a UTC offset' unless value.match?(/(?:Z|[+-]\d{2}:?\d{2})\z/)

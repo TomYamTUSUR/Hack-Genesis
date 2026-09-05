@@ -7,20 +7,21 @@ require 'open3'
 require 'rbconfig'
 require 'tmpdir'
 require_relative '../bin/update_provider_minute_stats'
+require_relative '../lib/payment_routing'
+require_relative '../db/database'
+require_relative '../lib/payment_routing/importers/upsert'
+require_relative '../lib/payment_routing/importers/providers_importer'
 
 class ProviderMinuteStatsTest < Minitest::Test
   ROOT = File.expand_path('..', __dir__)
-  SOURCE_DB = File.join(ROOT, 'DB', 'operations.db')
   AT = Time.iso8601('2026-09-05T12:00:00Z')
 
   def setup
-    @source_hash = Digest::SHA256.file(SOURCE_DB).hexdigest
     @directory = Dir.mktmpdir('provider-minute-stats-')
     @path = File.join(@directory, 'operations.db')
-    FileUtils.cp(SOURCE_DB, @path)
+    seed_providers!
     @db = SQLite3::Database.new(@path)
     @db.results_as_hash = true
-    @db.execute('DELETE FROM operations_history')
     @ids = @db.execute('SELECT payment_system, payment_system_id FROM providers').to_h do |row|
       [row['payment_system'], row['payment_system_id']]
     end
@@ -29,10 +30,19 @@ class ProviderMinuteStatsTest < Minitest::Test
   def teardown
     @db&.close
     FileUtils.remove_entry(@directory)
-    assert_equal @source_hash, Digest::SHA256.file(SOURCE_DB).hexdigest
   end
 
-  def operation(id, at:, amount:, provider: 'vipay', status: 'approved', latency: nil, bank: nil)
+  # Только providers - operations_history тестам нужна с нуля, своя (контролируемые
+  # моменты времени), поэтому историю из data/ сюда не грузим вообще.
+  def seed_providers!
+    config = PaymentRouting::RoutingConfig.new
+    db = PaymentRouting::Db.connect(@path)
+    PaymentRouting::Db.create_schema!(db)
+    PaymentRouting::Importers::ProvidersImporter.new(db: db, providers_file: config.providers_file).import
+    db.disconnect
+  end
+
+  def operation(id, at:, amount:, provider: 'vipay', status: 'approved', latency: nil, bank: 'sberbank')
     @db.execute(<<~SQL, [id, at, amount, @ids.fetch(provider), status, latency, bank])
       INSERT INTO operations_history (operation_id, created_at, amount, payment_system_id, status, latency_sec, bank)
       VALUES (?, ?, ?, ?, ?, ?, ?)
@@ -43,8 +53,11 @@ class ProviderMinuteStatsTest < Minitest::Test
     ProviderMinuteStats.new(database: @path, at: at).run
   end
 
-  def stats(name)
-    @db.get_first_row('SELECT in_progress_count, in_progress_amount FROM providers WHERE payment_system = ?', [name]).values
+  # in_progress_count/amount больше не пишутся в БД (см. bin/update_provider_minute_stats.rb) -
+  # значения минуты сравниваем по отчёту, а не по колонкам providers.
+  def stats(report, name)
+    row = report.fetch('providers').find { |r| r['payment_system'] == name }
+    [row['requests_last_minute'], row.dig('periods', 'minute', 'amount')]
   end
 
   def tables_snapshot
@@ -66,10 +79,10 @@ class ProviderMinuteStatsTest < Minitest::Test
 
     result = run_stats
 
-    assert_equal [3, 600], stats('vipay')
-    assert_equal [1, 400], stats('payflow')
-    assert_equal [0, 0], stats('quickpay')
-    assert_equal [0, 0], stats('spacepayments')
+    assert_equal [3, 600], stats(result, 'vipay')
+    assert_equal [1, 400], stats(result, 'payflow')
+    assert_equal [0, 0], stats(result, 'quickpay')
+    assert_equal [0, 0], stats(result, 'spacepayments')
     assert_equal schema, @db.execute('SELECT sql FROM sqlite_master ORDER BY name')
     assert_equal '2026-09-05T11:59:00.000000Z', result['window_start_exclusive']
     assert_equal '2026-09-05T12:00:00.000000Z', result['window_end_inclusive']
@@ -85,8 +98,8 @@ class ProviderMinuteStatsTest < Minitest::Test
     before = tables_snapshot
     assert_equal result, run_stats
     assert_equal before, tables_snapshot
-    run_stats(at: AT + 61)
-    @ids.each_key { |name| assert_equal [0, 0], stats(name) }
+    result = run_stats(at: AT + 61)
+    @ids.each_key { |name| assert_equal [0, 0], stats(result, name) }
     assert_equal 0, @db.execute('PRAGMA table_info(providers)').count { |row| row['name'] == 'requests_last_minute' }
   end
 
@@ -126,15 +139,16 @@ class ProviderMinuteStatsTest < Minitest::Test
       '--database', @path, '--at', '2026-09-05T15:00:00+03:00', chdir: @directory
     )
     assert status.success?, error
-    assert_equal 4, JSON.parse(output).fetch('providers').length
-    assert_equal [1, 500], stats('vipay')
+    report = JSON.parse(output)
+    assert_equal 4, report.fetch('providers').length
+    assert_equal [1, 500], stats(report, 'vipay')
   end
 
   def test_rates_shares_latency_periods_and_breakdowns
     operation('a', at: '2026-09-05T11:59:10Z', amount: 100, latency: 10, bank: 'sberbank')
     operation('b', at: '2026-09-05T11:59:20Z', amount: 300, latency: 30, bank: 'vtb')
     operation('c', at: '2026-09-05T11:59:30Z', amount: 200, status: 'rejected', latency: 50, bank: 'sberbank')
-    operation('d', at: '2026-09-05T11:59:40Z', amount: 400, status: 'in_progress')
+    operation('d', at: '2026-09-05T11:59:40Z', amount: 400, status: 'in_progress', bank: 'tinkoff')
     operation('e', at: '2026-09-05T11:59:50Z', amount: 500, provider: 'payflow', status: 'expired', latency: 100)
     operation('previous', at: '2026-09-05T11:59:00Z', amount: 200, latency: 20)
     operation('yesterday', at: '2026-09-04T23:30:00Z', amount: 1000, status: 'expired', latency: 90)

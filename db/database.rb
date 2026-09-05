@@ -74,7 +74,7 @@ module PaymentRouting
         Integer :amount, null: false
         String :bank, null: false
         String :card_brand
-        foreign_key :payment_system_id, :providers, null: false
+        foreign_key :payment_system_id, :providers, key: :payment_system_id, null: false
         String :status, null: false
         Integer :latency_sec
 
@@ -87,10 +87,10 @@ module PaymentRouting
       # Ref: routing_decisions.operation_id > operations_queue.operation_id
       # Ref: routing_decisions.selected_payment_system_id > providers.payment_system_id
       db.create_table? :routing_decisions do
-        foreign_key :operation_id, :operations_queue, type: String, primary_key: true
+        foreign_key :operation_id, :operations_queue, key: :operation_id, type: String, primary_key: true
         # Обязательные поля по формату ответа (см. ТЗ, "Формат результата роутинга"):
         # выбранный провайдер и симулированный результат должны быть у каждого решения.
-        foreign_key :selected_payment_system_id, :providers, null: false
+        foreign_key :selected_payment_system_id, :providers, key: :payment_system_id, null: false
         String :simulated_result, null: false
         Integer :latency_sec, null: false
         DateTime :created_at, null: false
@@ -104,8 +104,8 @@ module PaymentRouting
       # Ref: routing_attempts.payment_system_id > providers.payment_system_id
       db.create_table? :routing_attempts do
         primary_key :attempt_id
-        foreign_key :operation_id, :routing_decisions, type: String, null: false
-        foreign_key :payment_system_id, :providers, null: false
+        foreign_key :operation_id, :routing_decisions, key: :operation_id, type: String, null: false
+        foreign_key :payment_system_id, :providers, key: :payment_system_id, null: false
         Integer :attempt_number, null: false
         String :decision, null: false
         String :reason
@@ -125,8 +125,8 @@ module PaymentRouting
       # Ref: eligible_providers.operation_id > operations_queue.operation_id
       # Ref: eligible_providers.payment_system_id > providers.payment_system_id
       db.create_table? :eligible_providers do
-        foreign_key :operation_id, :operations_queue, type: String, null: false
-        foreign_key :payment_system_id, :providers, null: false
+        foreign_key :operation_id, :operations_queue, key: :operation_id, type: String, null: false
+        foreign_key :payment_system_id, :providers, key: :payment_system_id, null: false
         TrueClass :is_eligible, null: false
         DateTime :checked_at, null: false
 
@@ -142,8 +142,8 @@ module PaymentRouting
       # Ref: provider_skip_reasons.payment_system_id > providers.payment_system_id
       db.create_table? :provider_skip_reasons do
         primary_key :skip_reason_id
-        foreign_key :operation_id, :operations_queue, type: String, null: false
-        foreign_key :payment_system_id, :providers, null: false
+        foreign_key :operation_id, :operations_queue, key: :operation_id, type: String, null: false
+        foreign_key :payment_system_id, :providers, key: :payment_system_id, null: false
         String :reason, null: false
         DateTime :created_at, null: false
 
@@ -158,8 +158,8 @@ module PaymentRouting
       # Ref: reference_decisions.operation_id > operations_queue.operation_id
       # Ref: reference_decisions.required_payment_system_id > providers.payment_system_id
       db.create_table? :reference_decisions do
-        foreign_key :operation_id, :operations_queue, type: String, primary_key: true
-        foreign_key :required_payment_system_id, :providers, null: false
+        foreign_key :operation_id, :operations_queue, key: :operation_id, type: String, primary_key: true
+        foreign_key :required_payment_system_id, :providers, key: :payment_system_id, null: false
         String :reason, text: true
       end
 

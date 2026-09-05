@@ -6,7 +6,7 @@ require_relative '../lib/routing_analytics'
 
 project_root = File.expand_path('..', __dir__)
 options = {
-  database: File.join(project_root, 'DB', 'operations.db')
+  database: File.join(project_root, 'db', 'operations.db')
 }
 writer = nil
 

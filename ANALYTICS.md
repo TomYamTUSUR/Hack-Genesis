@@ -1,24 +1,24 @@
 # Аналитический контур роутинга
 
-Аналитика и журналирование работают с SQLite-базой `DB/operations.db`. Каталоги `data/` и `scripts/` используются только для чтения и никогда не изменяются.
+Аналитика и журналирование работают с SQLite-базой `db/operations.db` (схема — `db/database.rb`/`db/create_tables.rb`). Каталоги `data/` и `scripts/` используются только для чтения и никогда не изменяются.
 
 ## Первичная загрузка
 
 ```powershell
-bundle exec ruby bin/import_sources.rb
+bundle exec ruby bin/import_data.rb
 ```
 
-Команда транзакционно переносит исходные `providers.json`, `operations_history.csv`, очередь и эталонные решения в существующую схему БД. Повторный запуск безопасен: записи обновляются по их ключам, а уже обработанные операции не возвращаются в очередь.
+Переносит `data/providers.json`, `data/operations_history.csv` и `data/operations_queue_10.json` в БД (см. `lib/payment_routing/importers`). Повторный запуск безопасен: записи обновляются по их ключам. Можно импортировать по частям: `bundle exec ruby bin/import_data.rb providers history`.
 
-Для других файлов можно передать `--providers`, `--history`, `--queue`, `--references` и `--database`.
+`data/reference_decisions.json` в БД не заносится - это эталон для самопроверки (`scripts/validate_10.rb`), а не часть рабочих данных роутинга.
 
 ## Отчёт
 
 ```powershell
-bundle exec ruby bin/analyze.rb
+bundle exec ruby bin/analyze_db.rb
 ```
 
-По умолчанию команда только читает `DB/operations.db` и записывает результат в `reports/routing_report.json`. Другой файл БД задаётся через `--database`; `--stdout` выводит JSON без создания отчёта.
+Читает `db/operations.db` через `CanonicalDatabaseAnalytics` (строгая проверка соответствия схемы - таблицы, колонки, внешние ключи) и пишет `reports/routing_report_db.json`. `--stdout` выводит JSON без создания файла; `--database PATH`/`--output PATH` переопределяют пути по умолчанию.
 
 Отчёт содержит распределение количества и объёма операций, статусы, latency, загрузку лимитов, причины пропуска, очередь, рекомендации и проверки качества данных.
 
@@ -30,14 +30,14 @@ bundle exec ruby bin/log_operations.rb `
   --decisions incoming/routing_decisions.json
 ```
 
-Запись выполняется одной транзакцией. Обновляются `operations_history`, `routing_decisions`, `routing_attempts`, `eligible_providers` и `provider_skip_reasons`; завершённые операции удаляются из `operations_queue`. Для каждого `operation_id` хранится актуальное состояние решения.
+Запись выполняется одной транзакцией: обновляются `operations_history`, `routing_decisions`, `routing_attempts`, `eligible_providers` и `provider_skip_reasons`. Строка в `operations_queue` не удаляется (на неё ссылаются `routing_decisions`/`eligible_providers`/`provider_skip_reasons` внешними ключами) - "обработанность" операции `Analyzer` определяет наличием записи в `operations_history`/`routing_decisions`, а не отсутствием в очереди. Повторный вызов для того же `operation_id` заменяет его решение и попытки.
 
 ## Проверка
 
 ```powershell
 bundle install
-bundle exec ruby -Ilib test/routing_analytics_test.rb
-ruby scripts/validate_10.rb data/sample_routing_decisions.json
+rake test
+ruby scripts/validate_10.rb path/to/routing_decisions.json
 ```
 
-Аналитическое чтение открывает SQLite в режиме read-only. Вывод внутрь `data/` и `scripts/` дополнительно блокируется программно.
+Аналитическое чтение открывает SQLite в режиме read-only. Запись внутрь `data/` и `scripts/` дополнительно блокируется программно (`RoutingAnalytics::PathGuard`).

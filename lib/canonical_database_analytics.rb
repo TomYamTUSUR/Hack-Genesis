@@ -17,7 +17,7 @@ module RoutingAnalytics
         in_progress_amount available_requisites conversion_24h avg_latency_sec
         banks exclude_banks provider_margin_pct merchant_margin_pct
         allow_negative_agreement note volume_share_pct requests_per_minute_limit
-        daily_turnover_min daily_turnover_max
+        daily_turnover_min daily_turnover_max preferred_range_min preferred_range_max
       ],
       'operations_history' => %w[
         operation_id created_at amount bank card_brand payment_system_id status latency_sec

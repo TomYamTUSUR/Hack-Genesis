@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-require 'csv'
 require 'date'
 require 'fileutils'
 require 'json'
@@ -88,33 +87,11 @@ module RoutingAnalytics
     end
   end
 
+  # provider/history file loading lives in PaymentRouting::Importers (Sequel-based,
+  # see lib/payment_routing/importers) - this Loader only handles the JSON
+  # inputs specific to the analytics/logging CLIs (bin/log_operations.rb).
   class Loader
-    HISTORY_COLUMNS = %w[
-      operation_id created_at amount bank card_brand payment_system status latency_sec
-    ].freeze
-
     class << self
-      def providers(path)
-        data = parse_json(path)
-        unless data.is_a?(Hash) && data['providers'].is_a?(Array)
-          raise Error, "#{path}: expected an object with a providers array"
-        end
-
-        data
-      end
-
-      def history(path)
-        table = CSV.read(path, headers: true, encoding: 'bom|utf-8')
-        missing_columns = HISTORY_COLUMNS - table.headers
-        unless missing_columns.empty?
-          raise Error, "#{path}: missing history columns: #{missing_columns.join(', ')}"
-        end
-
-        table.map(&:to_h)
-      rescue CSV::MalformedCSVError => e
-        raise Error, "#{path}: malformed CSV: #{e.message}"
-      end
-
       def json_array(path)
         data = json_value(path)
         data.is_a?(Array) ? data : [data]
@@ -136,7 +113,7 @@ module RoutingAnalytics
 
   class DatabaseBase
     REQUIRED_TABLES = %w[
-      analytics_metadata eligible_providers operations_history operations_queue provider_skip_reasons
+      eligible_providers operations_history operations_queue provider_skip_reasons
       providers reference_decisions routing_attempts routing_decisions
     ].freeze
 
@@ -199,9 +176,10 @@ module RoutingAnalytics
 
     private
 
+    # snapshot_at/gateway/merchant have no columns in the canonical schema (see
+    # CanonicalDatabaseSource#provider_data) - kept nil here too so both
+    # adapters produce the same Analyzer input shape from the same schema.
     def provider_data
-      metadata = rows('SELECT meta_key, meta_value FROM analytics_metadata')
-        .to_h { |row| [row['meta_key'], row['meta_value']] }
       providers = rows('SELECT * FROM providers ORDER BY priority, payment_system_id').map do |provider|
         provider['banks'] = parse_banks(provider['banks'])
         provider['exclude_banks'] = provider['exclude_banks'].to_i == 1
@@ -210,9 +188,9 @@ module RoutingAnalytics
       end
 
       {
-        'snapshot_at' => metadata['snapshot_at'],
-        'gateway' => metadata['gateway'],
-        'merchant' => metadata['merchant'],
+        'snapshot_at' => nil,
+        'gateway' => nil,
+        'merchant' => nil,
         'providers' => providers
       }
     end
@@ -345,16 +323,9 @@ module RoutingAnalytics
     end
   end
 
+  # Writes routing results into an already-seeded database (see
+  # PaymentRouting::Importers for seeding providers/history/queue from data/*).
   class DatabaseWriter < DatabaseBase
-    PROVIDER_COLUMNS = %w[
-      payment_system status traffic_percentage priority limit_amount_min limit_amount_max
-      daily_amount_limit daily_approved_amount in_progress_count_limit in_progress_count
-      in_progress_amount_limit in_progress_amount available_requisites conversion_24h
-      avg_latency_sec banks exclude_banks provider_margin_pct merchant_margin_pct
-      allow_negative_agreement note volume_share_pct requests_per_minute_limit
-      daily_turnover_min daily_turnover_max
-    ].freeze
-
     def initialize(path, protected_roots: [])
       @path = File.expand_path(path)
       PathGuard.ensure_writable!(@path, protected_roots)
@@ -368,77 +339,6 @@ module RoutingAnalytics
     rescue SQLite3::Exception => e
       close
       raise Error, "unable to open database #{@path}: #{e.message}"
-    end
-
-    def import_sources(provider_data:, history_rows:, queue_operations:, reference_data: {})
-      counts = { metadata: 0, providers: 0, history: 0, queue: 0, references: 0 }
-      @database.transaction do
-        %w[snapshot_at gateway merchant].each do |key|
-          next if provider_data[key].nil?
-
-          upsert('analytics_metadata', {
-            'meta_key' => key,
-            'meta_value' => provider_data[key]
-          }, %w[meta_key])
-          counts[:metadata] += 1
-        end
-
-        Array(provider_data['providers']).each do |provider|
-          values = PROVIDER_COLUMNS.to_h do |column|
-            value = provider[column]
-            value = JSON.generate(value || []) if column == 'banks'
-            value = value ? 1 : 0 if %w[exclude_banks allow_negative_agreement].include?(column)
-            [column, value]
-          end
-          upsert('providers', values, %w[payment_system])
-          counts[:providers] += 1
-        end
-
-        history_rows.each do |row|
-          provider_id = provider_id!(row['payment_system'])
-          upsert('operations_history', {
-            'operation_id' => required!(row, 'operation_id'),
-            'created_at' => required!(row, 'created_at'),
-            'amount' => required!(row, 'amount'),
-            'bank' => required!(row, 'bank'),
-            'card_brand' => row['card_brand'],
-            'payment_system_id' => provider_id,
-            'status' => required!(row, 'status'),
-            'latency_sec' => row['latency_sec']
-          }, %w[operation_id])
-          @database.execute('DELETE FROM operations_queue WHERE operation_id = ?', row['operation_id'])
-          counts[:history] += 1
-        end
-
-        queue_operations.each do |operation|
-          operation_id = required!(operation, 'operation_id')
-          next if processed_operation?(operation_id)
-
-          upsert('operations_queue', {
-            'operation_id' => operation_id,
-            'created_at' => required!(operation, 'created_at'),
-            'amount' => required!(operation, 'amount'),
-            'bank' => required!(operation, 'bank'),
-            'card_brand' => operation['card_brand'],
-            'payout_requisite_sbp_phone' => operation.dig('payout_requisite', 'sbp', 'phone'),
-            'payout_requisite_bank_name' => operation.dig('payout_requisite', 'sbp', 'bank_name')
-          }, %w[operation_id])
-          counts[:queue] += 1
-        end
-
-        Array(reference_data['deterministic_cases']).each do |reference|
-          provider_id = provider_id!(reference['required_provider'])
-          upsert('reference_decisions', {
-            'operation_id' => required!(reference, 'operation_id'),
-            'required_payment_system_id' => provider_id,
-            'reason' => reference['reason']
-          }, %w[operation_id])
-          counts[:references] += 1
-        end
-      end
-      counts
-    rescue SQLite3::Exception => e
-      raise Error, "database import failed: #{e.message}"
     end
 
     def log_operations(operations:, decisions:, logged_at: Time.now)
@@ -495,7 +395,12 @@ module RoutingAnalytics
               VALUES (?, ?, ?, ?)
             SQL
           end
-          @database.execute('DELETE FROM operations_queue WHERE operation_id = ?', operation_id)
+          # operations_queue не чистится: routing_decisions/eligible_providers/
+          # provider_skip_reasons ссылаются на operation_id (см. ER-диаграмму) -
+          # удаление строки сломало бы эти FK. "Обработана" операция или нет,
+          # Analyzer определяет наличием записи в operations_history/routing_decisions
+          # (см. Analyzer#unprocessed_pending_operations), а не тем, осталась ли
+          # она физически в operations_queue.
         end
       end
       operations.length
@@ -528,16 +433,6 @@ module RoutingAnalytics
       raise Error, "unknown provider: #{payment_system.inspect}" unless id
 
       id
-    end
-
-    def processed_operation?(operation_id)
-      first_value(<<~SQL, [operation_id, operation_id]).to_i.positive?
-        SELECT EXISTS(
-          SELECT 1 FROM operations_history WHERE operation_id = ?
-          UNION ALL
-          SELECT 1 FROM routing_decisions WHERE operation_id = ?
-        )
-      SQL
     end
 
     def required!(object, key)
