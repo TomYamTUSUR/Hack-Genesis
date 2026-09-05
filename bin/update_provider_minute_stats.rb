@@ -13,7 +13,10 @@ require_relative '../lib/provider_minute_metrics'
 # Window: (at - 60 seconds, at], using SQLite timestamps including UTC offsets.
 # By request, in_progress_count/amount now hold ALL applications in that window,
 # regardless of status. They are not the total number/value of active operations.
-# Never changes the schema. Writes requests_last_minute only if it already exists.
+# Adds the agreed minute-share columns to providers on first write, atomically.
+# Writes requests_last_minute only if it already exists. Dry runs never migrate.
+# The older CanonicalDatabaseSource rejects extra columns and needs a separate
+# adaptation; other project files are intentionally left unchanged.
 # Also updates conversion_24h (ratio over all statuses) and avg_latency_sec (minute,
 # all known latencies, rounded to seconds). Missing observations produce NULL.
 # Daily created-operation totals are report-only; there is no completion time to
@@ -21,6 +24,24 @@ require_relative '../lib/provider_minute_metrics'
 # Usage: ruby bin/update_provider_minute_stats.rb [--database PATH] [--at ISO8601] [--dry-run]
 class ProviderMinuteStats
   class Error < StandardError; end
+
+  SHARE_COLUMNS = {
+    'actual_count_share_pct' => 'REAL',
+    'actual_volume_share_pct' => 'REAL',
+    'approved_volume_share_pct' => 'REAL',
+    'count_target_fulfillment_pct' => 'REAL',
+    'volume_target_fulfillment_pct' => 'REAL',
+    'count_share_gap_pp' => 'REAL',
+    'volume_share_gap_pp' => 'REAL',
+    'approval_rate_pct' => 'REAL',
+    'rejection_rate_pct' => 'REAL',
+    'expiration_rate_pct' => 'REAL',
+    'approved_amount_pct' => 'REAL',
+    'terminal_approval_rate_pct' => 'REAL',
+    # The calculation reference time (window end), including for --at replays.
+    'stats_calculated_at' => 'TEXT',
+    'stats_window_sec' => 'INTEGER'
+  }.freeze
 
   def initialize(database:, at: nil, dry_run: false)
     @path = File.expand_path(database)
@@ -45,14 +66,23 @@ class ProviderMinuteStats
       raise Error, "providers: missing columns #{missing.join(', ')}" unless missing.empty?
 
       fields << 'requests_last_minute' if columns.include?('requests_last_minute')
+      fields.concat(SHARE_COLUMNS.keys)
+      columns_to_add = SHARE_COLUMNS.keys - columns
       unless @dry_run
+        columns_to_add.each do |column|
+          database.execute("ALTER TABLE providers ADD COLUMN #{column} #{SHARE_COLUMNS.fetch(column)}")
+        end
         result.fetch('providers').each do |row|
           assignments = fields.map { |field| "#{field} = ?" }.join(', ')
           database.execute("UPDATE providers SET #{assignments} WHERE payment_system_id = ?",
                            row.values_at(*fields, 'payment_system_id'))
         end
       end
-      result['persistence'] = { 'dry_run' => @dry_run, 'columns' => fields, 'schema_changed' => false }
+      result['persistence'] = {
+        'dry_run' => @dry_run, 'columns' => fields,
+        'columns_to_add' => columns_to_add,
+        'schema_changed' => !@dry_run && !columns_to_add.empty?
+      }
     end
     result
   ensure
@@ -116,6 +146,13 @@ class ProviderMinuteStats
       previous = metrics.fetch('previous_minute')
       day = metrics.fetch('last_24h')
       conversion = day['count'].zero? ? nil : day.dig('statuses', 'approved', 'count').to_f / day['count']
+      targets = ProviderMinuteMetrics.targets(provider, minute)
+      targets['count_target_fulfillment_pct'] = ProviderMinuteMetrics.percentage(
+        minute['count_share_pct'], provider['traffic_percentage']
+      )
+      targets['volume_target_fulfillment_pct'] = ProviderMinuteMetrics.percentage(
+        minute['amount_share_pct'], provider['volume_share_pct']
+      )
       {
         'payment_system_id' => id, 'payment_system' => provider.fetch('payment_system'),
         'requests_last_minute' => minute['count'], 'in_progress_count' => minute['count'],
@@ -128,9 +165,9 @@ class ProviderMinuteStats
           'count_change_pct' => ProviderMinuteMetrics.change(minute['count'], previous['count']),
           'amount_change_pct' => ProviderMinuteMetrics.change(minute['amount'], previous['amount'])
         },
-        'targets' => ProviderMinuteMetrics.targets(provider, minute),
+        'targets' => targets,
         'minute_breakdown' => ProviderMinuteMetrics.breakdown(groups.fetch('minute').fetch(id, []), minute)
-      }
+      }.merge(minute_share_attributes(minute, targets, at))
     end
     {
       'window_start_exclusive' => (at - 60).getutc.iso8601(6),
@@ -147,12 +184,34 @@ class ProviderMinuteStats
         'empty_denominator' => 'null; counts and amounts for empty cohorts are zero',
         'snapshot_limits' => 'provider snapshot freshness is unknown; no timestamp is stored',
         'in_progress' => 'minute counts and amounts by request; not concurrent in-progress workload',
-        'historical_at' => 'uses currently stored statuses, not a reconstruction of past status changes'
+        'historical_at' => 'uses currently stored statuses, not a reconstruction of past status changes',
+        'persisted_shares' => 'last 60 seconds only; percentage points for gaps, percentages for shares and target fulfillment',
+        'target_fulfillment' => 'actual share / target share * 100; null if no observations or target is absent/zero',
+        'stats_calculated_at' => 'calculation reference time in UTC (window end; --at if supplied)'
       }
     }
   end
 
   private
+
+  def minute_share_attributes(minute, targets, at)
+    {
+      'actual_count_share_pct' => minute['count_share_pct'],
+      'actual_volume_share_pct' => minute['amount_share_pct'],
+      'approved_volume_share_pct' => minute['approved_amount_share_pct'],
+      'count_target_fulfillment_pct' => targets['count_target_fulfillment_pct'],
+      'volume_target_fulfillment_pct' => targets['volume_target_fulfillment_pct'],
+      'count_share_gap_pp' => targets['count_share_gap_pp'],
+      'volume_share_gap_pp' => targets['amount_share_gap_pp'],
+      'approval_rate_pct' => minute['approval_pct'],
+      'rejection_rate_pct' => minute['rejection_pct'],
+      'expiration_rate_pct' => minute['expiration_pct'],
+      'approved_amount_pct' => minute['approved_amount_pct'],
+      'terminal_approval_rate_pct' => minute['terminal_approval_pct'],
+      'stats_calculated_at' => at.getutc.iso8601(6),
+      'stats_window_sec' => 60
+    }
+  end
 
   def period_windows(at)
     {
@@ -185,9 +244,10 @@ if $PROGRAM_NAME == __FILE__
       parser.banner = 'Usage: ruby bin/update_provider_minute_stats.rb [options]'
       parser.separator 'Updates providers from operations_history for (now - 60 seconds, now], all statuses.'
       parser.separator 'Writes existing in_progress_count, in_progress_amount, conversion_24h and avg_latency_sec.'
-      parser.separator 'Writes requests_last_minute only if present. Never changes the schema. Other metrics are JSON-only.'
+      parser.separator 'Adds and updates 12 minute-share metrics plus stats_calculated_at/stats_window_sec in providers.'
+      parser.separator 'Writes requests_last_minute only if present. Other periods and breakdowns remain JSON-only.'
       parser.on('--database PATH', 'Existing SQLite database (default: DB/operations.db)') { |value| options[:database] = value }
-      parser.on('--dry-run', 'Read-only JSON report; do not update provider fields') { options[:dry_run] = true }
+      parser.on('--dry-run', 'Read-only JSON report; no schema or provider updates') { options[:dry_run] = true }
       parser.on('--at ISO8601', 'Window end with timezone, e.g. 2026-07-29T08:01:00+03:00 (default: now)') do |value|
         raise OptionParser::InvalidArgument, '--at must include Z or a UTC offset' unless value.match?(/(?:Z|[+-]\d{2}:?\d{2})\z/)
 
