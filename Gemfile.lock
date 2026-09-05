@@ -1,0 +1,23 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    csv (3.3.6)
+    minitest (5.27.0)
+    sqlite3 (2.9.6-x64-mingw-ucrt)
+
+PLATFORMS
+  x64-mingw-ucrt
+
+DEPENDENCIES
+  csv
+  minitest (~> 5.25)
+  sqlite3
+
+CHECKSUMS
+  bundler (4.0.20) sha256=7978a8ac648767f5e635bc522445b79e80a52b907a39a36c2d8085ed6bc762ae
+  csv (3.3.6) sha256=aba61e7e507a66f03d45cb1f3c4b6359861c3504038b422962875dce099e4456
+  minitest (5.27.0) sha256=2d3b17f8a36fe7801c1adcffdbc38233b938eb0b4966e97a6739055a45fa77d5
+  sqlite3 (2.9.6-x64-mingw-ucrt) sha256=1f2b88f417fd0a8c1d5ef19c7e817d8b9c61bee6e33b6b36255fb6e40148e6f8
+
+BUNDLED WITH
+  4.0.20

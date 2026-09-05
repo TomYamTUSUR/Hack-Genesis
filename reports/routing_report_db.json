@@ -4,34 +4,39 @@
     "from": "2026-07-29T08:00:00+03:00",
     "to": "2026-07-29T12:41:18+03:00"
   },
-  "generated_at": "2026-09-05T14:54:45+07:00",
+  "generated_at": "2026-09-05T15:59:51+07:00",
   "source": {
     "type": "sqlite",
     "database": "D:/CodesNodes_2/GENEZIS_hack_2026/DB/operations.db",
     "integrity_check": "ok",
-    "foreign_key_definitions": 0,
+    "foreign_key_definitions": 11,
     "table_rows": {
-      "analytics_metadata": 3,
-      "eligible_providers": 0,
-      "operations_history": 100,
       "operations_queue": 10,
-      "provider_skip_reasons": 0,
       "providers": 4,
-      "reference_decisions": 4,
+      "operations_history": 100,
+      "routing_decisions": 0,
       "routing_attempts": 0,
-      "routing_decisions": 0
+      "eligible_providers": 0,
+      "provider_skip_reasons": 0,
+      "reference_decisions": 4
     },
     "orphans": {
       "history_unknown_provider": 0,
+      "decision_without_queue_operation": 0,
       "decision_unknown_provider": 0,
-      "decision_without_operation": 0,
+      "attempt_without_decision": 0,
       "attempt_unknown_provider": 0,
-      "attempt_without_decision": 0
+      "eligible_without_queue_operation": 0,
+      "eligible_unknown_provider": 0,
+      "skip_without_queue_operation": 0,
+      "skip_unknown_provider": 0,
+      "reference_without_queue_operation": 0,
+      "reference_unknown_provider": 0
     }
   },
-  "provider_snapshot_at": "2026-07-30T09:00:00+03:00",
-  "gateway": "RUB_SBP_WITHDRAW",
-  "merchant": "alpha_market",
+  "provider_snapshot_at": null,
+  "gateway": null,
+  "merchant": null,
   "total_operations": 100,
   "pending_operations": 10,
   "all_operations_seen": 110,
@@ -304,37 +309,40 @@
     "invalid_amount_count": 0,
     "unknown_provider_count": 0,
     "unknown_status_count": 0,
-    "target_snapshot_after_history": true,
+    "target_snapshot_after_history": false,
     "blank_card_brand_count": 100,
     "history_timestamp_backward_transitions": 0,
     "history_current_bank_rule_mismatch_count": 29,
     "database_integrity": "ok",
     "database_table_rows": {
-      "analytics_metadata": 3,
-      "eligible_providers": 0,
-      "operations_history": 100,
       "operations_queue": 10,
-      "provider_skip_reasons": 0,
       "providers": 4,
-      "reference_decisions": 4,
+      "operations_history": 100,
+      "routing_decisions": 0,
       "routing_attempts": 0,
-      "routing_decisions": 0
+      "eligible_providers": 0,
+      "provider_skip_reasons": 0,
+      "reference_decisions": 4
     },
     "database_orphans": {
       "history_unknown_provider": 0,
+      "decision_without_queue_operation": 0,
       "decision_unknown_provider": 0,
-      "decision_without_operation": 0,
+      "attempt_without_decision": 0,
       "attempt_unknown_provider": 0,
-      "attempt_without_decision": 0
+      "eligible_without_queue_operation": 0,
+      "eligible_unknown_provider": 0,
+      "skip_without_queue_operation": 0,
+      "skip_unknown_provider": 0,
+      "reference_without_queue_operation": 0,
+      "reference_unknown_provider": 0
     },
-    "foreign_key_definitions": 0,
+    "foreign_key_definitions": 11,
     "warnings": [
-      "в схеме SQLite не объявлены внешние ключи; ссылочная целостность контролируется приложением",
       "29 исторических назначений не соответствуют текущему снимку банков провайдеров; история используется для аналитики, а не для определения текущей доступности",
       "card_brand отсутствует у всех анализируемых операций",
       "у провайдеров не задан requests_per_minute_limit; аналитика по ограничениям частоты запросов недоступна",
-      "у провайдеров не задан volume_share_pct; отклонения от целевого распределения объёма недоступны",
-      "целевые значения распределения трафика получены из снимка, сделанного после периода истории; поэтому отклонения от целей являются ориентировочными и не представляют собой SLA-показатели за тот же период"
+      "у провайдеров не задан volume_share_pct; отклонения от целевого распределения объёма недоступны"
     ]
   },
   "recommendation_period": "2026-07-29",

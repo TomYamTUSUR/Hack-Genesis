@@ -6,8 +6,9 @@ require_relative '../lib/routing_analytics'
 
 project_root = File.expand_path('..', __dir__)
 options = {
-  journal: File.join(project_root, 'logs', 'routing_operations.jsonl')
+  database: File.join(project_root, 'DB', 'operations.db')
 }
+writer = nil
 
 begin
   protected_roots = [File.join(project_root, 'data'), File.join(project_root, 'scripts')]
@@ -15,7 +16,7 @@ begin
     parser.banner = 'Usage: ruby bin/log_operations.rb --operations PATH --decisions PATH [options]'
     parser.on('--operations PATH', 'Operations JSON using the queue input structure') { |value| options[:operations] = value }
     parser.on('--decisions PATH', 'Routing decisions JSON using the sample output structure') { |value| options[:decisions] = value }
-    parser.on('--journal PATH', 'Destination append-only JSONL journal') { |value| options[:journal] = value }
+    parser.on('--database PATH', 'Destination SQLite database') { |value| options[:database] = value }
     parser.on('-h', '--help', 'Show this help') do
       puts parser
       exit 0
@@ -40,14 +41,13 @@ begin
       "operation/decision mismatch; missing=#{missing_decisions.join(',')} extra=#{extra_decisions.join(',')}"
   end
 
-  decisions_by_id = decisions.to_h { |decision| [decision['operation_id'], decision] }
-  journal = RoutingAnalytics::OperationJournal.new(options[:journal], protected_roots: protected_roots)
-  operations.each do |operation|
-    journal.append(operation: operation, decision: decisions_by_id.fetch(operation['operation_id']))
-  end
+  writer = RoutingAnalytics::DatabaseWriter.new(options[:database], protected_roots: protected_roots)
+  logged = writer.log_operations(operations: operations, decisions: decisions)
 
-  puts "Logged #{operations.length} operations to #{options[:journal]}"
+  puts "Logged #{logged} operations to #{options[:database]}"
 rescue OptionParser::ParseError, RoutingAnalytics::Error, Errno::ENOENT => e
   warn "Operation logging failed: #{e.message}"
   exit 1
+ensure
+  writer&.close
 end
