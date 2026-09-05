@@ -6,36 +6,19 @@ require 'json'
 require 'minitest/autorun'
 require 'tmpdir'
 require_relative '../lib/canonical_database_analytics'
-require_relative '../lib/payment_routing'
-require_relative '../db/database'
-require_relative '../lib/payment_routing/importers/upsert'
-require_relative '../lib/payment_routing/importers/provider_lookup'
-require_relative '../lib/payment_routing/importers/providers_importer'
-require_relative '../lib/payment_routing/importers/operations_queue_importer'
-require_relative '../lib/payment_routing/importers/operations_history_importer'
+require_relative 'support/seeded_database'
 
 class CanonicalDatabaseAnalyticsTest < Minitest::Test
   def setup
     @directory = Dir.mktmpdir('canonical-database-analytics-')
-    @database_path = File.join(@directory, 'operations.db')
-    seed!
+    # Строит настоящую БД из data/* тем же путём, что и bin/import_data.rb -
+    # так числа в этом тесте всегда соответствуют текущим data/*, а не
+    # рассинхронизированному заранее закоммиченному бинарнику.
+    @database_path = SeededDatabase.seed(File.join(@directory, 'operations.db'))
   end
 
   def teardown
     FileUtils.remove_entry(@directory)
-  end
-
-  # Строит настоящую БД из data/* тем же путём, что и bin/import_data.rb -
-  # так числа в этом тесте всегда соответствуют текущим data/*, а не
-  # рассинхронизированному заранее закоммиченному бинарнику.
-  def seed!
-    config = PaymentRouting::RoutingConfig.new
-    db = PaymentRouting::Db.connect(@database_path)
-    PaymentRouting::Db.create_schema!(db)
-    PaymentRouting::Importers::ProvidersImporter.new(db: db, providers_file: config.providers_file).import
-    PaymentRouting::Importers::OperationsQueueImporter.new(db: db, queue_file: config.operations_queue_file).import
-    PaymentRouting::Importers::OperationsHistoryImporter.new(db: db, history_file: config.operations_history_file).import
-    db.disconnect
   end
 
   def test_report_uses_canonical_database_without_modifying_it

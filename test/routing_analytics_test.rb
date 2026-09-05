@@ -6,25 +6,12 @@ require 'json'
 require 'minitest/autorun'
 require 'tmpdir'
 require_relative '../lib/routing_analytics'
-require_relative '../lib/payment_routing'
-require_relative '../db/database'
-require_relative '../lib/payment_routing/importers/upsert'
-require_relative '../lib/payment_routing/importers/provider_lookup'
-require_relative '../lib/payment_routing/importers/providers_importer'
-require_relative '../lib/payment_routing/importers/operations_queue_importer'
-require_relative '../lib/payment_routing/importers/operations_history_importer'
+require_relative 'support/seeded_database'
 
 class RoutingAnalyticsTest < Minitest::Test
   def with_seeded_database(providers: true, queue: true, history: true)
     Dir.mktmpdir do |directory|
-      path = File.join(directory, 'operations.db')
-      config = PaymentRouting::RoutingConfig.new
-      db = PaymentRouting::Db.connect(path)
-      PaymentRouting::Db.create_schema!(db)
-      PaymentRouting::Importers::ProvidersImporter.new(db: db, providers_file: config.providers_file).import if providers
-      PaymentRouting::Importers::OperationsQueueImporter.new(db: db, queue_file: config.operations_queue_file).import if queue
-      PaymentRouting::Importers::OperationsHistoryImporter.new(db: db, history_file: config.operations_history_file).import if history
-      db.disconnect
+      path = SeededDatabase.seed(File.join(directory, 'operations.db'), providers: providers, queue: queue, history: history)
       yield path
     end
   end

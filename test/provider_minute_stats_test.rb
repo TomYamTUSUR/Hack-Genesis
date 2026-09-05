@@ -7,10 +7,7 @@ require 'open3'
 require 'rbconfig'
 require 'tmpdir'
 require_relative '../bin/update_provider_minute_stats'
-require_relative '../lib/payment_routing'
-require_relative '../db/database'
-require_relative '../lib/payment_routing/importers/upsert'
-require_relative '../lib/payment_routing/importers/providers_importer'
+require_relative 'support/seeded_database'
 
 class ProviderMinuteStatsTest < Minitest::Test
   ROOT = File.expand_path('..', __dir__)
@@ -18,8 +15,9 @@ class ProviderMinuteStatsTest < Minitest::Test
 
   def setup
     @directory = Dir.mktmpdir('provider-minute-stats-')
-    @path = File.join(@directory, 'operations.db')
-    seed_providers!
+    # Только providers - operations_history тестам нужна с нуля, своя
+    # (контролируемые моменты времени), поэтому историю из data/ не грузим.
+    @path = SeededDatabase.seed(File.join(@directory, 'operations.db'), queue: false, history: false)
     @db = SQLite3::Database.new(@path)
     @db.results_as_hash = true
     @ids = @db.execute('SELECT payment_system, payment_system_id FROM providers').to_h do |row|
@@ -30,16 +28,6 @@ class ProviderMinuteStatsTest < Minitest::Test
   def teardown
     @db&.close
     FileUtils.remove_entry(@directory)
-  end
-
-  # Только providers - operations_history тестам нужна с нуля, своя (контролируемые
-  # моменты времени), поэтому историю из data/ сюда не грузим вообще.
-  def seed_providers!
-    config = PaymentRouting::RoutingConfig.new
-    db = PaymentRouting::Db.connect(@path)
-    PaymentRouting::Db.create_schema!(db)
-    PaymentRouting::Importers::ProvidersImporter.new(db: db, providers_file: config.providers_file).import
-    db.disconnect
   end
 
   def operation(id, at:, amount:, provider: 'vipay', status: 'approved', latency: nil, bank: 'sberbank')
