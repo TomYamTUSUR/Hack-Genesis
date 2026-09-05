@@ -28,5 +28,9 @@ module PaymentRouting
     # (лимит не задан, пул из одного провайдера, деление на ноль и т.п.).
     UNDEFINED_UTILIZATION = 0.0
     SINGLE_CANDIDATE_NORM = 1.0
+
+    # Ширина скользящего окна для "текущей" интенсивности (rpm_used), см.
+    # HistoricalActualsProvider - совпадает с окном requests_per_minute_limit.
+    RPM_WINDOW_SECONDS = 60
   end
 end
