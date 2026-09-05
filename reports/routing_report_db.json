@@ -4,7 +4,7 @@
     "from": "2026-07-29T08:00:00+03:00",
     "to": "2026-07-29T12:41:18+03:00"
   },
-  "generated_at": "2026-09-05T15:59:51+07:00",
+  "generated_at": "2026-09-05T19:59:02+07:00",
   "source": {
     "type": "sqlite",
     "database": "D:/CodesNodes_2/GENEZIS_hack_2026/DB/operations.db",
@@ -32,6 +32,12 @@
       "skip_unknown_provider": 0,
       "reference_without_queue_operation": 0,
       "reference_unknown_provider": 0
+    },
+    "definitions": {
+      "provider_snapshot": "Full provider snapshot time is unknown; stats_calculated_at dates only recalculated metrics.",
+      "minute_stats": "Persisted provider metrics; window ends at stats_calculated_at and lasts stats_window_sec seconds. Not recomputed by this report.",
+      "in_progress": "After the minute-stat update, in_progress_count/amount count all applications in that minute, not concurrent unfinished operations.",
+      "skip_reasons": "Distinct operation/provider/reason combinations across routing_attempts and provider_skip_reasons; the latter may contain imported reference expectations."
     }
   },
   "provider_snapshot_at": null,
@@ -71,7 +77,7 @@
       "expired": 3,
       "unknown": 0,
       "approval_rate_pct": 78.05,
-      "snapshot_conversion_24h_pct": 87,
+      "snapshot_conversion_24h_pct": null,
       "latency": {
         "count": 41,
         "avg_sec": 87.29,
@@ -94,7 +100,7 @@
       "expired": 7,
       "unknown": 0,
       "approval_rate_pct": 47.37,
-      "snapshot_conversion_24h_pct": 91,
+      "snapshot_conversion_24h_pct": null,
       "latency": {
         "count": 19,
         "avg_sec": 278.05,
@@ -117,7 +123,7 @@
       "expired": 6,
       "unknown": 0,
       "approval_rate_pct": 67.5,
-      "snapshot_conversion_24h_pct": 79,
+      "snapshot_conversion_24h_pct": null,
       "latency": {
         "count": 40,
         "avg_sec": 129.98,
@@ -140,7 +146,7 @@
       "expired": 0,
       "unknown": 0,
       "approval_rate_pct": null,
-      "snapshot_conversion_24h_pct": 95,
+      "snapshot_conversion_24h_pct": null,
       "latency": {
         "count": 0,
         "avg_sec": null,
@@ -257,34 +263,82 @@
       "status": "active",
       "priority": 1,
       "available_requisites": 12,
-      "in_progress_count": 4,
+      "in_progress_count": 0,
       "in_progress_count_limit": 10,
-      "in_progress_count_utilization_pct": 40,
-      "in_progress_amount": 380000,
+      "in_progress_count_utilization_pct": 0,
+      "in_progress_amount": 0,
       "in_progress_amount_limit": 1000000,
-      "in_progress_amount_utilization_pct": 38
+      "in_progress_amount_utilization_pct": 0,
+      "minute_stats": {
+        "actual_count_share_pct": null,
+        "actual_volume_share_pct": null,
+        "approved_volume_share_pct": null,
+        "count_target_fulfillment_pct": null,
+        "volume_target_fulfillment_pct": null,
+        "count_share_gap_pp": null,
+        "volume_share_gap_pp": null,
+        "approval_rate_pct": null,
+        "rejection_rate_pct": null,
+        "expiration_rate_pct": null,
+        "approved_amount_pct": null,
+        "terminal_approval_rate_pct": null,
+        "stats_calculated_at": "2026-09-05T11:31:12.891189Z",
+        "stats_window_sec": 60
+      }
     },
     "payflow": {
       "status": "active",
       "priority": 2,
       "available_requisites": 5,
-      "in_progress_count": 2,
+      "in_progress_count": 0,
       "in_progress_count_limit": 8,
-      "in_progress_count_utilization_pct": 25,
-      "in_progress_amount": 120000,
+      "in_progress_count_utilization_pct": 0,
+      "in_progress_amount": 0,
       "in_progress_amount_limit": 500000,
-      "in_progress_amount_utilization_pct": 24
+      "in_progress_amount_utilization_pct": 0,
+      "minute_stats": {
+        "actual_count_share_pct": null,
+        "actual_volume_share_pct": null,
+        "approved_volume_share_pct": null,
+        "count_target_fulfillment_pct": null,
+        "volume_target_fulfillment_pct": null,
+        "count_share_gap_pp": null,
+        "volume_share_gap_pp": null,
+        "approval_rate_pct": null,
+        "rejection_rate_pct": null,
+        "expiration_rate_pct": null,
+        "approved_amount_pct": null,
+        "terminal_approval_rate_pct": null,
+        "stats_calculated_at": "2026-09-05T11:31:12.891189Z",
+        "stats_window_sec": 60
+      }
     },
     "quickpay": {
       "status": "active",
       "priority": 3,
       "available_requisites": 20,
-      "in_progress_count": 1,
+      "in_progress_count": 0,
       "in_progress_count_limit": 15,
-      "in_progress_count_utilization_pct": 6.67,
-      "in_progress_amount": 50000,
+      "in_progress_count_utilization_pct": 0,
+      "in_progress_amount": 0,
       "in_progress_amount_limit": 2000000,
-      "in_progress_amount_utilization_pct": 2.5
+      "in_progress_amount_utilization_pct": 0,
+      "minute_stats": {
+        "actual_count_share_pct": null,
+        "actual_volume_share_pct": null,
+        "approved_volume_share_pct": null,
+        "count_target_fulfillment_pct": null,
+        "volume_target_fulfillment_pct": null,
+        "count_share_gap_pp": null,
+        "volume_share_gap_pp": null,
+        "approval_rate_pct": null,
+        "rejection_rate_pct": null,
+        "expiration_rate_pct": null,
+        "approved_amount_pct": null,
+        "terminal_approval_rate_pct": null,
+        "stats_calculated_at": "2026-09-05T11:31:12.891189Z",
+        "stats_window_sec": 60
+      }
     },
     "spacepayments": {
       "status": "active",
@@ -295,7 +349,23 @@
       "in_progress_count_utilization_pct": null,
       "in_progress_amount": 0,
       "in_progress_amount_limit": null,
-      "in_progress_amount_utilization_pct": null
+      "in_progress_amount_utilization_pct": null,
+      "minute_stats": {
+        "actual_count_share_pct": null,
+        "actual_volume_share_pct": null,
+        "approved_volume_share_pct": null,
+        "count_target_fulfillment_pct": null,
+        "volume_target_fulfillment_pct": null,
+        "count_share_gap_pp": null,
+        "volume_share_gap_pp": null,
+        "approval_rate_pct": null,
+        "rejection_rate_pct": null,
+        "expiration_rate_pct": null,
+        "approved_amount_pct": null,
+        "terminal_approval_rate_pct": null,
+        "stats_calculated_at": "2026-09-05T11:31:12.891189Z",
+        "stats_window_sec": 60
+      }
     }
   },
   "data_quality": {
@@ -342,7 +412,10 @@
       "29 исторических назначений не соответствуют текущему снимку банков провайдеров; история используется для аналитики, а не для определения текущей доступности",
       "card_brand отсутствует у всех анализируемых операций",
       "у провайдеров не задан requests_per_minute_limit; аналитика по ограничениям частоты запросов недоступна",
-      "у провайдеров не задан volume_share_pct; отклонения от целевого распределения объёма недоступны"
+      "у провайдеров не задан volume_share_pct; отклонения от целевого распределения объёма недоступны",
+      "Время полного снимка providers неизвестно; цели и лимиты могут относиться к другому периоду, чем история. Рекомендации ориентировочные.",
+      "Минутные показатели providers сохранены отдельным пересчётом; их окно указано в minute_stats и может не совпадать с периодом отчёта. in_progress_* отражает весь минутный поток.",
+      "routing_decisions пуста: отчёт описывает историю и очередь, фактические результаты новой маршрутизации отсутствуют."
     ]
   },
   "recommendation_period": "2026-07-29",
@@ -350,5 +423,1316 @@
     "payflow: фактическая доля 19% ниже цели 35%, но дневной лимит использован на 96.67%; сначала увеличить доступную ёмкость или снизить целевую долю",
     "payflow: доля expired составляет 36.84%; проверить таймауты и латентность до увеличения трафика",
     "quickpay: фактическая доля 40% выше цели 25%; снизить вес count-share среди допустимых провайдеров"
-  ]
+  ],
+  "routing_coverage": {
+    "definition": "Population: distinct operation IDs in operations_queue UNION routing_decisions. History-only operations are excluded; awaiting_decision is not the pending_operations metric.",
+    "status": "no_decisions",
+    "operations_in_scope": 10,
+    "queue_operations": 10,
+    "with_decision": 0,
+    "awaiting_decision": 10,
+    "decision_coverage_pct": 0,
+    "without_selected_provider": 0,
+    "unknown_selected_provider": 0,
+    "with_known_selected_provider": 0,
+    "fallback_operations": 0,
+    "fallback_share_of_decisions_pct": null,
+    "fallback_unclassified_operations": 0
+  },
+  "reference_comparison": {
+    "definition": "Compare provider IDs only for valid references with a recorded decision; missing decisions are not mismatches. Reference agreement does not validate all runtime constraints.",
+    "status": "no_comparable_decisions",
+    "reference_operations": 4,
+    "compared_operations": 0,
+    "matched": 0,
+    "mismatched": 0,
+    "awaiting_decision": 4,
+    "invalid_references": 0,
+    "match_rate_pct": null,
+    "comparison_coverage_pct": 0,
+    "mismatches": [],
+    "uncompared": [
+      {
+        "operation_id": "op_103",
+        "outcome": "awaiting_decision",
+        "required_payment_system_id": 3,
+        "required_provider": "quickpay",
+        "selected_payment_system_id": null,
+        "selected_provider": null,
+        "reference_reason": "vipay max=100000, payflow max=50000 — только quickpay принимает 150000"
+      },
+      {
+        "operation_id": "op_104",
+        "outcome": "awaiting_decision",
+        "required_payment_system_id": 3,
+        "required_provider": "quickpay",
+        "selected_payment_system_id": null,
+        "selected_provider": null,
+        "reference_reason": "gazprombank не в banks у vipay и payflow — только quickpay"
+      },
+      {
+        "operation_id": "op_107",
+        "outcome": "awaiting_decision",
+        "required_payment_system_id": 2,
+        "required_provider": "payflow",
+        "selected_payment_system_id": null,
+        "selected_provider": null,
+        "reference_reason": "amount=800 < limit_amount_min=1000 у vipay и quickpay — только payflow (min=500)"
+      },
+      {
+        "operation_id": "op_108",
+        "outcome": "awaiting_decision",
+        "required_payment_system_id": 3,
+        "required_provider": "quickpay",
+        "selected_payment_system_id": null,
+        "selected_provider": null,
+        "reference_reason": "raiffeisen не в banks у vipay и payflow — только quickpay"
+      }
+    ]
+  },
+  "attempt_cascades": {
+    "status": "no_decisions",
+    "definitions": {
+      "attempt_count": "Logged evaluation steps, including skipped providers; not HTTP requests. Orphans and synthesized reference skips are excluded.",
+      "first_choice": "Exactly one selected provider matching the final choice in a contiguous ordered log, without explicit fallback/failure evidence. Static eligibility skips do not count as dispatch failures.",
+      "fallback": "spacepayments final choice, explicit fallback reason, multiple selected providers, or a recorded failure before the final choice. Classification is based on retained logs, whose completeness is unverified.",
+      "failure_reasons": [
+        "provider_timeout",
+        "provider_rejected",
+        "provider_expired",
+        "payout_failed"
+      ],
+      "explicit_fallback_reasons": [
+        "fallback",
+        "fallback_candidate",
+        "fallback_selected",
+        "self_provider_fallback",
+        "fallback_to_self_provider",
+        "fallback_to_spacepayments"
+      ],
+      "success": "simulated_result = approved; no per-attempt payment outcome or verified live/simulation provenance is stored.",
+      "first_attempt_success_pct": "Approved first-choice operations / all classified operations.",
+      "cohort_approval_pct": "Approved operations / operations within the corresponding first-choice or fallback cohort."
+    },
+    "operations_with_attempt_logs": 0,
+    "operations_without_attempt_logs": 0,
+    "attempt_log_coverage_pct": null,
+    "recorded_attempts": 0,
+    "average_recorded_attempts": null,
+    "attempt_count_distribution": {},
+    "attempt_decisions": {},
+    "orphan_attempt_rows": 0,
+    "first_choice_operations": 0,
+    "first_choice_approved": 0,
+    "first_choice_approval_pct": null,
+    "first_attempt_success_pct": null,
+    "fallback_operations": 0,
+    "fallback_approved": 0,
+    "fallback_approval_pct": null,
+    "fallback_statuses": {},
+    "unclassified_operations": 0,
+    "classification_coverage_pct": null,
+    "network_attempt_count": null
+  },
+  "segments": {
+    "definition": "Same deduplicated population as total_operations; decisions override history. Approval denominator is all operations in the segment. Provider shares are within each segment. Amounts use database units; invalid amounts/latencies are excluded from numeric sums/statistics and invalid amounts are counted.",
+    "window": {
+      "from": "2026-07-29T05:00:00.000000Z",
+      "to": "2026-07-29T09:41:18.000000Z",
+      "invalid_or_missing_timestamps": 0
+    },
+    "amount_band_boundaries": {
+      "0_1000": {
+        "min_inclusive": 0,
+        "max_exclusive": 1000
+      },
+      "1000_10000": {
+        "min_inclusive": 1000,
+        "max_exclusive": 10000
+      },
+      "10000_50000": {
+        "min_inclusive": 10000,
+        "max_exclusive": 50000
+      },
+      "50000_100000": {
+        "min_inclusive": 50000,
+        "max_exclusive": 100000
+      },
+      "100000_plus": {
+        "min_inclusive": 100000,
+        "max_exclusive": null
+      }
+    },
+    "by_bank": {
+      "alfa": {
+        "count": 22,
+        "amount": 791000,
+        "invalid_amount_count": 0,
+        "statuses": {
+          "approved": 12,
+          "expired": 6,
+          "rejected": 4
+        },
+        "approval_rate_pct": 54.55,
+        "latency": {
+          "count": 22,
+          "avg_sec": 206.59,
+          "p50_sec": 92.5,
+          "p95_sec": 689,
+          "min_sec": 16,
+          "max_sec": 796
+        },
+        "sources": {
+          "operations_history": 22
+        },
+        "providers": {
+          "payflow": {
+            "count": 7,
+            "amount": 101500,
+            "invalid_amount_count": 0,
+            "statuses": {
+              "approved": 2,
+              "expired": 3,
+              "rejected": 2
+            },
+            "approval_rate_pct": 28.57,
+            "latency": {
+              "count": 7,
+              "avg_sec": 318.57,
+              "p50_sec": 105,
+              "p95_sec": 689,
+              "min_sec": 67,
+              "max_sec": 689
+            },
+            "sources": {
+              "operations_history": 7
+            },
+            "share_pct": 31.82,
+            "volume_share_pct": 12.83
+          },
+          "quickpay": {
+            "count": 7,
+            "amount": 376500,
+            "invalid_amount_count": 0,
+            "statuses": {
+              "approved": 5,
+              "expired": 2
+            },
+            "approval_rate_pct": 71.43,
+            "latency": {
+              "count": 7,
+              "avg_sec": 165,
+              "p50_sec": 105,
+              "p95_sec": 419,
+              "min_sec": 23,
+              "max_sec": 419
+            },
+            "sources": {
+              "operations_history": 7
+            },
+            "share_pct": 31.82,
+            "volume_share_pct": 47.6
+          },
+          "vipay": {
+            "count": 8,
+            "amount": 313000,
+            "invalid_amount_count": 0,
+            "statuses": {
+              "approved": 5,
+              "expired": 1,
+              "rejected": 2
+            },
+            "approval_rate_pct": 62.5,
+            "latency": {
+              "count": 8,
+              "avg_sec": 145,
+              "p50_sec": 62,
+              "p95_sec": 796,
+              "min_sec": 16,
+              "max_sec": 796
+            },
+            "sources": {
+              "operations_history": 8
+            },
+            "share_pct": 36.36,
+            "volume_share_pct": 39.57
+          }
+        }
+      },
+      "gazprombank": {
+        "count": 10,
+        "amount": 291500,
+        "invalid_amount_count": 0,
+        "statuses": {
+          "approved": 7,
+          "rejected": 3
+        },
+        "approval_rate_pct": 70,
+        "latency": {
+          "count": 10,
+          "avg_sec": 40.5,
+          "p50_sec": 32.5,
+          "p95_sec": 119,
+          "min_sec": 10,
+          "max_sec": 119
+        },
+        "sources": {
+          "operations_history": 10
+        },
+        "providers": {
+          "quickpay": {
+            "count": 5,
+            "amount": 163000,
+            "invalid_amount_count": 0,
+            "statuses": {
+              "approved": 3,
+              "rejected": 2
+            },
+            "approval_rate_pct": 60,
+            "latency": {
+              "count": 5,
+              "avg_sec": 60.8,
+              "p50_sec": 43,
+              "p95_sec": 119,
+              "min_sec": 28,
+              "max_sec": 119
+            },
+            "sources": {
+              "operations_history": 5
+            },
+            "share_pct": 50,
+            "volume_share_pct": 55.92
+          },
+          "vipay": {
+            "count": 5,
+            "amount": 128500,
+            "invalid_amount_count": 0,
+            "statuses": {
+              "approved": 4,
+              "rejected": 1
+            },
+            "approval_rate_pct": 80,
+            "latency": {
+              "count": 5,
+              "avg_sec": 20.2,
+              "p50_sec": 16,
+              "p95_sec": 42,
+              "min_sec": 10,
+              "max_sec": 42
+            },
+            "sources": {
+              "operations_history": 5
+            },
+            "share_pct": 50,
+            "volume_share_pct": 44.08
+          }
+        }
+      },
+      "raiffeisen": {
+        "count": 18,
+        "amount": 631500,
+        "invalid_amount_count": 0,
+        "statuses": {
+          "approved": 13,
+          "expired": 2,
+          "rejected": 3
+        },
+        "approval_rate_pct": 72.22,
+        "latency": {
+          "count": 18,
+          "avg_sec": 104.5,
+          "p50_sec": 53.5,
+          "p95_sec": 664,
+          "min_sec": 7,
+          "max_sec": 664
+        },
+        "sources": {
+          "operations_history": 18
+        },
+        "providers": {
+          "payflow": {
+            "count": 4,
+            "amount": 88000,
+            "invalid_amount_count": 0,
+            "statuses": {
+              "approved": 2,
+              "expired": 2
+            },
+            "approval_rate_pct": 50,
+            "latency": {
+              "count": 4,
+              "avg_sec": 325.5,
+              "p50_sec": 285,
+              "p95_sec": 664,
+              "min_sec": 68,
+              "max_sec": 664
+            },
+            "sources": {
+              "operations_history": 4
+            },
+            "share_pct": 22.22,
+            "volume_share_pct": 13.94
+          },
+          "quickpay": {
+            "count": 7,
+            "amount": 390000,
+            "invalid_amount_count": 0,
+            "statuses": {
+              "approved": 5,
+              "rejected": 2
+            },
+            "approval_rate_pct": 71.43,
+            "latency": {
+              "count": 7,
+              "avg_sec": 48,
+              "p50_sec": 48,
+              "p95_sec": 102,
+              "min_sec": 7,
+              "max_sec": 102
+            },
+            "sources": {
+              "operations_history": 7
+            },
+            "share_pct": 38.89,
+            "volume_share_pct": 61.76
+          },
+          "vipay": {
+            "count": 7,
+            "amount": 153500,
+            "invalid_amount_count": 0,
+            "statuses": {
+              "approved": 6,
+              "rejected": 1
+            },
+            "approval_rate_pct": 85.71,
+            "latency": {
+              "count": 7,
+              "avg_sec": 34.71,
+              "p50_sec": 31,
+              "p95_sec": 66,
+              "min_sec": 12,
+              "max_sec": 66
+            },
+            "sources": {
+              "operations_history": 7
+            },
+            "share_pct": 38.89,
+            "volume_share_pct": 24.31
+          }
+        }
+      },
+      "sberbank": {
+        "count": 16,
+        "amount": 534500,
+        "invalid_amount_count": 0,
+        "statuses": {
+          "approved": 11,
+          "expired": 3,
+          "rejected": 2
+        },
+        "approval_rate_pct": 68.75,
+        "latency": {
+          "count": 16,
+          "avg_sec": 170.13,
+          "p50_sec": 66,
+          "p95_sec": 763,
+          "min_sec": 5,
+          "max_sec": 763
+        },
+        "sources": {
+          "operations_history": 16
+        },
+        "providers": {
+          "payflow": {
+            "count": 3,
+            "amount": 47000,
+            "invalid_amount_count": 0,
+            "statuses": {
+              "approved": 3
+            },
+            "approval_rate_pct": 100,
+            "latency": {
+              "count": 3,
+              "avg_sec": 56,
+              "p50_sec": 52,
+              "p95_sec": 103,
+              "min_sec": 13,
+              "max_sec": 103
+            },
+            "sources": {
+              "operations_history": 3
+            },
+            "share_pct": 18.75,
+            "volume_share_pct": 8.79
+          },
+          "quickpay": {
+            "count": 5,
+            "amount": 249500,
+            "invalid_amount_count": 0,
+            "statuses": {
+              "approved": 1,
+              "expired": 3,
+              "rejected": 1
+            },
+            "approval_rate_pct": 20,
+            "latency": {
+              "count": 5,
+              "avg_sec": 410.6,
+              "p50_sec": 424,
+              "p95_sec": 763,
+              "min_sec": 48,
+              "max_sec": 763
+            },
+            "sources": {
+              "operations_history": 5
+            },
+            "share_pct": 31.25,
+            "volume_share_pct": 46.68
+          },
+          "vipay": {
+            "count": 8,
+            "amount": 238000,
+            "invalid_amount_count": 0,
+            "statuses": {
+              "approved": 7,
+              "rejected": 1
+            },
+            "approval_rate_pct": 87.5,
+            "latency": {
+              "count": 8,
+              "avg_sec": 62.63,
+              "p50_sec": 66,
+              "p95_sec": 117,
+              "min_sec": 5,
+              "max_sec": 117
+            },
+            "sources": {
+              "operations_history": 8
+            },
+            "share_pct": 50,
+            "volume_share_pct": 44.53
+          }
+        }
+      },
+      "tinkoff": {
+        "count": 14,
+        "amount": 483500,
+        "invalid_amount_count": 0,
+        "statuses": {
+          "approved": 9,
+          "expired": 4,
+          "rejected": 1
+        },
+        "approval_rate_pct": 64.29,
+        "latency": {
+          "count": 14,
+          "avg_sec": 209.71,
+          "p50_sec": 87.5,
+          "p95_sec": 859,
+          "min_sec": 28,
+          "max_sec": 859
+        },
+        "sources": {
+          "operations_history": 14
+        },
+        "providers": {
+          "payflow": {
+            "count": 2,
+            "amount": 36500,
+            "invalid_amount_count": 0,
+            "statuses": {
+              "expired": 2
+            },
+            "approval_rate_pct": 0,
+            "latency": {
+              "count": 2,
+              "avg_sec": 714,
+              "p50_sec": 714,
+              "p95_sec": 859,
+              "min_sec": 569,
+              "max_sec": 859
+            },
+            "sources": {
+              "operations_history": 2
+            },
+            "share_pct": 14.29,
+            "volume_share_pct": 7.55
+          },
+          "quickpay": {
+            "count": 6,
+            "amount": 225000,
+            "invalid_amount_count": 0,
+            "statuses": {
+              "approved": 4,
+              "expired": 1,
+              "rejected": 1
+            },
+            "approval_rate_pct": 66.67,
+            "latency": {
+              "count": 6,
+              "avg_sec": 137.5,
+              "p50_sec": 62,
+              "p95_sec": 522,
+              "min_sec": 29,
+              "max_sec": 522
+            },
+            "sources": {
+              "operations_history": 6
+            },
+            "share_pct": 42.86,
+            "volume_share_pct": 46.54
+          },
+          "vipay": {
+            "count": 6,
+            "amount": 222000,
+            "invalid_amount_count": 0,
+            "statuses": {
+              "approved": 5,
+              "expired": 1
+            },
+            "approval_rate_pct": 83.33,
+            "latency": {
+              "count": 6,
+              "avg_sec": 113.83,
+              "p50_sec": 87,
+              "p95_sec": 327,
+              "min_sec": 28,
+              "max_sec": 327
+            },
+            "sources": {
+              "operations_history": 6
+            },
+            "share_pct": 42.86,
+            "volume_share_pct": 45.92
+          }
+        }
+      },
+      "vtb": {
+        "count": 20,
+        "amount": 659500,
+        "invalid_amount_count": 0,
+        "statuses": {
+          "approved": 16,
+          "expired": 1,
+          "rejected": 3
+        },
+        "approval_rate_pct": 80,
+        "latency": {
+          "count": 20,
+          "avg_sec": 78.6,
+          "p50_sec": 42,
+          "p95_sec": 111,
+          "min_sec": 6,
+          "max_sec": 579
+        },
+        "sources": {
+          "operations_history": 20
+        },
+        "providers": {
+          "payflow": {
+            "count": 3,
+            "amount": 14500,
+            "invalid_amount_count": 0,
+            "statuses": {
+              "approved": 2,
+              "rejected": 1
+            },
+            "approval_rate_pct": 66.67,
+            "latency": {
+              "count": 3,
+              "avg_sec": 51.67,
+              "p50_sec": 39,
+              "p95_sec": 110,
+              "min_sec": 6,
+              "max_sec": 110
+            },
+            "sources": {
+              "operations_history": 3
+            },
+            "share_pct": 15,
+            "volume_share_pct": 2.2
+          },
+          "quickpay": {
+            "count": 10,
+            "amount": 481000,
+            "invalid_amount_count": 0,
+            "statuses": {
+              "approved": 9,
+              "rejected": 1
+            },
+            "approval_rate_pct": 90,
+            "latency": {
+              "count": 10,
+              "avg_sec": 52.6,
+              "p50_sec": 34,
+              "p95_sec": 111,
+              "min_sec": 20,
+              "max_sec": 111
+            },
+            "sources": {
+              "operations_history": 10
+            },
+            "share_pct": 50,
+            "volume_share_pct": 72.93
+          },
+          "vipay": {
+            "count": 7,
+            "amount": 164000,
+            "invalid_amount_count": 0,
+            "statuses": {
+              "approved": 5,
+              "expired": 1,
+              "rejected": 1
+            },
+            "approval_rate_pct": 71.43,
+            "latency": {
+              "count": 7,
+              "avg_sec": 127.29,
+              "p50_sec": 46,
+              "p95_sec": 579,
+              "min_sec": 28,
+              "max_sec": 579
+            },
+            "sources": {
+              "operations_history": 7
+            },
+            "share_pct": 35,
+            "volume_share_pct": 24.87
+          }
+        }
+      }
+    },
+    "by_amount": {
+      "0_1000": {
+        "count": 0,
+        "amount": 0,
+        "invalid_amount_count": 0,
+        "statuses": {},
+        "approval_rate_pct": null,
+        "latency": {
+          "count": 0,
+          "avg_sec": null,
+          "p50_sec": null,
+          "p95_sec": null,
+          "min_sec": null,
+          "max_sec": null
+        },
+        "sources": {},
+        "providers": {}
+      },
+      "1000_10000": {
+        "count": 33,
+        "amount": 123500,
+        "invalid_amount_count": 0,
+        "statuses": {
+          "approved": 20,
+          "expired": 5,
+          "rejected": 8
+        },
+        "approval_rate_pct": 60.61,
+        "latency": {
+          "count": 33,
+          "avg_sec": 142.61,
+          "p50_sec": 73,
+          "p95_sec": 763,
+          "min_sec": 6,
+          "max_sec": 859
+        },
+        "sources": {
+          "operations_history": 33
+        },
+        "providers": {
+          "payflow": {
+            "count": 10,
+            "amount": 32500,
+            "invalid_amount_count": 0,
+            "statuses": {
+              "approved": 5,
+              "expired": 3,
+              "rejected": 2
+            },
+            "approval_rate_pct": 50,
+            "latency": {
+              "count": 10,
+              "avg_sec": 235.4,
+              "p50_sec": 107.5,
+              "p95_sec": 859,
+              "min_sec": 6,
+              "max_sec": 859
+            },
+            "sources": {
+              "operations_history": 10
+            },
+            "share_pct": 30.3,
+            "volume_share_pct": 26.32
+          },
+          "quickpay": {
+            "count": 12,
+            "amount": 50000,
+            "invalid_amount_count": 0,
+            "statuses": {
+              "approved": 8,
+              "expired": 1,
+              "rejected": 3
+            },
+            "approval_rate_pct": 66.67,
+            "latency": {
+              "count": 12,
+              "avg_sec": 127.58,
+              "p50_sec": 74,
+              "p95_sec": 763,
+              "min_sec": 23,
+              "max_sec": 763
+            },
+            "sources": {
+              "operations_history": 12
+            },
+            "share_pct": 36.36,
+            "volume_share_pct": 40.49
+          },
+          "vipay": {
+            "count": 11,
+            "amount": 41000,
+            "invalid_amount_count": 0,
+            "statuses": {
+              "approved": 7,
+              "expired": 1,
+              "rejected": 3
+            },
+            "approval_rate_pct": 63.64,
+            "latency": {
+              "count": 11,
+              "avg_sec": 74.64,
+              "p50_sec": 42,
+              "p95_sec": 327,
+              "min_sec": 10,
+              "max_sec": 327
+            },
+            "sources": {
+              "operations_history": 11
+            },
+            "share_pct": 33.33,
+            "volume_share_pct": 33.2
+          }
+        }
+      },
+      "10000_50000": {
+        "count": 41,
+        "amount": 1103000,
+        "invalid_amount_count": 0,
+        "statuses": {
+          "approved": 29,
+          "expired": 8,
+          "rejected": 4
+        },
+        "approval_rate_pct": 70.73,
+        "latency": {
+          "count": 41,
+          "avg_sec": 170.32,
+          "p50_sec": 67,
+          "p95_sec": 689,
+          "min_sec": 7,
+          "max_sec": 796
+        },
+        "sources": {
+          "operations_history": 41
+        },
+        "providers": {
+          "payflow": {
+            "count": 9,
+            "amount": 255000,
+            "invalid_amount_count": 0,
+            "statuses": {
+              "approved": 4,
+              "expired": 4,
+              "rejected": 1
+            },
+            "approval_rate_pct": 44.44,
+            "latency": {
+              "count": 9,
+              "avg_sec": 325.44,
+              "p50_sec": 103,
+              "p95_sec": 689,
+              "min_sec": 52,
+              "max_sec": 689
+            },
+            "sources": {
+              "operations_history": 9
+            },
+            "share_pct": 21.95,
+            "volume_share_pct": 23.12
+          },
+          "quickpay": {
+            "count": 10,
+            "amount": 310000,
+            "invalid_amount_count": 0,
+            "statuses": {
+              "approved": 8,
+              "expired": 2
+            },
+            "approval_rate_pct": 80,
+            "latency": {
+              "count": 10,
+              "avg_sec": 163.2,
+              "p50_sec": 46.5,
+              "p95_sec": 755,
+              "min_sec": 7,
+              "max_sec": 755
+            },
+            "sources": {
+              "operations_history": 10
+            },
+            "share_pct": 24.39,
+            "volume_share_pct": 28.11
+          },
+          "vipay": {
+            "count": 22,
+            "amount": 538000,
+            "invalid_amount_count": 0,
+            "statuses": {
+              "approved": 17,
+              "expired": 2,
+              "rejected": 3
+            },
+            "approval_rate_pct": 77.27,
+            "latency": {
+              "count": 22,
+              "avg_sec": 110.09,
+              "p50_sec": 54,
+              "p95_sec": 579,
+              "min_sec": 12,
+              "max_sec": 796
+            },
+            "sources": {
+              "operations_history": 22
+            },
+            "share_pct": 53.66,
+            "volume_share_pct": 48.78
+          }
+        }
+      },
+      "50000_100000": {
+        "count": 21,
+        "amount": 1565000,
+        "invalid_amount_count": 0,
+        "statuses": {
+          "approved": 17,
+          "expired": 2,
+          "rejected": 2
+        },
+        "approval_rate_pct": 80.95,
+        "latency": {
+          "count": 21,
+          "avg_sec": 78.76,
+          "p50_sec": 52,
+          "p95_sec": 353,
+          "min_sec": 5,
+          "max_sec": 419
+        },
+        "sources": {
+          "operations_history": 21
+        },
+        "providers": {
+          "quickpay": {
+            "count": 13,
+            "amount": 925000,
+            "invalid_amount_count": 0,
+            "statuses": {
+              "approved": 9,
+              "expired": 2,
+              "rejected": 2
+            },
+            "approval_rate_pct": 69.23,
+            "latency": {
+              "count": 13,
+              "avg_sec": 101.38,
+              "p50_sec": 59,
+              "p95_sec": 419,
+              "min_sec": 9,
+              "max_sec": 419
+            },
+            "sources": {
+              "operations_history": 13
+            },
+            "share_pct": 61.9,
+            "volume_share_pct": 59.11
+          },
+          "vipay": {
+            "count": 8,
+            "amount": 640000,
+            "invalid_amount_count": 0,
+            "statuses": {
+              "approved": 8
+            },
+            "approval_rate_pct": 100,
+            "latency": {
+              "count": 8,
+              "avg_sec": 42,
+              "p50_sec": 44,
+              "p95_sec": 78,
+              "min_sec": 5,
+              "max_sec": 78
+            },
+            "sources": {
+              "operations_history": 8
+            },
+            "share_pct": 38.1,
+            "volume_share_pct": 40.89
+          }
+        }
+      },
+      "100000_plus": {
+        "count": 5,
+        "amount": 600000,
+        "invalid_amount_count": 0,
+        "statuses": {
+          "approved": 2,
+          "expired": 1,
+          "rejected": 2
+        },
+        "approval_rate_pct": 40,
+        "latency": {
+          "count": 5,
+          "avg_sec": 143.6,
+          "p50_sec": 105,
+          "p95_sec": 424,
+          "min_sec": 28,
+          "max_sec": 424
+        },
+        "sources": {
+          "operations_history": 5
+        },
+        "providers": {
+          "quickpay": {
+            "count": 5,
+            "amount": 600000,
+            "invalid_amount_count": 0,
+            "statuses": {
+              "approved": 2,
+              "expired": 1,
+              "rejected": 2
+            },
+            "approval_rate_pct": 40,
+            "latency": {
+              "count": 5,
+              "avg_sec": 143.6,
+              "p50_sec": 105,
+              "p95_sec": 424,
+              "min_sec": 28,
+              "max_sec": 424
+            },
+            "sources": {
+              "operations_history": 5
+            },
+            "share_pct": 100,
+            "volume_share_pct": 100
+          }
+        }
+      },
+      "unknown": {
+        "count": 0,
+        "amount": 0,
+        "invalid_amount_count": 0,
+        "statuses": {},
+        "approval_rate_pct": null,
+        "latency": {
+          "count": 0,
+          "avg_sec": null,
+          "p50_sec": null,
+          "p95_sec": null,
+          "min_sec": null,
+          "max_sec": null
+        },
+        "sources": {},
+        "providers": {}
+      }
+    }
+  },
+  "period_comparison": {
+    "timezone": "UTC",
+    "definition": "Latest observed UTC day before generated_at versus the immediately preceding day. Completed days use [00:00, next 00:00); today uses [00:00, generated_at) and the same elapsed interval yesterday. No substitution of an older nonadjacent day.",
+    "caveats": [
+      "Source coverage/completeness is not recorded; no observations do not prove zero activity.",
+      "Uses currently stored statuses and decision overrides, not reconstructed past outcomes."
+    ],
+    "excluded_invalid_timestamp_count": 0,
+    "excluded_at_or_after_generated_at_count": 0,
+    "status": "no_previous_period_observations",
+    "partial_day": false,
+    "current": {
+      "count": 100,
+      "amount": 3391500,
+      "invalid_amount_count": 0,
+      "statuses": {
+        "approved": 68,
+        "expired": 16,
+        "rejected": 16
+      },
+      "approval_rate_pct": 68,
+      "latency": {
+        "count": 100,
+        "avg_sec": 140.61,
+        "p50_sec": 63,
+        "p95_sec": 664,
+        "min_sec": 5,
+        "max_sec": 859
+      },
+      "sources": {
+        "operations_history": 100
+      },
+      "providers": {
+        "payflow": {
+          "count": 19,
+          "amount": 287500,
+          "invalid_amount_count": 0,
+          "statuses": {
+            "approved": 9,
+            "expired": 7,
+            "rejected": 3
+          },
+          "approval_rate_pct": 47.37,
+          "latency": {
+            "count": 19,
+            "avg_sec": 278.05,
+            "p50_sec": 105,
+            "p95_sec": 859,
+            "min_sec": 6,
+            "max_sec": 859
+          },
+          "sources": {
+            "operations_history": 19
+          },
+          "share_pct": 19,
+          "volume_share_pct": 8.48
+        },
+        "quickpay": {
+          "count": 40,
+          "amount": 1885000,
+          "invalid_amount_count": 0,
+          "statuses": {
+            "approved": 27,
+            "expired": 6,
+            "rejected": 7
+          },
+          "approval_rate_pct": 67.5,
+          "latency": {
+            "count": 40,
+            "avg_sec": 129.98,
+            "p50_sec": 61,
+            "p95_sec": 522,
+            "min_sec": 7,
+            "max_sec": 763
+          },
+          "sources": {
+            "operations_history": 40
+          },
+          "share_pct": 40,
+          "volume_share_pct": 55.58
+        },
+        "vipay": {
+          "count": 41,
+          "amount": 1219000,
+          "invalid_amount_count": 0,
+          "statuses": {
+            "approved": 32,
+            "expired": 3,
+            "rejected": 6
+          },
+          "approval_rate_pct": 78.05,
+          "latency": {
+            "count": 41,
+            "avg_sec": 87.29,
+            "p50_sec": 46,
+            "p95_sec": 327,
+            "min_sec": 5,
+            "max_sec": 796
+          },
+          "sources": {
+            "operations_history": 41
+          },
+          "share_pct": 41,
+          "volume_share_pct": 35.94
+        }
+      },
+      "from_inclusive": "2026-07-29T00:00:00.000000Z",
+      "to_exclusive": "2026-07-30T00:00:00.000000Z",
+      "duration_sec": 86400
+    },
+    "previous": {
+      "count": 0,
+      "amount": 0,
+      "invalid_amount_count": 0,
+      "statuses": {},
+      "approval_rate_pct": null,
+      "latency": {
+        "count": 0,
+        "avg_sec": null,
+        "p50_sec": null,
+        "p95_sec": null,
+        "min_sec": null,
+        "max_sec": null
+      },
+      "sources": {},
+      "providers": {},
+      "from_inclusive": "2026-07-28T00:00:00.000000Z",
+      "to_exclusive": "2026-07-29T00:00:00.000000Z",
+      "duration_sec": 86400
+    },
+    "changes": null,
+    "provider_changes": {}
+  },
+  "skip_reason_sources": {
+    "definition": "Counts use distinct operation/provider/reason tuples. Source-separated counts overlap and must not be added. Only routing_attempts is a recorded routing trace; provider_skip_reasons has no reliable fact/reference provenance flag.",
+    "routing_attempts": {
+      "distinct_skips": 0,
+      "reasons": {}
+    },
+    "stored_reference_or_unclassified": {
+      "distinct_skips": 0,
+      "reasons": {}
+    },
+    "overlap_count": 0,
+    "stored_only_count": 0,
+    "combined_distinct_count": 0
+  },
+  "freshness": {
+    "evaluated_at": "2026-09-05T12:59:02.332410Z",
+    "timezone": "UTC",
+    "definition": "Age is measured from stored event/reference times, not ingestion time. Negative age identifies future timestamps. Timezone-free dates are interpreted as UTC. No freshness SLA or ingestion watermark is available.",
+    "sources": {
+      "operations_history": {
+        "from": "2026-07-29T05:00:00.000000Z",
+        "to": "2026-07-29T09:41:18.000000Z",
+        "invalid_or_missing_timestamps": 0,
+        "rows": 100,
+        "timestamp_field": "created_at",
+        "last_observation_age_sec": 3295064.33,
+        "future_timestamp_count": 0,
+        "completeness_verified": false
+      },
+      "operations_queue": {
+        "from": "2026-07-30T06:05:00.000000Z",
+        "to": "2026-07-30T06:09:30.000000Z",
+        "invalid_or_missing_timestamps": 0,
+        "rows": 10,
+        "timestamp_field": "created_at",
+        "last_observation_age_sec": 3221372.33,
+        "future_timestamp_count": 0,
+        "completeness_verified": false
+      },
+      "routing_decisions": {
+        "from": null,
+        "to": null,
+        "invalid_or_missing_timestamps": 0,
+        "rows": 0,
+        "timestamp_field": "created_at",
+        "last_observation_age_sec": null,
+        "future_timestamp_count": 0,
+        "completeness_verified": false
+      },
+      "routing_attempts": {
+        "from": null,
+        "to": null,
+        "invalid_or_missing_timestamps": 0,
+        "rows": 0,
+        "timestamp_field": "created_at",
+        "last_observation_age_sec": null,
+        "future_timestamp_count": 0,
+        "completeness_verified": false
+      },
+      "provider_skip_reasons": {
+        "from": null,
+        "to": null,
+        "invalid_or_missing_timestamps": 0,
+        "rows": 0,
+        "timestamp_field": "created_at",
+        "last_observation_age_sec": null,
+        "future_timestamp_count": 0,
+        "completeness_verified": false
+      },
+      "reference_decisions": {
+        "rows": 4,
+        "as_of": null,
+        "reason": "No reference timestamp is stored."
+      },
+      "providers": {
+        "as_of": null,
+        "reason": "Full snapshot/target/limit timestamp is not stored."
+      }
+    },
+    "provider_metric_windows": {
+      "vipay": {
+        "minute_from_exclusive": "2026-09-05T11:30:12.891189Z",
+        "minute_to_inclusive": "2026-09-05T11:31:12.891189Z",
+        "window_sec": 60.0,
+        "conversion_24h_from_exclusive": "2026-09-04T11:31:12.891189Z",
+        "last_calculation_age_sec": 5269.44
+      },
+      "payflow": {
+        "minute_from_exclusive": "2026-09-05T11:30:12.891189Z",
+        "minute_to_inclusive": "2026-09-05T11:31:12.891189Z",
+        "window_sec": 60.0,
+        "conversion_24h_from_exclusive": "2026-09-04T11:31:12.891189Z",
+        "last_calculation_age_sec": 5269.44
+      },
+      "quickpay": {
+        "minute_from_exclusive": "2026-09-05T11:30:12.891189Z",
+        "minute_to_inclusive": "2026-09-05T11:31:12.891189Z",
+        "window_sec": 60.0,
+        "conversion_24h_from_exclusive": "2026-09-04T11:31:12.891189Z",
+        "last_calculation_age_sec": 5269.44
+      },
+      "spacepayments": {
+        "minute_from_exclusive": "2026-09-05T11:30:12.891189Z",
+        "minute_to_inclusive": "2026-09-05T11:31:12.891189Z",
+        "window_sec": 60.0,
+        "conversion_24h_from_exclusive": "2026-09-04T11:31:12.891189Z",
+        "last_calculation_age_sec": 5269.44
+      }
+    },
+    "blocks": {
+      "distribution_status_latency_segments": {
+        "source": "operations_history + routing_decisions; decision wins on duplicate operation_id",
+        "window": {
+          "from": "2026-07-29T05:00:00.000000Z",
+          "to": "2026-07-29T09:41:18.000000Z",
+          "invalid_or_missing_timestamps": 0
+        },
+        "outcome_provenance": "History status plus simulated_result from decisions; live versus sample origin is not stored."
+      },
+      "pending_queue": {
+        "source": "operations_queue excluding IDs present in history or decisions",
+        "window": {
+          "from": "2026-07-30T06:05:00.000000Z",
+          "to": "2026-07-30T06:09:30.000000Z",
+          "invalid_or_missing_timestamps": 0
+        }
+      },
+      "routing_coverage_reference_comparison_cascades": {
+        "source": "queue, raw decisions, raw attempts and references; all retained rows",
+        "decision_window": {
+          "from": null,
+          "to": null,
+          "invalid_or_missing_timestamps": 0
+        },
+        "reference_as_of": null
+      },
+      "skip_reasons": {
+        "source": "See skip_reason_sources; legacy skip_reasons remains their deduplicated union.",
+        "window": {
+          "from": null,
+          "to": null,
+          "invalid_or_missing_timestamps": 0
+        }
+      },
+      "provider_state_utilization_recommendations": {
+        "source": "Current stored provider fields; snapshot freshness is unknown. Minute metrics have separate windows above.",
+        "as_of": null,
+        "recommendation_period": "2026-07-29"
+      },
+      "period_comparison": {
+        "source": "Same deduplicated operations; UTC windows are explicit in period_comparison."
+      }
+    }
+  }
 }
