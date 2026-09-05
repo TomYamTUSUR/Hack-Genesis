@@ -12,10 +12,12 @@ module PaymentRouting
           assert_nil IntensityRule.new.call(provider: p, operation: operation, actuals: actuals(rpm_used: 10))
         end
 
-        def test_passes_when_exactly_at_the_rate_limit
+        def test_excluded_when_exactly_at_the_rate_limit
           p = provider(requests_per_minute_limit: 60)
 
-          assert_nil IntensityRule.new.call(provider: p, operation: operation, actuals: actuals(rpm_used: 60))
+          result = IntensityRule.new.call(provider: p, operation: operation, actuals: actuals(rpm_used: 60))
+
+          assert_equal "rate_limit_exceeded", result
         end
 
         def test_excluded_when_over_the_rate_limit

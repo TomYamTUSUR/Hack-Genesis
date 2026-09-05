@@ -23,7 +23,7 @@ module PaymentRouting
 
           result = BankRule.new.call(provider: p, operation: operation(bank: "vtb"), actuals: actuals)
 
-          assert_equal "bank_not_allowed", result
+          assert_equal "bank_not_in_list", result
         end
 
         def test_blacklist_excludes_a_listed_bank
@@ -31,7 +31,7 @@ module PaymentRouting
 
           result = BankRule.new.call(provider: p, operation: operation(bank: "vtb"), actuals: actuals)
 
-          assert_equal "bank_not_allowed", result
+          assert_equal "bank_not_in_list", result
         end
 
         def test_blacklist_passes_an_unlisted_bank

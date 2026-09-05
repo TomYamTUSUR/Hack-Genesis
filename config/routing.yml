@@ -5,14 +5,25 @@ data:
   providers_file: data/providers.json
   operations_history_file: data/operations_history.csv
   operations_queue_file: data/operations_queue_10.json
+  business_parameters_file: config/business_parameters.yml
 
 strategies_file: config/strategies.yml
 
+# Ключи стратегий, активных в Router прямо сейчас (см. config/strategies.yml).
+# 1 ключ -> solo-веса, 2+ -> combo-веса (см. StrategyWeightCalculator).
+active_strategies:
+  - priority
+
 # payment_system'ы, которые участвуют в рейтинге. Явный список вместо неявного
-# "все активные провайдеры" - потому что providers также содержит self-provider
-# (fallback), который в рейтинге не участвует (пока нет hard-constraints,
-# отличить его иначе, чем по имени, нечем).
+# "все активные провайдеры" - у providers.json также есть self-provider
+# (fallback), который в рейтинге не участвует; hard-constraints (HardFilter)
+# его не отличают от обычных провайдеров - он проходит их как любой другой,
+# исключить нужно по имени/списку, а не по правилу.
 rated_providers:
   - vipay
   - payflow
   - quickpay
+
+# self-provider: единственный кандидат, когда rated_providers пуст после
+# hard-constraints или все они технически недоступны в момент обращения.
+fallback_provider: spacepayments

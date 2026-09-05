@@ -26,7 +26,7 @@ module PaymentRouting
         result = Engine.new.call(provider: p, operation: operation(bank: "vtb"), actuals: actuals)
 
         refute result.eligible?
-        assert_equal %w[status_not_active bank_not_allowed no_available_requisites], result.reasons
+        assert_equal %w[status_not_active bank_not_in_list no_available_requisites], result.reasons
       end
 
       def test_call_all_evaluates_every_provider_against_its_own_actuals

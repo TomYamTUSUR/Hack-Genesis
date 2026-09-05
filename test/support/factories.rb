@@ -26,7 +26,8 @@ module PaymentRouting
     def actuals(overrides = {})
       ProviderActuals.new(
         **{
-          count_share_actual: 0, volume_share_actual: 0, turnover_actual: 0, rpm_used: 0
+          count_share_actual: 0, volume_share_actual: 0, count_actual: 0, volume_actual: 0,
+          turnover_actual: 0, rpm_used: 0
         }.merge(overrides)
       )
     end
@@ -52,6 +53,7 @@ module PaymentRouting
       config = RoutingConfig.new
 
       Importers::ProvidersImporter.new(db: db, providers_file: config.providers_file).import
+      Importers::BusinessParametersImporter.new(db: db, business_parameters_file: config.business_parameters_file).import
       Importers::OperationsQueueImporter.new(db: db, queue_file: config.operations_queue_file).import
       Importers::OperationsHistoryImporter.new(db: db, history_file: config.operations_history_file).import
 

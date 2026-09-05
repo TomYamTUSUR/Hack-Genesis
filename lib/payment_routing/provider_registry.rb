@@ -43,7 +43,8 @@ module PaymentRouting
         provider_margin_pct: row[:provider_margin_pct],
         merchant_margin_pct: row[:merchant_margin_pct],
         allow_negative_agreement: row[:allow_negative_agreement],
-        daily_turnover_max: row[:daily_turnover_max]
+        daily_turnover_max: row[:daily_turnover_max],
+        avg_latency_sec: row[:avg_latency_sec]
       )
     end
 

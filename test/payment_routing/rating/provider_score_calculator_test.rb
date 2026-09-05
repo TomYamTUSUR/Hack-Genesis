@@ -20,6 +20,8 @@ module PaymentRouting
           [p.payment_system, ProviderActuals.new(
             count_share_actual: p.traffic_percentage,
             volume_share_actual: p.volume_share_pct,
+            count_actual: 0,
+            volume_actual: 0,
             turnover_actual: p.daily_turnover_min || 0,
             rpm_used: 0
           )]

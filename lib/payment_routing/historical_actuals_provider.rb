@@ -40,8 +40,10 @@ module PaymentRouting
       # RatingPool#actuals_for упал бы на нём с KeyError при следующем ранжировании.
       @db[:providers].select_map(:payment_system).each_with_object({}) do |payment_system, result|
         result[payment_system] = ProviderActuals.new(
-          count_share_actual: percentage_of(counts[payment_system], total_count),
-          volume_share_actual: percentage_of(volumes[payment_system], total_volume),
+          count_share_actual: MathUtils.percentage_of(counts[payment_system], total_count),
+          volume_share_actual: MathUtils.percentage_of(volumes[payment_system], total_volume),
+          count_actual: counts[payment_system],
+          volume_actual: volumes[payment_system],
           turnover_actual: volumes[payment_system],
           rpm_used: rpm_used_by_provider.fetch(payment_system, Constants::UNDEFINED_UTILIZATION)
         )
@@ -73,12 +75,6 @@ module PaymentRouting
       Time.parse(value.to_s)
     rescue ArgumentError, TypeError
       nil
-    end
-
-    def percentage_of(part, total)
-      return 0.0 if total.zero?
-
-      100.0 * part / total
     end
   end
 end

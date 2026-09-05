@@ -4,14 +4,16 @@
 
 ## Структура проекта
 
-- `lib/payment_routing/` — доменная логика: провайдеры/операции, блок hard-constraints (`hard_filter/`), блок стратегий (`strategies/`), блок рейтинга (`rating/`), загрузчики из БД (`ProviderRegistry`, `HistoricalActualsProvider`, `OperationQueueLoader`), импортёры `data/* → БД` (`importers/`).
+- `lib/payment_routing/` — доменная логика: провайдеры/операции, блок hard-constraints (`hard_filter/`), блок стратегий (`strategies/`), блок рейтинга (`rating/`), оркестратор (`router/` — hard-constraints → рейтинг → попытки с fallback → обновление рантайм-состояния между операциями → запись состояния обратно в БД), загрузчики из БД (`ProviderRegistry`, `HistoricalActualsProvider`, `OperationQueueLoader`), импортёры `data/*`/`config/business_parameters.yml → БД` (`importers/`).
 - `db/` — схема SQLite (`database.rb`) и скрипт её создания (`create_tables.rb`).
-- `config/` — `routing.yml` (пути к данным для импорта, список рейтингуемых провайдеров), `strategies.yml` (коэффициенты стратегий).
+- `config/` — `routing.yml` (пути к данным для импорта, список рейтингуемых провайдеров, `active_strategies`, `fallback_provider`), `strategies.yml` (коэффициенты стратегий), `business_parameters.yml` (регулируемые бизнес-величины по провайдерам — `preferred_range_min/max`, `volume_share_pct`, `requests_per_minute_limit`, `daily_turnover_min/max` — которых нет в `data/providers.json`; временный источник, см. комментарий в файле).
 - `data/` — исходные файлы для первичного импорта в БД (`providers.json`, `operations_history.csv`, `operations_queue_10.json`).
-- `bin/` — исполняемые скрипты: `import_data.rb` (импорт data/* в БД), `demo_rating.rb` (демонстрация рейтинга на нескольких стратегиях), `demo_hard_filter.rb` (демонстрация hard-constraints на синтетических данных, БД не требует).
+- `bin/` — исполняемые скрипты: `import_data.rb` (импорт `data/*` + `config/business_parameters.yml` в БД), `route.rb` (обрабатывает очередь через Router → `routing_decisions_test.json` в корне + запись решений и обновлённого состояния провайдеров в БД), `build_report.rb` (строит `routing_report_test.json` из БД после `route.rb`), `demo_rating.rb` (демонстрация рейтинга на нескольких стратегиях), `demo_hard_filter.rb` (демонстрация hard-constraints на синтетических данных, БД не требует), `analyze_db.rb`/`log_operations.rb`/`update_provider_minute_stats.rb` (аналитика, см. `SCRIPTS.md`).
 - `test/` — Minitest, зеркалирует структуру `lib/`.
 
-Рейтинг и стратегии читают только БД (`db/operations.db`) — файлы в `data/` участвуют один раз, на этапе импорта.
+Рейтинг, стратегии и hard-constraints читают только БД (`db/operations.db`) — файлы в `data/`/`config/business_parameters.yml` участвуют один раз, на этапе импорта. `routing_decisions_test.json`/`routing_report_test.json` — обязательные артефакты по итогам обработки `data/operations_queue_10.json` (или другой очереди, импортированной в БД).
+
+Внутри одного прогона `bin/route.rb` рантайм-состояние провайдеров (`in_progress_count/amount`, `daily_approved_amount`, `count_share_actual`/`volume_share_actual`/`turnover_actual`) пересчитывается `Router::MetricsUpdater` после каждой операции — так следующая операция очереди видит уже изменившуюся картину, а не статичный снимок на начало прогона; доли (`count_share_actual`/`volume_share_actual`) пересчитываются сразу у всех рейтингуемых провайдеров, а не только у выбранного, так как это доли от общего количества/объёма. По завершении прогона `Router::StateWriter` пишет изменившиеся `in_progress_count/amount`/`daily_approved_amount` обратно в таблицу `providers` — иначе следующий запуск `bin/route.rb` стартовал бы заново с исходных значений `data/providers.json`. Симуляция исхода (`OutcomeSimulator`) в v1 всегда возвращает `"approved"` — реальная модель (например, на основе `conversion_24h`) не входит в текущий объём.
 
 ## Установка и запуск
 
@@ -24,9 +26,11 @@
 ```
 bundle install                          # зависимости (sequel, sqlite3, rake, minitest, csv)
 bundle exec ruby db/create_tables.rb    # создать схему в db/operations.db
-bundle exec ruby bin/import_data.rb     # загрузить data/* в БД (провайдеры - до history)
+bundle exec ruby bin/import_data.rb     # загрузить data/* + business_parameters.yml в БД (провайдеры - до history)
 bundle exec ruby bin/demo_rating.rb     # прогнать несколько стратегий и посмотреть ранжирование
 bundle exec ruby bin/demo_hard_filter.rb # прогнать hard-constraints по каждому правилу (без БД)
+bundle exec ruby bin/route.rb           # обработать очередь → routing_decisions_test.json + запись в БД
+bundle exec ruby bin/build_report.rb    # собрать routing_report_test.json из БД
 bundle exec rake test                   # тесты (или просто `rake test`, без bundler)
 ```
 
@@ -74,7 +78,7 @@ bundle exec rake test                   # тесты (или просто `rake 
 | daily_turnover_min / daily_turnover_max | Integer | Мин./макс. дневной оборот (фин. обязательства) |
 | preferred_range_min / preferred_range_max | Integer | Приоритетный диапазон суммы для стратегии "по сумме чека" (soft-goal, не путать с limit_amount_min/max) |
 
-`volume_share_pct`, `requests_per_minute_limit`, `daily_turnover_min/max`, `preferred_range_min/max` не приходят из `data/providers.json` - импортёр их не трогает (остаются `null`), дополняются отдельно.
+`volume_share_pct`, `requests_per_minute_limit`, `daily_turnover_min/max`, `preferred_range_min/max` не приходят из `data/providers.json` - `ProvidersImporter` их не трогает; значения для рейтингуемых провайдеров приходят из `config/business_parameters.yml` через отдельный `BusinessParametersImporter` (шаг `business_parameters` в `bin/import_data.rb`).
 
 ### 3. operations_history
 История выполненных операций (источник для актуалов рейтинга - см. `HistoricalActualsProvider`).

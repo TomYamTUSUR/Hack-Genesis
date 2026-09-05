@@ -26,8 +26,20 @@ module PaymentRouting
       resolve(@raw["strategies_file"])
     end
 
+    def business_parameters_file
+      resolve(@raw["data"]["business_parameters_file"])
+    end
+
+    def active_strategies
+      @raw["active_strategies"].map(&:to_sym)
+    end
+
     def rated_providers
       @raw["rated_providers"]
+    end
+
+    def fallback_provider
+      @raw["fallback_provider"]
     end
 
     private

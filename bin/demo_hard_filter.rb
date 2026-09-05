@@ -40,7 +40,10 @@ module PaymentRouting
     end
 
     def self.healthy_actuals(overrides = {})
-      ProviderActuals.new(**{ count_share_actual: 0, volume_share_actual: 0, turnover_actual: 500_000, rpm_used: 10 }.merge(overrides))
+      ProviderActuals.new(**{
+        count_share_actual: 0, volume_share_actual: 0, count_actual: 0, volume_actual: 0,
+        turnover_actual: 500_000, rpm_used: 10
+      }.merge(overrides))
     end
 
     SCENARIOS = [

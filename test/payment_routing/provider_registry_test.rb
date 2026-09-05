@@ -16,10 +16,10 @@ module PaymentRouting
     end
 
     def test_preferred_range_is_nil_when_not_set
-      vipay = @registry.load.find { |p| p.payment_system == "vipay" }
-      row = @db[:providers].where(payment_system: "vipay").first
+      @db[:providers].where(payment_system: "vipay").update(preferred_range_min: nil, preferred_range_max: nil)
 
-      assert_nil row[:preferred_range_min]
+      vipay = @registry.load.find { |p| p.payment_system == "vipay" }
+
       assert_nil vipay.preferred_range
     end
 

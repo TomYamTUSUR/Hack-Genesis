@@ -13,15 +13,17 @@ require_relative "../db/database"
 require_relative "../lib/payment_routing/importers/upsert"
 require_relative "../lib/payment_routing/importers/provider_lookup"
 require_relative "../lib/payment_routing/importers/providers_importer"
+require_relative "../lib/payment_routing/importers/business_parameters_importer"
 require_relative "../lib/payment_routing/importers/operations_queue_importer"
 require_relative "../lib/payment_routing/importers/operations_history_importer"
 
 module PaymentRouting
   module Importers
     class Cli
-      # Порядок задаёт и очерёдность зависимостей (providers - первым), и
-      # список допустимых имён источников для CLI-аргументов.
-      IMPORT_ORDER = %w[providers queue history].freeze
+      # Порядок задаёт и очерёдность зависимостей (providers - первым,
+      # business_parameters - сразу за ним, т.к. только обновляет уже
+      # созданные строки), и список допустимых имён источников для CLI-аргументов.
+      IMPORT_ORDER = %w[providers business_parameters queue history].freeze
 
       def initialize(db:, config:)
         @db = db
@@ -46,6 +48,7 @@ module PaymentRouting
       def importer_for(name)
         case name
         when "providers" then ProvidersImporter.new(db: @db, providers_file: @config.providers_file)
+        when "business_parameters" then BusinessParametersImporter.new(db: @db, business_parameters_file: @config.business_parameters_file)
         when "queue" then OperationsQueueImporter.new(db: @db, queue_file: @config.operations_queue_file)
         when "history" then OperationsHistoryImporter.new(db: @db, history_file: @config.operations_history_file)
         end

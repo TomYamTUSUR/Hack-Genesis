@@ -1,0 +1,27 @@
+# Регулируемые бизнес-величины, которых нет в снимке data/providers.json
+# (preferred_range/volume_share_pct/requests_per_minute_limit/daily_turnover_min/max)
+# - в providers.json их взять неоткуда, но без них соответствующие soft-goal
+# стратегии не работают (см. providers.volume_share_pct/requests_per_minute_limit
+# и т.д. в README). Значения подобраны близкими к реальным для НАШЕГО кейса
+# (ориентир - traffic_percentage/лимиты из providers.json и примеры из ТЗ),
+# не измеренные у настоящих провайдеров. Сейчас источник - этот файл и
+# BusinessParametersImporter; в будущем это должен быть полноценный механизм
+# изменения регулируемых величин, а не статичный YAML.
+providers:
+  vipay:
+    preferred_range_min: 50001
+    preferred_range_max: 100000
+    volume_share_pct: 50
+    requests_per_minute_limit: 20
+    daily_turnover_max: 5000000
+  payflow:
+    preferred_range_min: 500
+    preferred_range_max: 50000
+    volume_share_pct: 25
+    requests_per_minute_limit: 15
+    daily_turnover_min: 2000000
+  quickpay:
+    preferred_range_min: 100001
+    preferred_range_max: 200000
+    volume_share_pct: 25
+    requests_per_minute_limit: 25
