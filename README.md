@@ -4,11 +4,11 @@
 
 ## Структура проекта
 
-- `lib/payment_routing/` — доменная логика: провайдеры/операции, блок стратегий (`strategies/`), блок рейтинга (`rating/`), загрузчики из БД (`ProviderRegistry`, `HistoricalActualsProvider`, `OperationQueueLoader`), импортёры `data/* → БД` (`importers/`).
+- `lib/payment_routing/` — доменная логика: провайдеры/операции, блок hard-constraints (`hard_filter/`), блок стратегий (`strategies/`), блок рейтинга (`rating/`), загрузчики из БД (`ProviderRegistry`, `HistoricalActualsProvider`, `OperationQueueLoader`), импортёры `data/* → БД` (`importers/`).
 - `db/` — схема SQLite (`database.rb`) и скрипт её создания (`create_tables.rb`).
 - `config/` — `routing.yml` (пути к данным для импорта, список рейтингуемых провайдеров), `strategies.yml` (коэффициенты стратегий).
 - `data/` — исходные файлы для первичного импорта в БД (`providers.json`, `operations_history.csv`, `operations_queue_10.json`).
-- `bin/` — исполняемые скрипты: `import_data.rb` (импорт data/* в БД), `demo_rating.rb` (демонстрация рейтинга на нескольких стратегиях).
+- `bin/` — исполняемые скрипты: `import_data.rb` (импорт data/* в БД), `demo_rating.rb` (демонстрация рейтинга на нескольких стратегиях), `demo_hard_filter.rb` (демонстрация hard-constraints на синтетических данных, БД не требует).
 - `test/` — Minitest, зеркалирует структуру `lib/`.
 
 Рейтинг и стратегии читают только БД (`db/operations.db`) — файлы в `data/` участвуют один раз, на этапе импорта.
@@ -26,6 +26,7 @@ bundle install                          # зависимости (sequel, sqlite
 bundle exec ruby db/create_tables.rb    # создать схему в db/operations.db
 bundle exec ruby bin/import_data.rb     # загрузить data/* в БД (провайдеры - до history)
 bundle exec ruby bin/demo_rating.rb     # прогнать несколько стратегий и посмотреть ранжирование
+bundle exec ruby bin/demo_hard_filter.rb # прогнать hard-constraints по каждому правилу (без БД)
 bundle exec rake test                   # тесты (или просто `rake test`, без bundler)
 ```
 

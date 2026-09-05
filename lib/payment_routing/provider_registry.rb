@@ -31,7 +31,19 @@ module PaymentRouting
         in_progress_count: row[:in_progress_count],
         in_progress_count_limit: row[:in_progress_count_limit],
         in_progress_amount: row[:in_progress_amount],
-        in_progress_amount_limit: row[:in_progress_amount_limit]
+        in_progress_amount_limit: row[:in_progress_amount_limit],
+        status: row[:status],
+        limit_amount_min: row[:limit_amount_min],
+        limit_amount_max: row[:limit_amount_max],
+        daily_amount_limit: row[:daily_amount_limit],
+        daily_approved_amount: row[:daily_approved_amount],
+        available_requisites: row[:available_requisites],
+        banks: JSON.parse(row[:banks] || "[]"),
+        exclude_banks: row[:exclude_banks],
+        provider_margin_pct: row[:provider_margin_pct],
+        merchant_margin_pct: row[:merchant_margin_pct],
+        allow_negative_agreement: row[:allow_negative_agreement],
+        daily_turnover_max: row[:daily_turnover_max]
       )
     end
 

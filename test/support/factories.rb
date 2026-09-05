@@ -10,7 +10,15 @@ module PaymentRouting
           preferred_range: AmountRange.new(min: 0, max: 100_000),
           requests_per_minute_limit: nil, daily_turnover_min: nil,
           in_progress_count: 0, in_progress_count_limit: nil,
-          in_progress_amount: 0, in_progress_amount_limit: nil
+          in_progress_amount: 0, in_progress_amount_limit: nil,
+          # HardFilter: значения по умолчанию нейтральны - ничего не исключают,
+          # чтобы существующие тесты (rating/strategies), которым hard-constraints
+          # не важны, не завязывались на них.
+          status: "active", limit_amount_min: nil, limit_amount_max: nil,
+          daily_amount_limit: nil, daily_approved_amount: 0,
+          available_requisites: 1, banks: [], exclude_banks: false,
+          provider_margin_pct: nil, merchant_margin_pct: nil, allow_negative_agreement: false,
+          daily_turnover_max: nil
         }.merge(overrides)
       )
     end
