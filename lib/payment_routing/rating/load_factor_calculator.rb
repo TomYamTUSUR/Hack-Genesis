@@ -1,6 +1,4 @@
 module PaymentRouting
-    # u(p) и LoadFactor(p)^gamma - универсальный множитель рейтинга, учитывающий любое из трёх измерений загрузки (rpm, in-progress count/amount),
-    # чтобы не обращаться к провайдеру, упёршемуся в любой из своих лимитов.
   module Rating
     class LoadFactorCalculator
       def utilization(provider:, actuals:)

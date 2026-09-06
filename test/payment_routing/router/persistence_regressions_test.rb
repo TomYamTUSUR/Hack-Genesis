@@ -28,7 +28,7 @@ module PaymentRouting
       end
 
       def run_route
-        output, error, status = cli("bin/route.rb", "--database", @path)
+        output, error, status = cli("bin/route.rb", "--database", @path, "--output", File.join(@directory, "routing_decisions_test.json"))
         assert status.success?, "#{output}\n#{error}"
         output
       end

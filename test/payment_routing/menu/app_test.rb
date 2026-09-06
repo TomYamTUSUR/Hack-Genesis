@@ -28,8 +28,8 @@ module PaymentRouting
       def with_app(config: RoutingConfig.new, **seed_options)
         dir = Dir.mktmpdir("menu-app-")
         path = SeededDatabase.seed(File.join(dir, "operations.db"), **seed_options)
-        app = App.new(database_path: path, config: config)
-        yield app, path
+        app = App.new(database_path: path, config: config, output_dir: dir)
+        yield app, path, dir
       ensure
         app&.instance_variable_get(:@db)&.disconnect
         begin
@@ -72,12 +72,12 @@ module PaymentRouting
       end
 
       def test_start_route_writes_both_the_decisions_and_the_report_file
-        with_app do |app, _path|
+        with_app do |app, _path, dir|
           output = script(app, :start_route, [])
           assert_match(/decisions written/, output)
           assert_match(/Report written to/, output)
-          assert File.file?(File.join(PaymentRouting.root, "routing_decisions_test.json"))
-          assert File.file?(File.join(PaymentRouting.root, "routing_report_test.json"))
+          assert File.file?(File.join(dir, "routing_decisions_test.json"))
+          assert File.file?(File.join(dir, "routing_report_test.json"))
         end
       end
 
@@ -269,29 +269,19 @@ module PaymentRouting
       end
 
       def test_generate_excel_report_blocks_without_a_report
-        report_path = File.join(PaymentRouting.root, "routing_report_test.json")
-        backup = File.read(report_path, encoding: "UTF-8") if File.file?(report_path)
-        File.delete(report_path) if File.file?(report_path)
-
         with_app do |app, _path|
           output = script(app, :generate_excel_report, [])
           assert_match(/routing_report_test\.json not found/, output)
         end
-      ensure
-        File.write(report_path, backup, encoding: "UTF-8") if backup
       end
 
       def test_generate_excel_report_writes_the_xlsx_file
-        output_path = File.join(PaymentRouting.root, "routing_analytics.xlsx")
-        FileUtils.rm_f(output_path)
-
-        with_app do |app, _path|
+        with_app do |app, _path, dir|
+          script(app, :start_route, [])
           output = script(app, :generate_excel_report, [])
           assert_match(/Excel analytics report generated/, output)
-          assert File.file?(output_path)
+          assert File.file?(File.join(dir, "routing_analytics.xlsx"))
         end
-      ensure
-        FileUtils.rm_f(output_path)
       end
     end
   end

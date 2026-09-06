@@ -1,7 +1,6 @@
 module PaymentRouting
   module Rating
     module Norms
-       # Стратегия "Приоритизация по конверсии за 24ч" - выше конверсия, выше норма.
       class ConversionNorm < BaseNorm
         KEY = :conversion
 

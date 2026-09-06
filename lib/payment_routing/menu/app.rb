@@ -20,9 +20,10 @@ module PaymentRouting
 
       CLEAR_KEYWORD = "clear"
 
-      def initialize(database_path: Db::DEFAULT_PATH, config: RoutingConfig.new)
+      def initialize(database_path: Db::DEFAULT_PATH, config: RoutingConfig.new, output_dir: PaymentRouting.root)
         @database_path = database_path
         @config = config
+        @output_dir = output_dir
         @db = Db.connect(@database_path)
         Db.create_schema!(@db)
         @clear_mode = false
@@ -85,13 +86,13 @@ module PaymentRouting
       end
 
       def write_decisions(decisions)
-        output = File.join(PaymentRouting.root, "routing_decisions_test.json")
+        output = File.join(@output_dir, "routing_decisions_test.json")
         File.write(output, JSON.pretty_generate(decisions) + "\n", encoding: "UTF-8")
         "Done: #{decisions.size} decisions written to #{output}"
       end
 
       def write_report
-        output = File.join(PaymentRouting.root, "routing_report_test.json")
+        output = File.join(@output_dir, "routing_report_test.json")
         analytics = RoutingAnalytics::CanonicalDatabaseAnalytics.new(@database_path)
         RoutingAnalytics::ReportWriter.write(output, analytics.report)
         analytics.close
@@ -306,14 +307,15 @@ module PaymentRouting
       # -------------------------------------------------- 6. excel analytics
 
       def generate_excel_report
-        report_path = File.join(PaymentRouting.root, "routing_report_test.json")
+        report_path = File.join(@output_dir, "routing_report_test.json")
         unless File.file?(report_path)
           finish_with_message(["routing_report_test.json not found - run Start Route first (item 1)"])
           return
         end
 
         script = File.join(PaymentRouting.root, "bin", "generate_excel_report.rb")
-        stdout, stderr, status = Open3.capture3(RbConfig.ruby, script)
+        output_path = File.join(@output_dir, "routing_analytics.xlsx")
+        stdout, stderr, status = Open3.capture3(RbConfig.ruby, script, report_path, output_path)
         if status.success?
           finish_with_message(["Excel analytics report generated.", *stdout.strip.lines.map(&:chomp)])
         else

@@ -6,6 +6,7 @@ require 'json'
 require 'minitest/autorun'
 require 'tmpdir'
 require_relative '../lib/routing_analytics'
+require_relative '../lib/canonical_database_analytics'
 require_relative 'support/seeded_database'
 
 class RoutingAnalyticsTest < Minitest::Test
@@ -17,7 +18,7 @@ class RoutingAnalyticsTest < Minitest::Test
   end
 
   def report_from(path)
-    source = RoutingAnalytics::DatabaseSource.new(path)
+    source = RoutingAnalytics::CanonicalDatabaseSource.new(path)
     RoutingAnalytics::Analyzer.new(**source.analysis_inputs)
       .report(generated_at: Time.iso8601('2026-07-30T09:00:00+03:00'))
   ensure
@@ -36,7 +37,7 @@ class RoutingAnalyticsTest < Minitest::Test
       assert_equal 100, report.dig('daily_distribution', '2026-07-29', 'total_operations')
       assert_equal '2026-07-29', report['recommendation_period']
       # snapshot_at/gateway/merchant не хранятся в канонической схеме (нет для них колонок) -
-      # см. DatabaseSource#provider_data / CanonicalDatabaseSource#provider_data.
+      # см. CanonicalDatabaseSource#provider_data.
       assert_nil report['gateway']
       assert_nil report['merchant']
       assert_equal 41, report.dig('distribution', 'vipay', 'count')
@@ -108,7 +109,7 @@ class RoutingAnalyticsTest < Minitest::Test
     end
   end
 
-  def test_database_source_is_read_only
+  def test_report_source_is_read_only
     with_seeded_database do |path|
       before = Digest::SHA256.file(path).hexdigest
       report_from(path)
