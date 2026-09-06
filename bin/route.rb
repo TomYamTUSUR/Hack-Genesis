@@ -9,6 +9,11 @@
 # bin/build_decisions.rb (тем же принципом, что bin/build_report.rb собирает
 # routing_report_test.json), запускать сразу после этого скрипта.
 #
+# Перед чтением providers всегда переносит config/business_parameters.yml в БД
+# (BusinessParametersImporter) - Router читает только БД (см. README), а этот
+# шаг гарантирует, что она не может "отстать" от файла: не нужно отдельно
+# помнить про `bin/import_data.rb business_parameters` после правки YAML.
+#
 # providers/history должны быть уже импортированы (bundle exec ruby bin/import_data.rb).
 # Использование: bundle exec ruby bin/route.rb [--database PATH]
 
@@ -16,6 +21,7 @@ require "optparse"
 require_relative "../lib/payment_routing"
 require_relative "../db/database"
 require_relative "../lib/routing_analytics"
+require_relative "../lib/payment_routing/importers/business_parameters_importer"
 
 options = { database: PaymentRouting::Db::DEFAULT_PATH }
 
@@ -32,6 +38,8 @@ include PaymentRouting
 
 config = RoutingConfig.new
 db = Db.connect(options[:database])
+
+Importers::BusinessParametersImporter.new(db: db, business_parameters_file: config.business_parameters_file).import
 
 rated_and_fallback = config.rated_providers + [config.fallback_provider]
 providers = ProviderRegistry.new(db: db, rated_providers: rated_and_fallback).load
