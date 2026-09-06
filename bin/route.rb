@@ -39,37 +39,39 @@ include PaymentRouting
 config = RoutingConfig.new
 db = Db.connect(options[:database])
 
-Importers::BusinessParametersImporter.new(db: db, business_parameters_file: config.business_parameters_file).import
+decisions = []
+begin
+  # Lock before loading pending IDs and state; a second runner sees the committed
+  # result and cannot dispatch the same queue again.
+  db.transaction(mode: :immediate) do
+    Db.upgrade_schema!(db)
+    operations = OperationQueueLoader.new(db: db).load
+    next if operations.empty?
 
-rated_and_fallback = config.rated_providers + [config.fallback_provider]
-providers = ProviderRegistry.new(db: db, rated_providers: rated_and_fallback).load
-raise "db/operations.db пуста или в ней нет rated_providers/fallback_provider - запустите bin/import_data.rb" if providers.empty?
+    Importers::BusinessParametersImporter.new(db: db, business_parameters_file: config.business_parameters_file).import
+    names = config.rated_providers + [config.fallback_provider]
+    providers = ProviderRegistry.new(db: db, rated_providers: names).load
+    raise "db/operations.db пуста или в ней нет rated_providers/fallback_provider - запустите bin/import_data.rb" if providers.empty?
 
-actuals = HistoricalActualsProvider.new(db: db).load
-operations = OperationQueueLoader.new(db: db).load
-raise "operations_queue пуста - нечего обрабатывать" if operations.empty?
-
-state = Router::RunState.new(providers: providers, actuals_by_provider: actuals)
-strategy_registry = Strategies::StrategyRegistry.new(strategies_file: config.strategies_file)
-router = Router::Router.new(
-  state: state,
-  rated_payment_systems: config.rated_providers,
-  fallback_payment_system: config.fallback_provider,
-  strategy_registry: strategy_registry,
-  active_strategies: config.active_strategies
-)
-
-decisions = router.route_all(operations)
-
-Router::StateWriter.new(db: db).write(state)
-puts "Состояние провайдеров (in_progress_count/amount, daily_approved_amount) обновлено в БД"
-
-writer = RoutingAnalytics::DatabaseWriter.new(options[:database])
-operations_by_id = operations.to_h { |operation| [operation.operation_id, { "operation_id" => operation.operation_id, "amount" => operation.amount, "bank" => operation.bank }] }
-writer.log_operations(
-  operations: decisions.map { |decision| operations_by_id.fetch(decision.operation_id) },
-  decisions: decisions.map(&:to_h)
-)
-writer.close
-puts "Решения записаны в БД (routing_decisions/routing_attempts/eligible_providers/provider_skip_reasons)"
-puts "Запустите bin/build_decisions.rb, чтобы собрать routing_decisions_test.json из БД"
+    actuals = HistoricalActualsProvider.new(db: db).load(at: operations.first.created_at)
+    state = Router::RunState.new(providers: providers, actuals_by_provider: actuals)
+    router = Router::Router.new(
+      state: state, rated_payment_systems: config.rated_providers,
+      fallback_payment_system: config.fallback_provider,
+      strategy_registry: Strategies::StrategyRegistry.new(strategies_file: config.strategies_file),
+      active_strategies: config.active_strategies
+    )
+    decisions = router.route_all(operations)
+    Router::StateWriter.new(db: db).write(state)
+    writer = RoutingAnalytics::DatabaseWriter.new(options[:database], db: db)
+    writer.log_operations(operations: operations.map(&:to_h), decisions: decisions.map(&:to_h))
+  end
+  if decisions.empty?
+    puts "Нет необработанных операций"
+  else
+    puts "Решения (#{decisions.size}) и состояние провайдеров сохранены в БД"
+    puts "Запустите bin/build_decisions.rb, чтобы собрать routing_decisions_test.json из БД"
+  end
+ensure
+  db.disconnect
+end

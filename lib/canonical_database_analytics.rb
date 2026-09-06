@@ -743,7 +743,10 @@ module RoutingAnalytics
           seconds = valid_amount(provider['stats_window_sec'])
           seconds = nil if seconds&.zero?
           [provider['payment_system'], {
-            'minute_from_exclusive' => time && seconds ? (time - seconds).iso8601(6) : nil,
+            'analysis_from_exclusive' => time && seconds ? (time - seconds).iso8601(6) : nil,
+            'analysis_to_inclusive' => time&.iso8601(6),
+            'analysis_window_mode' => time ? (seconds ? 'rolling' : 'all_time') : nil,
+            'minute_from_exclusive' => time ? (time - 60).iso8601(6) : nil,
             'minute_to_inclusive' => time&.iso8601(6), 'window_sec' => seconds,
             'conversion_24h_from_exclusive' => time ? (time - 86_400).iso8601(6) : nil,
             'last_calculation_age_sec' => time ? Utils.clean_number(@generated_at - time) : nil
@@ -754,7 +757,7 @@ module RoutingAnalytics
           'pending_queue' => { 'source' => 'operations_queue excluding IDs present in history or decisions', 'window' => observation_window(unprocessed_pending_operations(latest_routing_events)) },
           'routing_coverage_reference_comparison_cascades' => { 'source' => 'queue, raw decisions, raw attempts and references; all retained rows', 'decision_window' => observation_window(@decisions), 'reference_as_of' => nil },
           'skip_reasons' => { 'source' => 'See skip_reason_sources; legacy skip_reasons remains their deduplicated union.', 'window' => observation_window(@details[:stored_skips] + @details[:attempts].select { |row| row['decision'] == 'skipped' }) },
-          'provider_state_utilization_recommendations' => { 'source' => 'Current stored provider fields; snapshot freshness is unknown. Minute metrics have separate windows above.', 'as_of' => nil, 'recommendation_period' => period_label(latest_day_records(@records)) },
+          'provider_state_utilization_recommendations' => { 'source' => 'Current stored provider fields; snapshot freshness is unknown. Recalculated metrics have separate windows above.', 'as_of' => nil, 'recommendation_period' => period_label(latest_day_records(@records)) },
           'period_comparison' => { 'source' => 'Same deduplicated operations; UTC windows are explicit in period_comparison.' }
         }
       }
@@ -773,7 +776,7 @@ module RoutingAnalytics
         result['skip_reasons'] = @source.skip_reason_counts
         providers = inputs.fetch(:provider_data).fetch('providers')
         providers.each do |provider|
-          # Keep persisted minute metrics separate from distribution over all history.
+          # Keep the legacy minute_stats key; persisted metrics have a configurable window.
           stats = provider.select { |key, _| CanonicalDatabaseSource::PROVIDER_STATS_COLUMNS.include?(key) }
           next if stats.empty?
 
@@ -781,14 +784,14 @@ module RoutingAnalytics
         end
         result['source']['definitions'] = {
           'provider_snapshot' => 'Full provider snapshot time is unknown; stats_calculated_at dates only recalculated metrics.',
-          'minute_stats' => 'Persisted provider metrics; window ends at stats_calculated_at and lasts stats_window_sec seconds. Not recomputed by this report.',
-          'in_progress' => 'After the minute-stat update, in_progress_count/amount count all applications in that minute, not concurrent unfinished operations.',
+          'minute_stats' => 'Legacy key for persisted provider metrics. Analysis window ends at stats_calculated_at; stats_window_sec = null means all history, otherwise a rolling window in seconds. requests_last_minute always uses 60 seconds; conversion_24h uses 24 hours. Not recomputed by this report.',
+          'in_progress' => 'Provider statistics updates do not change stored in_progress_count/amount; these are provider workload snapshot fields.',
           'skip_reasons' => 'Distinct operation/provider/reason combinations across routing_attempts and provider_skip_reasons; the latter may contain imported reference expectations.'
         }
         warnings = result.fetch('data_quality').fetch('warnings')
         warnings << 'Время полного снимка providers неизвестно; цели и лимиты могут относиться к другому периоду, чем история. Рекомендации ориентировочные.'
         if providers.any? { |provider| provider['stats_calculated_at'] }
-          warnings << 'Минутные показатели providers сохранены отдельным пересчётом; их окно указано в minute_stats и может не совпадать с периодом отчёта. in_progress_* отражает весь минутный поток.'
+          warnings << 'Показатели providers сохранены отдельным пересчётом; окно указано в minute_stats: stats_window_sec = null означает всю историю до stats_calculated_at. Период может не совпадать с периодом отчёта; requests_last_minute и conversion_24h сохраняют минутное и суточное окна.'
         end
         if result.dig('source', 'table_rows', 'routing_decisions').zero?
           warnings << 'routing_decisions пуста: отчёт описывает историю и очередь, фактические результаты новой маршрутизации отсутствуют.'
