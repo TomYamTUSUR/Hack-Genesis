@@ -6,11 +6,197 @@
       {
         "provider": "payflow",
         "decision": "selected",
-        "reason": "highest_score"
+        "reason": "highest_score",
+        "details": {
+          "provider": "payflow",
+          "score": 43.91001942180744,
+          "norms": {
+            "count_share": 0.8109243697478992,
+            "volume_share": 0.898651587646803,
+            "priority": 0.5,
+            "range_fit": 0.5858585858585859,
+            "conversion": 1.0,
+            "intensity": 1.0,
+            "turnover": 0.275
+          },
+          "load_factor": 0.5625
+        },
+        "dispatched_at": "2026-07-30T09:05:00.000000+03:00"
       }
     ],
     "simulated_result": "approved",
-    "latency_sec": 52
+    "latency_sec": 52,
+    "explanation": {
+      "eligibility": [
+        {
+          "provider": "vipay",
+          "is_eligible": true,
+          "reasons": [],
+          "details": {
+            "operation": {
+              "amount": 15000.0,
+              "bank": "sberbank"
+            },
+            "provider": {
+              "status": "active",
+              "limit_amount_min": 1000,
+              "limit_amount_max": 100000,
+              "daily_amount_limit": 5000000,
+              "daily_approved_amount": 3200000.0,
+              "in_progress_count": 4,
+              "in_progress_count_limit": 10,
+              "in_progress_amount": 380000,
+              "in_progress_amount_limit": 1000000,
+              "banks": [
+                "sberbank",
+                "tinkoff",
+                "vtb"
+              ],
+              "exclude_banks": false,
+              "available_requisites": 12,
+              "provider_margin_pct": 1.2,
+              "merchant_margin_pct": 1.5,
+              "allow_negative_agreement": false,
+              "requests_per_minute_limit": 20.0,
+              "daily_turnover_max": 5000000
+            },
+            "actuals": {
+              "rpm_used": 0,
+              "turnover_actual": 3200000.0
+            }
+          }
+        },
+        {
+          "provider": "payflow",
+          "is_eligible": true,
+          "reasons": [],
+          "details": {
+            "operation": {
+              "amount": 15000.0,
+              "bank": "sberbank"
+            },
+            "provider": {
+              "status": "active",
+              "limit_amount_min": 500,
+              "limit_amount_max": 50000,
+              "daily_amount_limit": 3000000,
+              "daily_approved_amount": 2900000.0,
+              "in_progress_count": 2,
+              "in_progress_count_limit": 8,
+              "in_progress_amount": 120000,
+              "in_progress_amount_limit": 500000,
+              "banks": [
+                "sberbank",
+                "alfa"
+              ],
+              "exclude_banks": false,
+              "available_requisites": 5,
+              "provider_margin_pct": 1.0,
+              "merchant_margin_pct": 1.5,
+              "allow_negative_agreement": false,
+              "requests_per_minute_limit": 15.0,
+              "daily_turnover_max": null
+            },
+            "actuals": {
+              "rpm_used": 0,
+              "turnover_actual": 2900000.0
+            }
+          }
+        },
+        {
+          "provider": "quickpay",
+          "is_eligible": true,
+          "reasons": [],
+          "details": {
+            "operation": {
+              "amount": 15000.0,
+              "bank": "sberbank"
+            },
+            "provider": {
+              "status": "active",
+              "limit_amount_min": 1000,
+              "limit_amount_max": 200000,
+              "daily_amount_limit": 8000000,
+              "daily_approved_amount": 1100000.0,
+              "in_progress_count": 1,
+              "in_progress_count_limit": 15,
+              "in_progress_amount": 50000,
+              "in_progress_amount_limit": 2000000,
+              "banks": [],
+              "exclude_banks": false,
+              "available_requisites": 20,
+              "provider_margin_pct": 0.8,
+              "merchant_margin_pct": 1.5,
+              "allow_negative_agreement": false,
+              "requests_per_minute_limit": 25.0,
+              "daily_turnover_max": null
+            },
+            "actuals": {
+              "rpm_used": 0,
+              "turnover_actual": 1100000.0
+            }
+          }
+        }
+      ],
+      "ranking": [
+        {
+          "provider": "payflow",
+          "score": 43.91001942180744,
+          "norms": {
+            "count_share": 0.8109243697478992,
+            "volume_share": 0.898651587646803,
+            "priority": 0.5,
+            "range_fit": 0.5858585858585859,
+            "conversion": 1.0,
+            "intensity": 1.0,
+            "turnover": 0.275
+          },
+          "load_factor": 0.5625
+        },
+        {
+          "provider": "quickpay",
+          "score": 19.216410658797376,
+          "norms": {
+            "count_share": 0.20588235294117652,
+            "volume_share": 0.02957807742496743,
+            "priority": 0.0,
+            "range_fit": 0.0,
+            "conversion": 0.0,
+            "intensity": 1.0,
+            "turnover": 0.5
+          },
+          "load_factor": 0.8711111111111112
+        },
+        {
+          "provider": "vipay",
+          "score": 17.0410638896707,
+          "norms": {
+            "count_share": 0.4117647058823529,
+            "volume_share": 0.5358851674641149,
+            "priority": 1.0,
+            "range_fit": 0.0,
+            "conversion": 0.6666666666666664,
+            "intensity": 1.0,
+            "turnover": 0.5
+          },
+          "load_factor": 0.36
+        }
+      ],
+      "active_strategies": [
+        "count_share"
+      ],
+      "weights": {
+        "count_share": 0.7,
+        "volume_share": 0.05,
+        "priority": 0.05,
+        "range_fit": 0.05,
+        "conversion": 0.05,
+        "intensity": 0.05,
+        "turnover": 0.05
+      },
+      "gamma": 2,
+      "selection_policy": "descending weighted score times load factor; ties follow rated_providers order"
+    }
   },
   {
     "operation_id": "op_102",
@@ -19,16 +205,226 @@
       {
         "provider": "vipay",
         "decision": "skipped",
-        "reason": "bank_not_in_list"
+        "reason": "bank_not_in_list",
+        "details": {
+          "operation": {
+            "amount": 48000.0,
+            "bank": "alfa"
+          },
+          "provider": {
+            "status": "active",
+            "limit_amount_min": 1000,
+            "limit_amount_max": 100000,
+            "daily_amount_limit": 5000000,
+            "daily_approved_amount": 3200000.0,
+            "in_progress_count": 4,
+            "in_progress_count_limit": 10,
+            "in_progress_amount": 380000,
+            "in_progress_amount_limit": 1000000,
+            "banks": [
+              "sberbank",
+              "tinkoff",
+              "vtb"
+            ],
+            "exclude_banks": false,
+            "available_requisites": 12,
+            "provider_margin_pct": 1.2,
+            "merchant_margin_pct": 1.5,
+            "allow_negative_agreement": false,
+            "requests_per_minute_limit": 20.0,
+            "daily_turnover_max": 5000000
+          },
+          "actuals": {
+            "rpm_used": 0,
+            "turnover_actual": 3200000.0
+          },
+          "reasons": [
+            "bank_not_in_list"
+          ]
+        }
       },
       {
         "provider": "payflow",
         "decision": "selected",
-        "reason": "highest_score"
+        "reason": "highest_score",
+        "details": {
+          "provider": "payflow",
+          "score": 42.9558319197824,
+          "norms": {
+            "count_share": 0.7929606625258799,
+            "volume_share": 0.8863439930855661,
+            "priority": 1.0,
+            "range_fit": 0.08080808080808077,
+            "conversion": 1.0,
+            "intensity": 0.9333333333333333,
+            "turnover": 0.27125
+          },
+          "load_factor": 0.5625
+        },
+        "dispatched_at": "2026-07-30T09:05:30.000000+03:00"
       }
     ],
     "simulated_result": "approved",
-    "latency_sec": 52
+    "latency_sec": 52,
+    "explanation": {
+      "eligibility": [
+        {
+          "provider": "vipay",
+          "is_eligible": false,
+          "reasons": [
+            "bank_not_in_list"
+          ],
+          "details": {
+            "operation": {
+              "amount": 48000.0,
+              "bank": "alfa"
+            },
+            "provider": {
+              "status": "active",
+              "limit_amount_min": 1000,
+              "limit_amount_max": 100000,
+              "daily_amount_limit": 5000000,
+              "daily_approved_amount": 3200000.0,
+              "in_progress_count": 4,
+              "in_progress_count_limit": 10,
+              "in_progress_amount": 380000,
+              "in_progress_amount_limit": 1000000,
+              "banks": [
+                "sberbank",
+                "tinkoff",
+                "vtb"
+              ],
+              "exclude_banks": false,
+              "available_requisites": 12,
+              "provider_margin_pct": 1.2,
+              "merchant_margin_pct": 1.5,
+              "allow_negative_agreement": false,
+              "requests_per_minute_limit": 20.0,
+              "daily_turnover_max": 5000000
+            },
+            "actuals": {
+              "rpm_used": 0,
+              "turnover_actual": 3200000.0
+            }
+          }
+        },
+        {
+          "provider": "payflow",
+          "is_eligible": true,
+          "reasons": [],
+          "details": {
+            "operation": {
+              "amount": 48000.0,
+              "bank": "alfa"
+            },
+            "provider": {
+              "status": "active",
+              "limit_amount_min": 500,
+              "limit_amount_max": 50000,
+              "daily_amount_limit": 3000000,
+              "daily_approved_amount": 2915000.0,
+              "in_progress_count": 2,
+              "in_progress_count_limit": 8,
+              "in_progress_amount": 120000.0,
+              "in_progress_amount_limit": 500000,
+              "banks": [
+                "sberbank",
+                "alfa"
+              ],
+              "exclude_banks": false,
+              "available_requisites": 5,
+              "provider_margin_pct": 1.0,
+              "merchant_margin_pct": 1.5,
+              "allow_negative_agreement": false,
+              "requests_per_minute_limit": 15.0,
+              "daily_turnover_max": null
+            },
+            "actuals": {
+              "rpm_used": 1,
+              "turnover_actual": 2915000.0
+            }
+          }
+        },
+        {
+          "provider": "quickpay",
+          "is_eligible": true,
+          "reasons": [],
+          "details": {
+            "operation": {
+              "amount": 48000.0,
+              "bank": "alfa"
+            },
+            "provider": {
+              "status": "active",
+              "limit_amount_min": 1000,
+              "limit_amount_max": 200000,
+              "daily_amount_limit": 8000000,
+              "daily_approved_amount": 1100000.0,
+              "in_progress_count": 1,
+              "in_progress_count_limit": 15,
+              "in_progress_amount": 50000,
+              "in_progress_amount_limit": 2000000,
+              "banks": [],
+              "exclude_banks": false,
+              "available_requisites": 20,
+              "provider_margin_pct": 0.8,
+              "merchant_margin_pct": 1.5,
+              "allow_negative_agreement": false,
+              "requests_per_minute_limit": 25.0,
+              "daily_turnover_max": null
+            },
+            "actuals": {
+              "rpm_used": 0,
+              "turnover_actual": 1100000.0
+            }
+          }
+        }
+      ],
+      "ranking": [
+        {
+          "provider": "payflow",
+          "score": 42.9558319197824,
+          "norms": {
+            "count_share": 0.7929606625258799,
+            "volume_share": 0.8863439930855661,
+            "priority": 1.0,
+            "range_fit": 0.08080808080808077,
+            "conversion": 1.0,
+            "intensity": 0.9333333333333333,
+            "turnover": 0.27125
+          },
+          "load_factor": 0.5625
+        },
+        {
+          "provider": "quickpay",
+          "score": 19.94559977285918,
+          "norms": {
+            "count_share": 0.2173913043478261,
+            "volume_share": 0.03586862575626626,
+            "priority": 0.0,
+            "range_fit": 0.0,
+            "conversion": 0.0,
+            "intensity": 1.0,
+            "turnover": 0.5
+          },
+          "load_factor": 0.8711111111111112
+        }
+      ],
+      "active_strategies": [
+        "count_share"
+      ],
+      "weights": {
+        "count_share": 0.7,
+        "volume_share": 0.05,
+        "priority": 0.05,
+        "range_fit": 0.05,
+        "conversion": 0.05,
+        "intensity": 0.05,
+        "turnover": 0.05
+      },
+      "gamma": 2,
+      "selection_policy": "descending weighted score times load factor; ties follow rated_providers order"
+    }
   },
   {
     "operation_id": "op_103",
@@ -37,21 +433,256 @@
       {
         "provider": "vipay",
         "decision": "skipped",
-        "reason": "amount_exceeds_limit"
+        "reason": "amount_exceeds_limit",
+        "details": {
+          "operation": {
+            "amount": 150000.0,
+            "bank": "sberbank"
+          },
+          "provider": {
+            "status": "active",
+            "limit_amount_min": 1000,
+            "limit_amount_max": 100000,
+            "daily_amount_limit": 5000000,
+            "daily_approved_amount": 3200000.0,
+            "in_progress_count": 4,
+            "in_progress_count_limit": 10,
+            "in_progress_amount": 380000,
+            "in_progress_amount_limit": 1000000,
+            "banks": [
+              "sberbank",
+              "tinkoff",
+              "vtb"
+            ],
+            "exclude_banks": false,
+            "available_requisites": 12,
+            "provider_margin_pct": 1.2,
+            "merchant_margin_pct": 1.5,
+            "allow_negative_agreement": false,
+            "requests_per_minute_limit": 20.0,
+            "daily_turnover_max": 5000000
+          },
+          "actuals": {
+            "rpm_used": 0,
+            "turnover_actual": 3200000.0
+          },
+          "reasons": [
+            "amount_exceeds_limit"
+          ]
+        }
       },
       {
         "provider": "payflow",
         "decision": "skipped",
-        "reason": "amount_exceeds_limit"
+        "reason": "amount_exceeds_limit",
+        "details": {
+          "operation": {
+            "amount": 150000.0,
+            "bank": "sberbank"
+          },
+          "provider": {
+            "status": "active",
+            "limit_amount_min": 500,
+            "limit_amount_max": 50000,
+            "daily_amount_limit": 3000000,
+            "daily_approved_amount": 2963000.0,
+            "in_progress_count": 2,
+            "in_progress_count_limit": 8,
+            "in_progress_amount": 120000.0,
+            "in_progress_amount_limit": 500000,
+            "banks": [
+              "sberbank",
+              "alfa"
+            ],
+            "exclude_banks": false,
+            "available_requisites": 5,
+            "provider_margin_pct": 1.0,
+            "merchant_margin_pct": 1.5,
+            "allow_negative_agreement": false,
+            "requests_per_minute_limit": 15.0,
+            "daily_turnover_max": null
+          },
+          "actuals": {
+            "rpm_used": 1,
+            "turnover_actual": 2963000.0
+          },
+          "reasons": [
+            "amount_exceeds_limit",
+            "daily_amount_limit_exceeded"
+          ]
+        }
       },
       {
         "provider": "quickpay",
         "decision": "selected",
-        "reason": "only_eligible_provider"
+        "reason": "only_eligible_provider",
+        "details": {
+          "provider": "quickpay",
+          "score": 33.77929975005838,
+          "norms": {
+            "count_share": 0.2285714285714286,
+            "volume_share": 0.055461473327688415,
+            "priority": 1.0,
+            "range_fit": 0.999989999899999,
+            "conversion": 1.0,
+            "intensity": 1.0,
+            "turnover": 0.5
+          },
+          "load_factor": 0.8711111111111112
+        },
+        "dispatched_at": "2026-07-30T09:06:00.000000+03:00"
       }
     ],
     "simulated_result": "approved",
-    "latency_sec": 29
+    "latency_sec": 29,
+    "explanation": {
+      "eligibility": [
+        {
+          "provider": "vipay",
+          "is_eligible": false,
+          "reasons": [
+            "amount_exceeds_limit"
+          ],
+          "details": {
+            "operation": {
+              "amount": 150000.0,
+              "bank": "sberbank"
+            },
+            "provider": {
+              "status": "active",
+              "limit_amount_min": 1000,
+              "limit_amount_max": 100000,
+              "daily_amount_limit": 5000000,
+              "daily_approved_amount": 3200000.0,
+              "in_progress_count": 4,
+              "in_progress_count_limit": 10,
+              "in_progress_amount": 380000,
+              "in_progress_amount_limit": 1000000,
+              "banks": [
+                "sberbank",
+                "tinkoff",
+                "vtb"
+              ],
+              "exclude_banks": false,
+              "available_requisites": 12,
+              "provider_margin_pct": 1.2,
+              "merchant_margin_pct": 1.5,
+              "allow_negative_agreement": false,
+              "requests_per_minute_limit": 20.0,
+              "daily_turnover_max": 5000000
+            },
+            "actuals": {
+              "rpm_used": 0,
+              "turnover_actual": 3200000.0
+            }
+          }
+        },
+        {
+          "provider": "payflow",
+          "is_eligible": false,
+          "reasons": [
+            "amount_exceeds_limit",
+            "daily_amount_limit_exceeded"
+          ],
+          "details": {
+            "operation": {
+              "amount": 150000.0,
+              "bank": "sberbank"
+            },
+            "provider": {
+              "status": "active",
+              "limit_amount_min": 500,
+              "limit_amount_max": 50000,
+              "daily_amount_limit": 3000000,
+              "daily_approved_amount": 2963000.0,
+              "in_progress_count": 2,
+              "in_progress_count_limit": 8,
+              "in_progress_amount": 120000.0,
+              "in_progress_amount_limit": 500000,
+              "banks": [
+                "sberbank",
+                "alfa"
+              ],
+              "exclude_banks": false,
+              "available_requisites": 5,
+              "provider_margin_pct": 1.0,
+              "merchant_margin_pct": 1.5,
+              "allow_negative_agreement": false,
+              "requests_per_minute_limit": 15.0,
+              "daily_turnover_max": null
+            },
+            "actuals": {
+              "rpm_used": 1,
+              "turnover_actual": 2963000.0
+            }
+          }
+        },
+        {
+          "provider": "quickpay",
+          "is_eligible": true,
+          "reasons": [],
+          "details": {
+            "operation": {
+              "amount": 150000.0,
+              "bank": "sberbank"
+            },
+            "provider": {
+              "status": "active",
+              "limit_amount_min": 1000,
+              "limit_amount_max": 200000,
+              "daily_amount_limit": 8000000,
+              "daily_approved_amount": 1100000.0,
+              "in_progress_count": 1,
+              "in_progress_count_limit": 15,
+              "in_progress_amount": 50000,
+              "in_progress_amount_limit": 2000000,
+              "banks": [],
+              "exclude_banks": false,
+              "available_requisites": 20,
+              "provider_margin_pct": 0.8,
+              "merchant_margin_pct": 1.5,
+              "allow_negative_agreement": false,
+              "requests_per_minute_limit": 25.0,
+              "daily_turnover_max": null
+            },
+            "actuals": {
+              "rpm_used": 0,
+              "turnover_actual": 1100000.0
+            }
+          }
+        }
+      ],
+      "ranking": [
+        {
+          "provider": "quickpay",
+          "score": 33.77929975005838,
+          "norms": {
+            "count_share": 0.2285714285714286,
+            "volume_share": 0.055461473327688415,
+            "priority": 1.0,
+            "range_fit": 0.999989999899999,
+            "conversion": 1.0,
+            "intensity": 1.0,
+            "turnover": 0.5
+          },
+          "load_factor": 0.8711111111111112
+        }
+      ],
+      "active_strategies": [
+        "count_share"
+      ],
+      "weights": {
+        "count_share": 0.7,
+        "volume_share": 0.05,
+        "priority": 0.05,
+        "range_fit": 0.05,
+        "conversion": 0.05,
+        "intensity": 0.05,
+        "turnover": 0.05
+      },
+      "gamma": 2,
+      "selection_policy": "descending weighted score times load factor; ties follow rated_providers order"
+    }
   },
   {
     "operation_id": "op_104",
@@ -60,21 +691,254 @@
       {
         "provider": "vipay",
         "decision": "skipped",
-        "reason": "bank_not_in_list"
+        "reason": "bank_not_in_list",
+        "details": {
+          "operation": {
+            "amount": 3000.0,
+            "bank": "gazprombank"
+          },
+          "provider": {
+            "status": "active",
+            "limit_amount_min": 1000,
+            "limit_amount_max": 100000,
+            "daily_amount_limit": 5000000,
+            "daily_approved_amount": 3200000.0,
+            "in_progress_count": 4,
+            "in_progress_count_limit": 10,
+            "in_progress_amount": 380000,
+            "in_progress_amount_limit": 1000000,
+            "banks": [
+              "sberbank",
+              "tinkoff",
+              "vtb"
+            ],
+            "exclude_banks": false,
+            "available_requisites": 12,
+            "provider_margin_pct": 1.2,
+            "merchant_margin_pct": 1.5,
+            "allow_negative_agreement": false,
+            "requests_per_minute_limit": 20.0,
+            "daily_turnover_max": 5000000
+          },
+          "actuals": {
+            "rpm_used": 0,
+            "turnover_actual": 3200000.0
+          },
+          "reasons": [
+            "bank_not_in_list"
+          ]
+        }
       },
       {
         "provider": "payflow",
         "decision": "skipped",
-        "reason": "bank_not_in_list"
+        "reason": "bank_not_in_list",
+        "details": {
+          "operation": {
+            "amount": 3000.0,
+            "bank": "gazprombank"
+          },
+          "provider": {
+            "status": "active",
+            "limit_amount_min": 500,
+            "limit_amount_max": 50000,
+            "daily_amount_limit": 3000000,
+            "daily_approved_amount": 2963000.0,
+            "in_progress_count": 2,
+            "in_progress_count_limit": 8,
+            "in_progress_amount": 120000.0,
+            "in_progress_amount_limit": 500000,
+            "banks": [
+              "sberbank",
+              "alfa"
+            ],
+            "exclude_banks": false,
+            "available_requisites": 5,
+            "provider_margin_pct": 1.0,
+            "merchant_margin_pct": 1.5,
+            "allow_negative_agreement": false,
+            "requests_per_minute_limit": 15.0,
+            "daily_turnover_max": null
+          },
+          "actuals": {
+            "rpm_used": 0,
+            "turnover_actual": 2963000.0
+          },
+          "reasons": [
+            "bank_not_in_list"
+          ]
+        }
       },
       {
         "provider": "quickpay",
         "decision": "selected",
-        "reason": "only_eligible_provider"
+        "reason": "only_eligible_provider",
+        "details": {
+          "provider": "quickpay",
+          "score": 27.952851330203444,
+          "norms": {
+            "count_share": 0.21126760563380287,
+            "volume_share": 0.0,
+            "priority": 1.0,
+            "range_fit": 0.0,
+            "conversion": 1.0,
+            "intensity": 0.96,
+            "turnover": 0.5
+          },
+          "load_factor": 0.8711111111111112
+        },
+        "dispatched_at": "2026-07-30T09:06:30.000000+03:00"
       }
     ],
     "simulated_result": "approved",
-    "latency_sec": 29
+    "latency_sec": 29,
+    "explanation": {
+      "eligibility": [
+        {
+          "provider": "vipay",
+          "is_eligible": false,
+          "reasons": [
+            "bank_not_in_list"
+          ],
+          "details": {
+            "operation": {
+              "amount": 3000.0,
+              "bank": "gazprombank"
+            },
+            "provider": {
+              "status": "active",
+              "limit_amount_min": 1000,
+              "limit_amount_max": 100000,
+              "daily_amount_limit": 5000000,
+              "daily_approved_amount": 3200000.0,
+              "in_progress_count": 4,
+              "in_progress_count_limit": 10,
+              "in_progress_amount": 380000,
+              "in_progress_amount_limit": 1000000,
+              "banks": [
+                "sberbank",
+                "tinkoff",
+                "vtb"
+              ],
+              "exclude_banks": false,
+              "available_requisites": 12,
+              "provider_margin_pct": 1.2,
+              "merchant_margin_pct": 1.5,
+              "allow_negative_agreement": false,
+              "requests_per_minute_limit": 20.0,
+              "daily_turnover_max": 5000000
+            },
+            "actuals": {
+              "rpm_used": 0,
+              "turnover_actual": 3200000.0
+            }
+          }
+        },
+        {
+          "provider": "payflow",
+          "is_eligible": false,
+          "reasons": [
+            "bank_not_in_list"
+          ],
+          "details": {
+            "operation": {
+              "amount": 3000.0,
+              "bank": "gazprombank"
+            },
+            "provider": {
+              "status": "active",
+              "limit_amount_min": 500,
+              "limit_amount_max": 50000,
+              "daily_amount_limit": 3000000,
+              "daily_approved_amount": 2963000.0,
+              "in_progress_count": 2,
+              "in_progress_count_limit": 8,
+              "in_progress_amount": 120000.0,
+              "in_progress_amount_limit": 500000,
+              "banks": [
+                "sberbank",
+                "alfa"
+              ],
+              "exclude_banks": false,
+              "available_requisites": 5,
+              "provider_margin_pct": 1.0,
+              "merchant_margin_pct": 1.5,
+              "allow_negative_agreement": false,
+              "requests_per_minute_limit": 15.0,
+              "daily_turnover_max": null
+            },
+            "actuals": {
+              "rpm_used": 0,
+              "turnover_actual": 2963000.0
+            }
+          }
+        },
+        {
+          "provider": "quickpay",
+          "is_eligible": true,
+          "reasons": [],
+          "details": {
+            "operation": {
+              "amount": 3000.0,
+              "bank": "gazprombank"
+            },
+            "provider": {
+              "status": "active",
+              "limit_amount_min": 1000,
+              "limit_amount_max": 200000,
+              "daily_amount_limit": 8000000,
+              "daily_approved_amount": 1250000.0,
+              "in_progress_count": 1,
+              "in_progress_count_limit": 15,
+              "in_progress_amount": 50000.0,
+              "in_progress_amount_limit": 2000000,
+              "banks": [],
+              "exclude_banks": false,
+              "available_requisites": 20,
+              "provider_margin_pct": 0.8,
+              "merchant_margin_pct": 1.5,
+              "allow_negative_agreement": false,
+              "requests_per_minute_limit": 25.0,
+              "daily_turnover_max": null
+            },
+            "actuals": {
+              "rpm_used": 1,
+              "turnover_actual": 1250000.0
+            }
+          }
+        }
+      ],
+      "ranking": [
+        {
+          "provider": "quickpay",
+          "score": 27.952851330203444,
+          "norms": {
+            "count_share": 0.21126760563380287,
+            "volume_share": 0.0,
+            "priority": 1.0,
+            "range_fit": 0.0,
+            "conversion": 1.0,
+            "intensity": 0.96,
+            "turnover": 0.5
+          },
+          "load_factor": 0.8711111111111112
+        }
+      ],
+      "active_strategies": [
+        "count_share"
+      ],
+      "weights": {
+        "count_share": 0.7,
+        "volume_share": 0.05,
+        "priority": 0.05,
+        "range_fit": 0.05,
+        "conversion": 0.05,
+        "intensity": 0.05,
+        "turnover": 0.05
+      },
+      "gamma": 2,
+      "selection_policy": "descending weighted score times load factor; ties follow rated_providers order"
+    }
   },
   {
     "operation_id": "op_105",
@@ -83,34 +947,454 @@
       {
         "provider": "payflow",
         "decision": "skipped",
-        "reason": "bank_not_in_list"
+        "reason": "bank_not_in_list",
+        "details": {
+          "operation": {
+            "amount": 25000.0,
+            "bank": "tinkoff"
+          },
+          "provider": {
+            "status": "active",
+            "limit_amount_min": 500,
+            "limit_amount_max": 50000,
+            "daily_amount_limit": 3000000,
+            "daily_approved_amount": 2963000.0,
+            "in_progress_count": 2,
+            "in_progress_count_limit": 8,
+            "in_progress_amount": 120000.0,
+            "in_progress_amount_limit": 500000,
+            "banks": [
+              "sberbank",
+              "alfa"
+            ],
+            "exclude_banks": false,
+            "available_requisites": 5,
+            "provider_margin_pct": 1.0,
+            "merchant_margin_pct": 1.5,
+            "allow_negative_agreement": false,
+            "requests_per_minute_limit": 15.0,
+            "daily_turnover_max": null
+          },
+          "actuals": {
+            "rpm_used": 0,
+            "turnover_actual": 2963000.0
+          },
+          "reasons": [
+            "bank_not_in_list"
+          ]
+        }
       },
       {
         "provider": "vipay",
         "decision": "selected",
-        "reason": "highest_score"
+        "reason": "highest_score",
+        "details": {
+          "provider": "vipay",
+          "score": 18.536341948310138,
+          "norms": {
+            "count_share": 0.4444444444444445,
+            "volume_share": 0.5757455268389662,
+            "priority": 1.0,
+            "range_fit": 0.0,
+            "conversion": 1.0,
+            "intensity": 1.0,
+            "turnover": 0.5
+          },
+          "load_factor": 0.36
+        },
+        "dispatched_at": "2026-07-30T09:07:00.000000+03:00"
       }
     ],
     "simulated_result": "approved",
-    "latency_sec": 38
+    "latency_sec": 38,
+    "explanation": {
+      "eligibility": [
+        {
+          "provider": "vipay",
+          "is_eligible": true,
+          "reasons": [],
+          "details": {
+            "operation": {
+              "amount": 25000.0,
+              "bank": "tinkoff"
+            },
+            "provider": {
+              "status": "active",
+              "limit_amount_min": 1000,
+              "limit_amount_max": 100000,
+              "daily_amount_limit": 5000000,
+              "daily_approved_amount": 3200000.0,
+              "in_progress_count": 4,
+              "in_progress_count_limit": 10,
+              "in_progress_amount": 380000,
+              "in_progress_amount_limit": 1000000,
+              "banks": [
+                "sberbank",
+                "tinkoff",
+                "vtb"
+              ],
+              "exclude_banks": false,
+              "available_requisites": 12,
+              "provider_margin_pct": 1.2,
+              "merchant_margin_pct": 1.5,
+              "allow_negative_agreement": false,
+              "requests_per_minute_limit": 20.0,
+              "daily_turnover_max": 5000000
+            },
+            "actuals": {
+              "rpm_used": 0,
+              "turnover_actual": 3200000.0
+            }
+          }
+        },
+        {
+          "provider": "payflow",
+          "is_eligible": false,
+          "reasons": [
+            "bank_not_in_list"
+          ],
+          "details": {
+            "operation": {
+              "amount": 25000.0,
+              "bank": "tinkoff"
+            },
+            "provider": {
+              "status": "active",
+              "limit_amount_min": 500,
+              "limit_amount_max": 50000,
+              "daily_amount_limit": 3000000,
+              "daily_approved_amount": 2963000.0,
+              "in_progress_count": 2,
+              "in_progress_count_limit": 8,
+              "in_progress_amount": 120000.0,
+              "in_progress_amount_limit": 500000,
+              "banks": [
+                "sberbank",
+                "alfa"
+              ],
+              "exclude_banks": false,
+              "available_requisites": 5,
+              "provider_margin_pct": 1.0,
+              "merchant_margin_pct": 1.5,
+              "allow_negative_agreement": false,
+              "requests_per_minute_limit": 15.0,
+              "daily_turnover_max": null
+            },
+            "actuals": {
+              "rpm_used": 0,
+              "turnover_actual": 2963000.0
+            }
+          }
+        },
+        {
+          "provider": "quickpay",
+          "is_eligible": true,
+          "reasons": [],
+          "details": {
+            "operation": {
+              "amount": 25000.0,
+              "bank": "tinkoff"
+            },
+            "provider": {
+              "status": "active",
+              "limit_amount_min": 1000,
+              "limit_amount_max": 200000,
+              "daily_amount_limit": 8000000,
+              "daily_approved_amount": 1253000.0,
+              "in_progress_count": 1,
+              "in_progress_count_limit": 15,
+              "in_progress_amount": 50000.0,
+              "in_progress_amount_limit": 2000000,
+              "banks": [],
+              "exclude_banks": false,
+              "available_requisites": 20,
+              "provider_margin_pct": 0.8,
+              "merchant_margin_pct": 1.5,
+              "allow_negative_agreement": false,
+              "requests_per_minute_limit": 25.0,
+              "daily_turnover_max": null
+            },
+            "actuals": {
+              "rpm_used": 1,
+              "turnover_actual": 1253000.0
+            }
+          }
+        }
+      ],
+      "ranking": [
+        {
+          "provider": "vipay",
+          "score": 18.536341948310138,
+          "norms": {
+            "count_share": 0.4444444444444445,
+            "volume_share": 0.5757455268389662,
+            "priority": 1.0,
+            "range_fit": 0.0,
+            "conversion": 1.0,
+            "intensity": 1.0,
+            "turnover": 0.5
+          },
+          "load_factor": 0.36
+        },
+        {
+          "provider": "quickpay",
+          "score": 18.215901234567898,
+          "norms": {
+            "count_share": 0.19444444444444442,
+            "volume_share": 0.0,
+            "priority": 0.0,
+            "range_fit": 0.0,
+            "conversion": 0.0,
+            "intensity": 0.96,
+            "turnover": 0.5
+          },
+          "load_factor": 0.8711111111111112
+        }
+      ],
+      "active_strategies": [
+        "count_share"
+      ],
+      "weights": {
+        "count_share": 0.7,
+        "volume_share": 0.05,
+        "priority": 0.05,
+        "range_fit": 0.05,
+        "conversion": 0.05,
+        "intensity": 0.05,
+        "turnover": 0.05
+      },
+      "gamma": 2,
+      "selection_policy": "descending weighted score times load factor; ties follow rated_providers order"
+    }
   },
   {
     "operation_id": "op_106",
-    "selected_provider": "vipay",
+    "selected_provider": "quickpay",
     "attempts": [
       {
         "provider": "payflow",
         "decision": "skipped",
-        "reason": "amount_exceeds_limit"
+        "reason": "amount_exceeds_limit",
+        "details": {
+          "operation": {
+            "amount": 52000.0,
+            "bank": "sberbank"
+          },
+          "provider": {
+            "status": "active",
+            "limit_amount_min": 500,
+            "limit_amount_max": 50000,
+            "daily_amount_limit": 3000000,
+            "daily_approved_amount": 2963000.0,
+            "in_progress_count": 2,
+            "in_progress_count_limit": 8,
+            "in_progress_amount": 120000.0,
+            "in_progress_amount_limit": 500000,
+            "banks": [
+              "sberbank",
+              "alfa"
+            ],
+            "exclude_banks": false,
+            "available_requisites": 5,
+            "provider_margin_pct": 1.0,
+            "merchant_margin_pct": 1.5,
+            "allow_negative_agreement": false,
+            "requests_per_minute_limit": 15.0,
+            "daily_turnover_max": null
+          },
+          "actuals": {
+            "rpm_used": 0,
+            "turnover_actual": 2963000.0
+          },
+          "reasons": [
+            "amount_exceeds_limit",
+            "daily_amount_limit_exceeded"
+          ]
+        }
       },
       {
-        "provider": "vipay",
+        "provider": "quickpay",
         "decision": "selected",
-        "reason": "highest_score"
+        "reason": "highest_score",
+        "details": {
+          "provider": "quickpay",
+          "score": 19.068158055585517,
+          "norms": {
+            "count_share": 0.2054794520547945,
+            "volume_share": 0.0011811023622047556,
+            "priority": 0.0,
+            "range_fit": 0.0,
+            "conversion": 0.0,
+            "intensity": 1.0,
+            "turnover": 0.5
+          },
+          "load_factor": 0.8711111111111112
+        },
+        "dispatched_at": "2026-07-30T09:07:30.000000+03:00"
       }
     ],
     "simulated_result": "approved",
-    "latency_sec": 38
+    "latency_sec": 29,
+    "explanation": {
+      "eligibility": [
+        {
+          "provider": "vipay",
+          "is_eligible": true,
+          "reasons": [],
+          "details": {
+            "operation": {
+              "amount": 52000.0,
+              "bank": "sberbank"
+            },
+            "provider": {
+              "status": "active",
+              "limit_amount_min": 1000,
+              "limit_amount_max": 100000,
+              "daily_amount_limit": 5000000,
+              "daily_approved_amount": 3225000.0,
+              "in_progress_count": 4,
+              "in_progress_count_limit": 10,
+              "in_progress_amount": 380000.0,
+              "in_progress_amount_limit": 1000000,
+              "banks": [
+                "sberbank",
+                "tinkoff",
+                "vtb"
+              ],
+              "exclude_banks": false,
+              "available_requisites": 12,
+              "provider_margin_pct": 1.2,
+              "merchant_margin_pct": 1.5,
+              "allow_negative_agreement": false,
+              "requests_per_minute_limit": 20.0,
+              "daily_turnover_max": 5000000
+            },
+            "actuals": {
+              "rpm_used": 1,
+              "turnover_actual": 3225000.0
+            }
+          }
+        },
+        {
+          "provider": "payflow",
+          "is_eligible": false,
+          "reasons": [
+            "amount_exceeds_limit",
+            "daily_amount_limit_exceeded"
+          ],
+          "details": {
+            "operation": {
+              "amount": 52000.0,
+              "bank": "sberbank"
+            },
+            "provider": {
+              "status": "active",
+              "limit_amount_min": 500,
+              "limit_amount_max": 50000,
+              "daily_amount_limit": 3000000,
+              "daily_approved_amount": 2963000.0,
+              "in_progress_count": 2,
+              "in_progress_count_limit": 8,
+              "in_progress_amount": 120000.0,
+              "in_progress_amount_limit": 500000,
+              "banks": [
+                "sberbank",
+                "alfa"
+              ],
+              "exclude_banks": false,
+              "available_requisites": 5,
+              "provider_margin_pct": 1.0,
+              "merchant_margin_pct": 1.5,
+              "allow_negative_agreement": false,
+              "requests_per_minute_limit": 15.0,
+              "daily_turnover_max": null
+            },
+            "actuals": {
+              "rpm_used": 0,
+              "turnover_actual": 2963000.0
+            }
+          }
+        },
+        {
+          "provider": "quickpay",
+          "is_eligible": true,
+          "reasons": [],
+          "details": {
+            "operation": {
+              "amount": 52000.0,
+              "bank": "sberbank"
+            },
+            "provider": {
+              "status": "active",
+              "limit_amount_min": 1000,
+              "limit_amount_max": 200000,
+              "daily_amount_limit": 8000000,
+              "daily_approved_amount": 1253000.0,
+              "in_progress_count": 1,
+              "in_progress_count_limit": 15,
+              "in_progress_amount": 50000.0,
+              "in_progress_amount_limit": 2000000,
+              "banks": [],
+              "exclude_banks": false,
+              "available_requisites": 20,
+              "provider_margin_pct": 0.8,
+              "merchant_margin_pct": 1.5,
+              "allow_negative_agreement": false,
+              "requests_per_minute_limit": 25.0,
+              "daily_turnover_max": null
+            },
+            "actuals": {
+              "rpm_used": 0,
+              "turnover_actual": 1253000.0
+            }
+          }
+        }
+      ],
+      "ranking": [
+        {
+          "provider": "quickpay",
+          "score": 19.068158055585517,
+          "norms": {
+            "count_share": 0.2054794520547945,
+            "volume_share": 0.0011811023622047556,
+            "priority": 0.0,
+            "range_fit": 0.0,
+            "conversion": 0.0,
+            "intensity": 1.0,
+            "turnover": 0.5
+          },
+          "load_factor": 0.8711111111111112
+        },
+        {
+          "provider": "vipay",
+          "score": 18.340346583503774,
+          "norms": {
+            "count_share": 0.43493150684931503,
+            "volume_share": 0.5700787401574803,
+            "priority": 1.0,
+            "range_fit": 0.07996159923198465,
+            "conversion": 1.0,
+            "intensity": 0.95,
+            "turnover": 0.5
+          },
+          "load_factor": 0.36
+        }
+      ],
+      "active_strategies": [
+        "count_share"
+      ],
+      "weights": {
+        "count_share": 0.7,
+        "volume_share": 0.05,
+        "priority": 0.05,
+        "range_fit": 0.05,
+        "conversion": 0.05,
+        "intensity": 0.05,
+        "turnover": 0.05
+      },
+      "gamma": 2,
+      "selection_policy": "descending weighted score times load factor; ties follow rated_providers order"
+    }
   },
   {
     "operation_id": "op_107",
@@ -119,21 +1403,251 @@
       {
         "provider": "vipay",
         "decision": "skipped",
-        "reason": "amount_below_minimum"
+        "reason": "amount_below_minimum",
+        "details": {
+          "operation": {
+            "amount": 800.0,
+            "bank": "sberbank"
+          },
+          "provider": {
+            "status": "active",
+            "limit_amount_min": 1000,
+            "limit_amount_max": 100000,
+            "daily_amount_limit": 5000000,
+            "daily_approved_amount": 3225000.0,
+            "in_progress_count": 4,
+            "in_progress_count_limit": 10,
+            "in_progress_amount": 380000.0,
+            "in_progress_amount_limit": 1000000,
+            "banks": [
+              "sberbank",
+              "tinkoff",
+              "vtb"
+            ],
+            "exclude_banks": false,
+            "available_requisites": 12,
+            "provider_margin_pct": 1.2,
+            "merchant_margin_pct": 1.5,
+            "allow_negative_agreement": false,
+            "requests_per_minute_limit": 20.0,
+            "daily_turnover_max": 5000000
+          },
+          "actuals": {
+            "rpm_used": 0,
+            "turnover_actual": 3225000.0
+          },
+          "reasons": [
+            "amount_below_minimum"
+          ]
+        }
       },
       {
         "provider": "quickpay",
         "decision": "skipped",
-        "reason": "amount_below_minimum"
+        "reason": "amount_below_minimum",
+        "details": {
+          "operation": {
+            "amount": 800.0,
+            "bank": "sberbank"
+          },
+          "provider": {
+            "status": "active",
+            "limit_amount_min": 1000,
+            "limit_amount_max": 200000,
+            "daily_amount_limit": 8000000,
+            "daily_approved_amount": 1305000.0,
+            "in_progress_count": 1,
+            "in_progress_count_limit": 15,
+            "in_progress_amount": 50000.0,
+            "in_progress_amount_limit": 2000000,
+            "banks": [],
+            "exclude_banks": false,
+            "available_requisites": 20,
+            "provider_margin_pct": 0.8,
+            "merchant_margin_pct": 1.5,
+            "allow_negative_agreement": false,
+            "requests_per_minute_limit": 25.0,
+            "daily_turnover_max": null
+          },
+          "actuals": {
+            "rpm_used": 1,
+            "turnover_actual": 1305000.0
+          },
+          "reasons": [
+            "amount_below_minimum"
+          ]
+        }
       },
       {
         "provider": "payflow",
         "decision": "selected",
-        "reason": "only_eligible_provider"
+        "reason": "only_eligible_provider",
+        "details": {
+          "provider": "payflow",
+          "score": 42.637205117048865,
+          "norms": {
+            "count_share": 0.7876447876447876,
+            "volume_share": 0.8614969135802468,
+            "priority": 1.0,
+            "range_fit": 0.012121212121212088,
+            "conversion": 1.0,
+            "intensity": 1.0,
+            "turnover": 0.25925
+          },
+          "load_factor": 0.5625
+        },
+        "dispatched_at": "2026-07-30T09:08:00.000000+03:00"
       }
     ],
     "simulated_result": "approved",
-    "latency_sec": 52
+    "latency_sec": 52,
+    "explanation": {
+      "eligibility": [
+        {
+          "provider": "vipay",
+          "is_eligible": false,
+          "reasons": [
+            "amount_below_minimum"
+          ],
+          "details": {
+            "operation": {
+              "amount": 800.0,
+              "bank": "sberbank"
+            },
+            "provider": {
+              "status": "active",
+              "limit_amount_min": 1000,
+              "limit_amount_max": 100000,
+              "daily_amount_limit": 5000000,
+              "daily_approved_amount": 3225000.0,
+              "in_progress_count": 4,
+              "in_progress_count_limit": 10,
+              "in_progress_amount": 380000.0,
+              "in_progress_amount_limit": 1000000,
+              "banks": [
+                "sberbank",
+                "tinkoff",
+                "vtb"
+              ],
+              "exclude_banks": false,
+              "available_requisites": 12,
+              "provider_margin_pct": 1.2,
+              "merchant_margin_pct": 1.5,
+              "allow_negative_agreement": false,
+              "requests_per_minute_limit": 20.0,
+              "daily_turnover_max": 5000000
+            },
+            "actuals": {
+              "rpm_used": 0,
+              "turnover_actual": 3225000.0
+            }
+          }
+        },
+        {
+          "provider": "payflow",
+          "is_eligible": true,
+          "reasons": [],
+          "details": {
+            "operation": {
+              "amount": 800.0,
+              "bank": "sberbank"
+            },
+            "provider": {
+              "status": "active",
+              "limit_amount_min": 500,
+              "limit_amount_max": 50000,
+              "daily_amount_limit": 3000000,
+              "daily_approved_amount": 2963000.0,
+              "in_progress_count": 2,
+              "in_progress_count_limit": 8,
+              "in_progress_amount": 120000.0,
+              "in_progress_amount_limit": 500000,
+              "banks": [
+                "sberbank",
+                "alfa"
+              ],
+              "exclude_banks": false,
+              "available_requisites": 5,
+              "provider_margin_pct": 1.0,
+              "merchant_margin_pct": 1.5,
+              "allow_negative_agreement": false,
+              "requests_per_minute_limit": 15.0,
+              "daily_turnover_max": null
+            },
+            "actuals": {
+              "rpm_used": 0,
+              "turnover_actual": 2963000.0
+            }
+          }
+        },
+        {
+          "provider": "quickpay",
+          "is_eligible": false,
+          "reasons": [
+            "amount_below_minimum"
+          ],
+          "details": {
+            "operation": {
+              "amount": 800.0,
+              "bank": "sberbank"
+            },
+            "provider": {
+              "status": "active",
+              "limit_amount_min": 1000,
+              "limit_amount_max": 200000,
+              "daily_amount_limit": 8000000,
+              "daily_approved_amount": 1305000.0,
+              "in_progress_count": 1,
+              "in_progress_count_limit": 15,
+              "in_progress_amount": 50000.0,
+              "in_progress_amount_limit": 2000000,
+              "banks": [],
+              "exclude_banks": false,
+              "available_requisites": 20,
+              "provider_margin_pct": 0.8,
+              "merchant_margin_pct": 1.5,
+              "allow_negative_agreement": false,
+              "requests_per_minute_limit": 25.0,
+              "daily_turnover_max": null
+            },
+            "actuals": {
+              "rpm_used": 1,
+              "turnover_actual": 1305000.0
+            }
+          }
+        }
+      ],
+      "ranking": [
+        {
+          "provider": "payflow",
+          "score": 42.637205117048865,
+          "norms": {
+            "count_share": 0.7876447876447876,
+            "volume_share": 0.8614969135802468,
+            "priority": 1.0,
+            "range_fit": 0.012121212121212088,
+            "conversion": 1.0,
+            "intensity": 1.0,
+            "turnover": 0.25925
+          },
+          "load_factor": 0.5625
+        }
+      ],
+      "active_strategies": [
+        "count_share"
+      ],
+      "weights": {
+        "count_share": 0.7,
+        "volume_share": 0.05,
+        "priority": 0.05,
+        "range_fit": 0.05,
+        "conversion": 0.05,
+        "intensity": 0.05,
+        "turnover": 0.05
+      },
+      "gamma": 2,
+      "selection_policy": "descending weighted score times load factor; ties follow rated_providers order"
+    }
   },
   {
     "operation_id": "op_108",
@@ -142,21 +1656,256 @@
       {
         "provider": "vipay",
         "decision": "skipped",
-        "reason": "bank_not_in_list"
+        "reason": "bank_not_in_list",
+        "details": {
+          "operation": {
+            "amount": 42000.0,
+            "bank": "raiffeisen"
+          },
+          "provider": {
+            "status": "active",
+            "limit_amount_min": 1000,
+            "limit_amount_max": 100000,
+            "daily_amount_limit": 5000000,
+            "daily_approved_amount": 3225000.0,
+            "in_progress_count": 4,
+            "in_progress_count_limit": 10,
+            "in_progress_amount": 380000.0,
+            "in_progress_amount_limit": 1000000,
+            "banks": [
+              "sberbank",
+              "tinkoff",
+              "vtb"
+            ],
+            "exclude_banks": false,
+            "available_requisites": 12,
+            "provider_margin_pct": 1.2,
+            "merchant_margin_pct": 1.5,
+            "allow_negative_agreement": false,
+            "requests_per_minute_limit": 20.0,
+            "daily_turnover_max": 5000000
+          },
+          "actuals": {
+            "rpm_used": 0,
+            "turnover_actual": 3225000.0
+          },
+          "reasons": [
+            "bank_not_in_list"
+          ]
+        }
       },
       {
         "provider": "payflow",
         "decision": "skipped",
-        "reason": "daily_amount_limit_exceeded"
+        "reason": "daily_amount_limit_exceeded",
+        "details": {
+          "operation": {
+            "amount": 42000.0,
+            "bank": "raiffeisen"
+          },
+          "provider": {
+            "status": "active",
+            "limit_amount_min": 500,
+            "limit_amount_max": 50000,
+            "daily_amount_limit": 3000000,
+            "daily_approved_amount": 2963800.0,
+            "in_progress_count": 2,
+            "in_progress_count_limit": 8,
+            "in_progress_amount": 120000.0,
+            "in_progress_amount_limit": 500000,
+            "banks": [
+              "sberbank",
+              "alfa"
+            ],
+            "exclude_banks": false,
+            "available_requisites": 5,
+            "provider_margin_pct": 1.0,
+            "merchant_margin_pct": 1.5,
+            "allow_negative_agreement": false,
+            "requests_per_minute_limit": 15.0,
+            "daily_turnover_max": null
+          },
+          "actuals": {
+            "rpm_used": 1,
+            "turnover_actual": 2963800.0
+          },
+          "reasons": [
+            "daily_amount_limit_exceeded",
+            "bank_not_in_list"
+          ]
+        }
       },
       {
         "provider": "quickpay",
         "decision": "selected",
-        "reason": "only_eligible_provider"
+        "reason": "only_eligible_provider",
+        "details": {
+          "provider": "quickpay",
+          "score": 27.44,
+          "norms": {
+            "count_share": 0.2,
+            "volume_share": 0.0,
+            "priority": 1.0,
+            "range_fit": 0.0,
+            "conversion": 1.0,
+            "intensity": 1.0,
+            "turnover": 0.5
+          },
+          "load_factor": 0.8711111111111112
+        },
+        "dispatched_at": "2026-07-30T09:08:30.000000+03:00"
       }
     ],
     "simulated_result": "approved",
-    "latency_sec": 29
+    "latency_sec": 29,
+    "explanation": {
+      "eligibility": [
+        {
+          "provider": "vipay",
+          "is_eligible": false,
+          "reasons": [
+            "bank_not_in_list"
+          ],
+          "details": {
+            "operation": {
+              "amount": 42000.0,
+              "bank": "raiffeisen"
+            },
+            "provider": {
+              "status": "active",
+              "limit_amount_min": 1000,
+              "limit_amount_max": 100000,
+              "daily_amount_limit": 5000000,
+              "daily_approved_amount": 3225000.0,
+              "in_progress_count": 4,
+              "in_progress_count_limit": 10,
+              "in_progress_amount": 380000.0,
+              "in_progress_amount_limit": 1000000,
+              "banks": [
+                "sberbank",
+                "tinkoff",
+                "vtb"
+              ],
+              "exclude_banks": false,
+              "available_requisites": 12,
+              "provider_margin_pct": 1.2,
+              "merchant_margin_pct": 1.5,
+              "allow_negative_agreement": false,
+              "requests_per_minute_limit": 20.0,
+              "daily_turnover_max": 5000000
+            },
+            "actuals": {
+              "rpm_used": 0,
+              "turnover_actual": 3225000.0
+            }
+          }
+        },
+        {
+          "provider": "payflow",
+          "is_eligible": false,
+          "reasons": [
+            "daily_amount_limit_exceeded",
+            "bank_not_in_list"
+          ],
+          "details": {
+            "operation": {
+              "amount": 42000.0,
+              "bank": "raiffeisen"
+            },
+            "provider": {
+              "status": "active",
+              "limit_amount_min": 500,
+              "limit_amount_max": 50000,
+              "daily_amount_limit": 3000000,
+              "daily_approved_amount": 2963800.0,
+              "in_progress_count": 2,
+              "in_progress_count_limit": 8,
+              "in_progress_amount": 120000.0,
+              "in_progress_amount_limit": 500000,
+              "banks": [
+                "sberbank",
+                "alfa"
+              ],
+              "exclude_banks": false,
+              "available_requisites": 5,
+              "provider_margin_pct": 1.0,
+              "merchant_margin_pct": 1.5,
+              "allow_negative_agreement": false,
+              "requests_per_minute_limit": 15.0,
+              "daily_turnover_max": null
+            },
+            "actuals": {
+              "rpm_used": 1,
+              "turnover_actual": 2963800.0
+            }
+          }
+        },
+        {
+          "provider": "quickpay",
+          "is_eligible": true,
+          "reasons": [],
+          "details": {
+            "operation": {
+              "amount": 42000.0,
+              "bank": "raiffeisen"
+            },
+            "provider": {
+              "status": "active",
+              "limit_amount_min": 1000,
+              "limit_amount_max": 200000,
+              "daily_amount_limit": 8000000,
+              "daily_approved_amount": 1305000.0,
+              "in_progress_count": 1,
+              "in_progress_count_limit": 15,
+              "in_progress_amount": 50000.0,
+              "in_progress_amount_limit": 2000000,
+              "banks": [],
+              "exclude_banks": false,
+              "available_requisites": 20,
+              "provider_margin_pct": 0.8,
+              "merchant_margin_pct": 1.5,
+              "allow_negative_agreement": false,
+              "requests_per_minute_limit": 25.0,
+              "daily_turnover_max": null
+            },
+            "actuals": {
+              "rpm_used": 0,
+              "turnover_actual": 1305000.0
+            }
+          }
+        }
+      ],
+      "ranking": [
+        {
+          "provider": "quickpay",
+          "score": 27.44,
+          "norms": {
+            "count_share": 0.2,
+            "volume_share": 0.0,
+            "priority": 1.0,
+            "range_fit": 0.0,
+            "conversion": 1.0,
+            "intensity": 1.0,
+            "turnover": 0.5
+          },
+          "load_factor": 0.8711111111111112
+        }
+      ],
+      "active_strategies": [
+        "count_share"
+      ],
+      "weights": {
+        "count_share": 0.7,
+        "volume_share": 0.05,
+        "priority": 0.05,
+        "range_fit": 0.05,
+        "conversion": 0.05,
+        "intensity": 0.05,
+        "turnover": 0.05
+      },
+      "gamma": 2,
+      "selection_policy": "descending weighted score times load factor; ties follow rated_providers order"
+    }
   },
   {
     "operation_id": "op_109",
@@ -165,16 +1914,225 @@
       {
         "provider": "payflow",
         "decision": "skipped",
-        "reason": "bank_not_in_list"
+        "reason": "bank_not_in_list",
+        "details": {
+          "operation": {
+            "amount": 10000.0,
+            "bank": "vtb"
+          },
+          "provider": {
+            "status": "active",
+            "limit_amount_min": 500,
+            "limit_amount_max": 50000,
+            "daily_amount_limit": 3000000,
+            "daily_approved_amount": 2963800.0,
+            "in_progress_count": 2,
+            "in_progress_count_limit": 8,
+            "in_progress_amount": 120000.0,
+            "in_progress_amount_limit": 500000,
+            "banks": [
+              "sberbank",
+              "alfa"
+            ],
+            "exclude_banks": false,
+            "available_requisites": 5,
+            "provider_margin_pct": 1.0,
+            "merchant_margin_pct": 1.5,
+            "allow_negative_agreement": false,
+            "requests_per_minute_limit": 15.0,
+            "daily_turnover_max": null
+          },
+          "actuals": {
+            "rpm_used": 0,
+            "turnover_actual": 2963800.0
+          },
+          "reasons": [
+            "bank_not_in_list"
+          ]
+        }
       },
       {
         "provider": "vipay",
         "decision": "selected",
-        "reason": "highest_score"
+        "reason": "highest_score",
+        "details": {
+          "provider": "vipay",
+          "score": 18.876353543263043,
+          "norms": {
+            "count_share": 0.45723684210526316,
+            "volume_share": 0.585547290116897,
+            "priority": 1.0,
+            "range_fit": 0.0,
+            "conversion": 1.0,
+            "intensity": 1.0,
+            "turnover": 0.5
+          },
+          "load_factor": 0.36
+        },
+        "dispatched_at": "2026-07-30T09:09:00.000000+03:00"
       }
     ],
     "simulated_result": "approved",
-    "latency_sec": 38
+    "latency_sec": 38,
+    "explanation": {
+      "eligibility": [
+        {
+          "provider": "vipay",
+          "is_eligible": true,
+          "reasons": [],
+          "details": {
+            "operation": {
+              "amount": 10000.0,
+              "bank": "vtb"
+            },
+            "provider": {
+              "status": "active",
+              "limit_amount_min": 1000,
+              "limit_amount_max": 100000,
+              "daily_amount_limit": 5000000,
+              "daily_approved_amount": 3225000.0,
+              "in_progress_count": 4,
+              "in_progress_count_limit": 10,
+              "in_progress_amount": 380000.0,
+              "in_progress_amount_limit": 1000000,
+              "banks": [
+                "sberbank",
+                "tinkoff",
+                "vtb"
+              ],
+              "exclude_banks": false,
+              "available_requisites": 12,
+              "provider_margin_pct": 1.2,
+              "merchant_margin_pct": 1.5,
+              "allow_negative_agreement": false,
+              "requests_per_minute_limit": 20.0,
+              "daily_turnover_max": 5000000
+            },
+            "actuals": {
+              "rpm_used": 0,
+              "turnover_actual": 3225000.0
+            }
+          }
+        },
+        {
+          "provider": "payflow",
+          "is_eligible": false,
+          "reasons": [
+            "bank_not_in_list"
+          ],
+          "details": {
+            "operation": {
+              "amount": 10000.0,
+              "bank": "vtb"
+            },
+            "provider": {
+              "status": "active",
+              "limit_amount_min": 500,
+              "limit_amount_max": 50000,
+              "daily_amount_limit": 3000000,
+              "daily_approved_amount": 2963800.0,
+              "in_progress_count": 2,
+              "in_progress_count_limit": 8,
+              "in_progress_amount": 120000.0,
+              "in_progress_amount_limit": 500000,
+              "banks": [
+                "sberbank",
+                "alfa"
+              ],
+              "exclude_banks": false,
+              "available_requisites": 5,
+              "provider_margin_pct": 1.0,
+              "merchant_margin_pct": 1.5,
+              "allow_negative_agreement": false,
+              "requests_per_minute_limit": 15.0,
+              "daily_turnover_max": null
+            },
+            "actuals": {
+              "rpm_used": 0,
+              "turnover_actual": 2963800.0
+            }
+          }
+        },
+        {
+          "provider": "quickpay",
+          "is_eligible": true,
+          "reasons": [],
+          "details": {
+            "operation": {
+              "amount": 10000.0,
+              "bank": "vtb"
+            },
+            "provider": {
+              "status": "active",
+              "limit_amount_min": 1000,
+              "limit_amount_max": 200000,
+              "daily_amount_limit": 8000000,
+              "daily_approved_amount": 1347000.0,
+              "in_progress_count": 1,
+              "in_progress_count_limit": 15,
+              "in_progress_amount": 50000.0,
+              "in_progress_amount_limit": 2000000,
+              "banks": [],
+              "exclude_banks": false,
+              "available_requisites": 20,
+              "provider_margin_pct": 0.8,
+              "merchant_margin_pct": 1.5,
+              "allow_negative_agreement": false,
+              "requests_per_minute_limit": 25.0,
+              "daily_turnover_max": null
+            },
+            "actuals": {
+              "rpm_used": 1,
+              "turnover_actual": 1347000.0
+            }
+          }
+        }
+      ],
+      "ranking": [
+        {
+          "provider": "vipay",
+          "score": 18.876353543263043,
+          "norms": {
+            "count_share": 0.45723684210526316,
+            "volume_share": 0.585547290116897,
+            "priority": 1.0,
+            "range_fit": 0.0,
+            "conversion": 1.0,
+            "intensity": 1.0,
+            "turnover": 0.5
+          },
+          "load_factor": 0.36
+        },
+        {
+          "provider": "quickpay",
+          "score": 17.591859649122807,
+          "norms": {
+            "count_share": 0.18421052631578944,
+            "volume_share": 0.0,
+            "priority": 0.0,
+            "range_fit": 0.0,
+            "conversion": 0.0,
+            "intensity": 0.96,
+            "turnover": 0.5
+          },
+          "load_factor": 0.8711111111111112
+        }
+      ],
+      "active_strategies": [
+        "count_share"
+      ],
+      "weights": {
+        "count_share": 0.7,
+        "volume_share": 0.05,
+        "priority": 0.05,
+        "range_fit": 0.05,
+        "conversion": 0.05,
+        "intensity": 0.05,
+        "turnover": 0.05
+      },
+      "gamma": 2,
+      "selection_policy": "descending weighted score times load factor; ties follow rated_providers order"
+    }
   },
   {
     "operation_id": "op_110",
@@ -183,20 +2141,253 @@
       {
         "provider": "vipay",
         "decision": "skipped",
-        "reason": "bank_not_in_list"
+        "reason": "bank_not_in_list",
+        "details": {
+          "operation": {
+            "amount": 40000.0,
+            "bank": "alfa"
+          },
+          "provider": {
+            "status": "active",
+            "limit_amount_min": 1000,
+            "limit_amount_max": 100000,
+            "daily_amount_limit": 5000000,
+            "daily_approved_amount": 3235000.0,
+            "in_progress_count": 4,
+            "in_progress_count_limit": 10,
+            "in_progress_amount": 380000.0,
+            "in_progress_amount_limit": 1000000,
+            "banks": [
+              "sberbank",
+              "tinkoff",
+              "vtb"
+            ],
+            "exclude_banks": false,
+            "available_requisites": 12,
+            "provider_margin_pct": 1.2,
+            "merchant_margin_pct": 1.5,
+            "allow_negative_agreement": false,
+            "requests_per_minute_limit": 20.0,
+            "daily_turnover_max": 5000000
+          },
+          "actuals": {
+            "rpm_used": 1,
+            "turnover_actual": 3235000.0
+          },
+          "reasons": [
+            "bank_not_in_list"
+          ]
+        }
       },
       {
         "provider": "payflow",
         "decision": "skipped",
-        "reason": "daily_amount_limit_exceeded"
+        "reason": "daily_amount_limit_exceeded",
+        "details": {
+          "operation": {
+            "amount": 40000.0,
+            "bank": "alfa"
+          },
+          "provider": {
+            "status": "active",
+            "limit_amount_min": 500,
+            "limit_amount_max": 50000,
+            "daily_amount_limit": 3000000,
+            "daily_approved_amount": 2963800.0,
+            "in_progress_count": 2,
+            "in_progress_count_limit": 8,
+            "in_progress_amount": 120000.0,
+            "in_progress_amount_limit": 500000,
+            "banks": [
+              "sberbank",
+              "alfa"
+            ],
+            "exclude_banks": false,
+            "available_requisites": 5,
+            "provider_margin_pct": 1.0,
+            "merchant_margin_pct": 1.5,
+            "allow_negative_agreement": false,
+            "requests_per_minute_limit": 15.0,
+            "daily_turnover_max": null
+          },
+          "actuals": {
+            "rpm_used": 0,
+            "turnover_actual": 2963800.0
+          },
+          "reasons": [
+            "daily_amount_limit_exceeded"
+          ]
+        }
       },
       {
         "provider": "quickpay",
         "decision": "selected",
-        "reason": "only_eligible_provider"
+        "reason": "only_eligible_provider",
+        "details": {
+          "provider": "quickpay",
+          "score": 27.123232323232322,
+          "norms": {
+            "count_share": 0.19480519480519476,
+            "volume_share": 0.0,
+            "priority": 1.0,
+            "range_fit": 0.0,
+            "conversion": 1.0,
+            "intensity": 1.0,
+            "turnover": 0.5
+          },
+          "load_factor": 0.8711111111111112
+        },
+        "dispatched_at": "2026-07-30T09:09:30.000000+03:00"
       }
     ],
     "simulated_result": "approved",
-    "latency_sec": 29
+    "latency_sec": 29,
+    "explanation": {
+      "eligibility": [
+        {
+          "provider": "vipay",
+          "is_eligible": false,
+          "reasons": [
+            "bank_not_in_list"
+          ],
+          "details": {
+            "operation": {
+              "amount": 40000.0,
+              "bank": "alfa"
+            },
+            "provider": {
+              "status": "active",
+              "limit_amount_min": 1000,
+              "limit_amount_max": 100000,
+              "daily_amount_limit": 5000000,
+              "daily_approved_amount": 3235000.0,
+              "in_progress_count": 4,
+              "in_progress_count_limit": 10,
+              "in_progress_amount": 380000.0,
+              "in_progress_amount_limit": 1000000,
+              "banks": [
+                "sberbank",
+                "tinkoff",
+                "vtb"
+              ],
+              "exclude_banks": false,
+              "available_requisites": 12,
+              "provider_margin_pct": 1.2,
+              "merchant_margin_pct": 1.5,
+              "allow_negative_agreement": false,
+              "requests_per_minute_limit": 20.0,
+              "daily_turnover_max": 5000000
+            },
+            "actuals": {
+              "rpm_used": 1,
+              "turnover_actual": 3235000.0
+            }
+          }
+        },
+        {
+          "provider": "payflow",
+          "is_eligible": false,
+          "reasons": [
+            "daily_amount_limit_exceeded"
+          ],
+          "details": {
+            "operation": {
+              "amount": 40000.0,
+              "bank": "alfa"
+            },
+            "provider": {
+              "status": "active",
+              "limit_amount_min": 500,
+              "limit_amount_max": 50000,
+              "daily_amount_limit": 3000000,
+              "daily_approved_amount": 2963800.0,
+              "in_progress_count": 2,
+              "in_progress_count_limit": 8,
+              "in_progress_amount": 120000.0,
+              "in_progress_amount_limit": 500000,
+              "banks": [
+                "sberbank",
+                "alfa"
+              ],
+              "exclude_banks": false,
+              "available_requisites": 5,
+              "provider_margin_pct": 1.0,
+              "merchant_margin_pct": 1.5,
+              "allow_negative_agreement": false,
+              "requests_per_minute_limit": 15.0,
+              "daily_turnover_max": null
+            },
+            "actuals": {
+              "rpm_used": 0,
+              "turnover_actual": 2963800.0
+            }
+          }
+        },
+        {
+          "provider": "quickpay",
+          "is_eligible": true,
+          "reasons": [],
+          "details": {
+            "operation": {
+              "amount": 40000.0,
+              "bank": "alfa"
+            },
+            "provider": {
+              "status": "active",
+              "limit_amount_min": 1000,
+              "limit_amount_max": 200000,
+              "daily_amount_limit": 8000000,
+              "daily_approved_amount": 1347000.0,
+              "in_progress_count": 1,
+              "in_progress_count_limit": 15,
+              "in_progress_amount": 50000.0,
+              "in_progress_amount_limit": 2000000,
+              "banks": [],
+              "exclude_banks": false,
+              "available_requisites": 20,
+              "provider_margin_pct": 0.8,
+              "merchant_margin_pct": 1.5,
+              "allow_negative_agreement": false,
+              "requests_per_minute_limit": 25.0,
+              "daily_turnover_max": null
+            },
+            "actuals": {
+              "rpm_used": 0,
+              "turnover_actual": 1347000.0
+            }
+          }
+        }
+      ],
+      "ranking": [
+        {
+          "provider": "quickpay",
+          "score": 27.123232323232322,
+          "norms": {
+            "count_share": 0.19480519480519476,
+            "volume_share": 0.0,
+            "priority": 1.0,
+            "range_fit": 0.0,
+            "conversion": 1.0,
+            "intensity": 1.0,
+            "turnover": 0.5
+          },
+          "load_factor": 0.8711111111111112
+        }
+      ],
+      "active_strategies": [
+        "count_share"
+      ],
+      "weights": {
+        "count_share": 0.7,
+        "volume_share": 0.05,
+        "priority": 0.05,
+        "range_fit": 0.05,
+        "conversion": 0.05,
+        "intensity": 0.05,
+        "turnover": 0.05
+      },
+      "gamma": 2,
+      "selection_policy": "descending weighted score times load factor; ties follow rated_providers order"
+    }
   }
 ]

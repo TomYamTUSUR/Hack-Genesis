@@ -12,7 +12,7 @@ strategies_file: config/strategies.yml
 # Ключи стратегий, активных в Router прямо сейчас (см. config/strategies.yml).
 # 1 ключ -> solo-веса, 2+ -> combo-веса (см. StrategyWeightCalculator).
 active_strategies:
-  - priority
+  - count_share
 
 # payment_system'ы, которые участвуют в рейтинге. Явный список вместо неявного
 # "все активные провайдеры" - у providers.json также есть self-provider

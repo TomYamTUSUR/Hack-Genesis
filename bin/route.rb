@@ -1,33 +1,43 @@
 #!/usr/bin/env ruby
 # Обрабатывает очередь операций через Router (hard-constraints -> рейтинг ->
-# попытки с fallback -> обновление рантайм-состояния) и:
+# попытки с fallback -> обновление рантайм-состояния) и сразу же после этого:
 #   1. журналирует каждое решение в БД через уже готовый
 #      RoutingAnalytics::DatabaseWriter#log_operations (routing_decisions/
 #      routing_attempts/eligible_providers/provider_skip_reasons);
-#   2. пишет обновлённое рантайм-состояние провайдеров обратно в providers.
-# Сам routing_decisions_test.json этот скрипт не пишет - его собирает из БД
-# bin/build_decisions.rb (тем же принципом, что bin/build_report.rb собирает
-# routing_report_test.json), запускать сразу после этого скрипта.
+#   2. пишет обновлённое рантайм-состояние провайдеров обратно в providers;
+#   3. собирает обязательный routing_decisions_test.json из БД (через
+#      DecisionsReader - тот же путь, что и отдельный bin/build_decisions.rb,
+#      который остаётся самостоятельным скриптом для пересборки JSON без
+#      повторного роутинга, если БД уже содержит нужные решения).
 #
-# Перед чтением providers всегда переносит config/business_parameters.yml в БД
-# (BusinessParametersImporter) - Router читает только БД (см. README), а этот
-# шаг гарантирует, что она не может "отстать" от файла: не нужно отдельно
-# помнить про `bin/import_data.rb business_parameters` после правки YAML.
+# Всё это (включая перенос config/business_parameters.yml в БД) выполняется в
+# одной db.transaction - при сбое любого из писателей откатывается весь
+# прогон целиком, а не только его часть (см. DatabaseWriter#log_operations:
+# "Passing the Router's Sequel connection joins its transaction").
+#
+# OperationQueueLoader сам исключает operation_id, для которых уже есть
+# operations_history/routing_decisions - повторный запуск на той же очереди
+# без новых операций является штатным идемпотентным no-op, а не ошибкой.
 #
 # providers/history должны быть уже импортированы (bundle exec ruby bin/import_data.rb).
-# Использование: bundle exec ruby bin/route.rb [--database PATH]
+# Использование: bundle exec ruby bin/route.rb [--database PATH] [--output PATH]
 
+require "json"
 require "optparse"
 require_relative "../lib/payment_routing"
 require_relative "../db/database"
 require_relative "../lib/routing_analytics"
 require_relative "../lib/payment_routing/importers/business_parameters_importer"
 
-options = { database: PaymentRouting::Db::DEFAULT_PATH }
+options = {
+  database: PaymentRouting::Db::DEFAULT_PATH,
+  output: File.join(PaymentRouting.root, "routing_decisions_test.json")
+}
 
 OptionParser.new do |parser|
   parser.banner = "Usage: ruby bin/route.rb [options]"
   parser.on("--database PATH", "SQLite database (default: db/operations.db)") { |value| options[:database] = value }
+  parser.on("--output PATH", "Destination JSON (default: routing_decisions_test.json)") { |value| options[:output] = value }
   parser.on("-h", "--help", "Show this help") do
     puts parser
     exit 0
@@ -39,37 +49,51 @@ include PaymentRouting
 config = RoutingConfig.new
 db = Db.connect(options[:database])
 
-Importers::BusinessParametersImporter.new(db: db, business_parameters_file: config.business_parameters_file).import
+processed = false
 
-rated_and_fallback = config.rated_providers + [config.fallback_provider]
-providers = ProviderRegistry.new(db: db, rated_providers: rated_and_fallback).load
-raise "db/operations.db пуста или в ней нет rated_providers/fallback_provider - запустите bin/import_data.rb" if providers.empty?
+db.transaction do
+  Importers::BusinessParametersImporter.new(db: db, business_parameters_file: config.business_parameters_file).import
 
-actuals = HistoricalActualsProvider.new(db: db).load
-operations = OperationQueueLoader.new(db: db).load
-raise "operations_queue пуста - нечего обрабатывать" if operations.empty?
+  rated_and_fallback = config.rated_providers + [config.fallback_provider]
+  providers = ProviderRegistry.new(db: db, rated_providers: rated_and_fallback).load
+  raise "db/operations.db пуста или в ней нет rated_providers/fallback_provider - запустите bin/import_data.rb" if providers.empty?
 
-state = Router::RunState.new(providers: providers, actuals_by_provider: actuals)
-strategy_registry = Strategies::StrategyRegistry.new(strategies_file: config.strategies_file)
-router = Router::Router.new(
-  state: state,
-  rated_payment_systems: config.rated_providers,
-  fallback_payment_system: config.fallback_provider,
-  strategy_registry: strategy_registry,
-  active_strategies: config.active_strategies
-)
+  actuals = HistoricalActualsProvider.new(db: db).load
+  operations = OperationQueueLoader.new(db: db).load
+  next if operations.empty?
 
-decisions = router.route_all(operations)
+  state = Router::RunState.new(providers: providers, actuals_by_provider: actuals)
+  strategy_registry = Strategies::StrategyRegistry.new(strategies_file: config.strategies_file)
+  router = Router::Router.new(
+    state: state,
+    rated_payment_systems: config.rated_providers,
+    fallback_payment_system: config.fallback_provider,
+    strategy_registry: strategy_registry,
+    active_strategies: config.active_strategies
+  )
 
-Router::StateWriter.new(db: db).write(state)
-puts "Состояние провайдеров (in_progress_count/amount, daily_approved_amount) обновлено в БД"
+  decisions = router.route_all(operations)
 
-writer = RoutingAnalytics::DatabaseWriter.new(options[:database])
-operations_by_id = operations.to_h { |operation| [operation.operation_id, { "operation_id" => operation.operation_id, "amount" => operation.amount, "bank" => operation.bank }] }
-writer.log_operations(
-  operations: decisions.map { |decision| operations_by_id.fetch(decision.operation_id) },
-  decisions: decisions.map(&:to_h)
-)
-writer.close
-puts "Решения записаны в БД (routing_decisions/routing_attempts/eligible_providers/provider_skip_reasons)"
-puts "Запустите bin/build_decisions.rb, чтобы собрать routing_decisions_test.json из БД"
+  writer = RoutingAnalytics::DatabaseWriter.new(options[:database], db: db)
+  operations_by_id = operations.to_h { |operation| [operation.operation_id, { "operation_id" => operation.operation_id, "amount" => operation.amount, "bank" => operation.bank }] }
+
+  Router::StateWriter.new(db: db).write(state)
+  writer.log_operations(
+    operations: decisions.map { |decision| operations_by_id.fetch(decision.operation_id) },
+    decisions: decisions.map(&:to_h)
+  )
+  writer.close
+
+  processed = true
+end
+
+unless processed
+  puts "Нет необработанных операций в operations_queue"
+  exit 0
+end
+
+puts "Состояние провайдеров и решения записаны в БД (providers/routing_decisions/routing_attempts/eligible_providers/provider_skip_reasons)"
+
+decisions_json = DecisionsReader.new(db: db).load
+File.write(options[:output], JSON.pretty_generate(decisions_json) + "\n", encoding: "UTF-8")
+puts "#{decisions_json.size} решений собрано из БД в #{options[:output]}"
