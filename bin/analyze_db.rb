@@ -7,7 +7,7 @@ require_relative '../lib/canonical_database_analytics'
 project_root = File.expand_path('..', __dir__)
 options = {
   database: File.join(project_root, 'db', 'operations.db'),
-  output: File.join(project_root, 'reports', 'routing_report_db.json'),
+  output: File.join(project_root, 'routing_report_test.json'),
   stdout: false
 }
 analytics = nil
