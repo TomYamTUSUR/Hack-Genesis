@@ -21,7 +21,7 @@
           },
           "load_factor": 0.5625
         },
-        "dispatched_at": "2026-07-30T09:05:00.123456+03:00"
+        "dispatched_at": "2026-07-30T09:05:00.000000+03:00"
       }
     ],
     "simulated_result": "approved",
@@ -505,7 +505,7 @@
             "daily_turnover_max": null
           },
           "actuals": {
-            "rpm_used": 2,
+            "rpm_used": 1,
             "turnover_actual": 2963000.0
           },
           "reasons": [
@@ -614,7 +614,7 @@
               "daily_turnover_max": null
             },
             "actuals": {
-              "rpm_used": 2,
+              "rpm_used": 1,
               "turnover_actual": 2963000.0
             }
           }

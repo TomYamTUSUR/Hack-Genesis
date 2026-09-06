@@ -126,7 +126,9 @@ module PaymentRouting
           keys = strategy_keys
           active = active_strategies
           lines = ["=== Switch strategies ==="] + keys.each_with_index.map do |key, index|
-            mark = active.include?(key) ? "✅" : "❌"
+            # [x]/[ ] вместо emoji - plain ASCII, корректно отображается на
+            # любом устройстве/шрифте, в отличие от Unicode-галочек/крестиков.
+            mark = active.include?(key) ? "[x]" : "[ ]"
             "#{index + 1}. #{key} #{mark}"
           end
           lines << "" << "Enter one or more numbers separated by spaces/commas to toggle several at once."
