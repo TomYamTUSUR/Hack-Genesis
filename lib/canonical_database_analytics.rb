@@ -427,7 +427,7 @@ module RoutingAnalytics
       decision_ids = @decisions_by_id.keys
       population = (queue_ids | decision_ids).length
       {
-        'definition' => 'Population: distinct operation IDs in operations_queue UNION routing_decisions. History-only operations are excluded; awaiting_decision is not the pending_operations metric.',
+        'definition' => 'Выборка: уникальные идентификаторы операций из объединения operations_queue и routing_decisions. Операции, присутствующие только в истории, исключены; awaiting_decision отличается от показателя pending_operations.',
         'status' => population.zero? ? 'no_operations' : (@decisions.empty? ? 'no_decisions' : 'available'),
         'operations_in_scope' => population,
         'queue_operations' => queue_ids.length,
@@ -483,14 +483,14 @@ module RoutingAnalytics
       {
         'status' => @decisions.empty? ? 'no_decisions' : (with_attempts.empty? ? 'no_attempt_logs' : 'available_with_caveats'),
         'definitions' => {
-          'attempt_count' => 'Logged evaluation steps, including skipped providers; not HTTP requests. Orphans and synthesized reference skips are excluded.',
-          'first_choice' => 'Exactly one selected provider matching the final choice in a contiguous ordered log, without explicit fallback/failure evidence. Static eligibility skips do not count as dispatch failures.',
-          'fallback' => 'spacepayments final choice, explicit fallback reason, multiple selected providers, or a recorded failure before the final choice. Classification is based on retained logs, whose completeness is unverified.',
+          'attempt_count' => 'Шаги оценки, записанные в журнале, включая пропущенных провайдеров; это не количество HTTP-запросов. Записи с нарушенными связями и искусственно добавленные справочные пропуски исключены.',
+          'first_choice' => 'Ровно один выбранный провайдер, совпадающий с итоговым выбором в упорядоченном журнале с непрерывной нумерацией, без явных признаков перехода на резервный маршрут или сбоя. Пропуски из-за статических ограничений доступности не считаются сбоями отправки.',
+          'fallback' => 'Итоговый выбор spacepayments, явная причина перехода на резервный маршрут, несколько выбранных провайдеров или зарегистрированный сбой до итогового выбора. Классификация основана на сохранённых журналах, полнота которых не проверена.',
           'failure_reasons' => FAILURE_REASONS,
           'explicit_fallback_reasons' => FALLBACK_REASONS,
-          'success' => 'simulated_result = approved; no per-attempt payment outcome or verified live/simulation provenance is stored.',
-          'first_attempt_success_pct' => 'Approved first-choice operations / all classified operations.',
-          'cohort_approval_pct' => 'Approved operations / operations within the corresponding first-choice or fallback cohort.'
+          'success' => 'Успех определяется условием simulated_result = approved; результат платежа для каждой попытки и подтверждённые сведения о реальном или смоделированном происхождении данных не сохраняются.',
+          'first_attempt_success_pct' => 'Количество одобренных операций с первым выбранным провайдером / количество всех классифицированных операций.',
+          'cohort_approval_pct' => 'Количество одобренных операций / количество операций в соответствующей группе первого выбора или резервного маршрута.'
         },
         'operations_with_attempt_logs' => with_attempts.length,
         'operations_without_attempt_logs' => @decisions.length - with_attempts.length,
@@ -551,7 +551,7 @@ module RoutingAnalytics
         by_amount[band ? band.first : 'unknown'] << row
       end
       {
-        'definition' => 'Same deduplicated population as total_operations; decisions override history. Approval denominator is all operations in the segment. Provider shares are within each segment. Amounts use database units; invalid amounts/latencies are excluded from numeric sums/statistics and invalid amounts are counted.',
+        'definition' => 'Та же выборка без дубликатов, что и для total_operations; решения имеют приоритет над историей. Доля одобрений рассчитывается от всех операций сегмента. Доли провайдеров рассчитываются внутри каждого сегмента. Суммы указаны в единицах базы данных; некорректные суммы и времена обработки исключаются из суммирования и статистики, количество некорректных сумм учитывается отдельно.',
         'window' => observation_window(@records),
         'amount_band_boundaries' => AMOUNT_BANDS.to_h { |name, lower, upper| [name, { 'min_inclusive' => lower, 'max_exclusive' => upper }] },
         'by_bank' => @records.group_by { |row| row['bank'].to_s.strip.empty? ? 'unknown' : row['bank'] }.sort.to_h.transform_values { |group| cohort_summary(group) },
@@ -598,8 +598,8 @@ module RoutingAnalytics
       dated = @records.filter_map { |row| time = timestamp(row['created_at']); [time, row] if time && time < @generated_at }
       result = {
         'timezone' => 'UTC',
-        'definition' => 'Latest observed UTC day before generated_at versus the immediately preceding day. Completed days use [00:00, next 00:00); today uses [00:00, generated_at) and the same elapsed interval yesterday. No substitution of an older nonadjacent day.',
-        'caveats' => ['Source coverage/completeness is not recorded; no observations do not prove zero activity.', 'Uses currently stored statuses and decision overrides, not reconstructed past outcomes.'],
+        'definition' => 'Последний день с наблюдениями до generated_at по UTC сравнивается с непосредственно предыдущим днём. Для завершённых дней используется интервал [00:00, 00:00 следующего дня); для текущего дня — [00:00, generated_at) и такой же по длительности интервал вчера. Замена предыдущего дня более ранним несмежным днём не выполняется.',
+        'caveats' => ['Охват и полнота источников не фиксируются; отсутствие наблюдений не доказывает отсутствие активности.', 'Используются текущие сохранённые статусы с приоритетом решений над историей, а не восстановленные результаты на прошлый момент времени.'],
         'excluded_invalid_timestamp_count' => @records.count { |row| timestamp(row['created_at']).nil? },
         'excluded_at_or_after_generated_at_count' => @records.count { |row| time = timestamp(row['created_at']); time && time >= @generated_at },
         'status' => 'no_dated_operations', 'partial_day' => nil,
@@ -643,7 +643,7 @@ module RoutingAnalytics
       observed = skip_keys(@details[:attempts].select { |row| row['decision'] == 'skipped' })
       stored = skip_keys(@details[:stored_skips])
       {
-        'definition' => 'Counts use distinct operation/provider/reason tuples. Source-separated counts overlap and must not be added. Only routing_attempts is a recorded routing trace; provider_skip_reasons has no reliable fact/reference provenance flag.',
+        'definition' => 'Подсчёт ведётся по уникальным сочетаниям операции, провайдера и причины. Показатели отдельных источников пересекаются и не должны суммироваться. Только routing_attempts является журналом фактических шагов маршрутизации; в provider_skip_reasons нет надёжного признака, отличающего фактические данные от справочных.',
         'routing_attempts' => { 'distinct_skips' => observed.length, 'reasons' => observed.map(&:last).tally.sort.to_h },
         'stored_reference_or_unclassified' => { 'distinct_skips' => stored.length, 'reasons' => stored.map(&:last).tally.sort.to_h },
         'overlap_count' => (observed & stored).length,
@@ -666,14 +666,14 @@ module RoutingAnalytics
     def freshness
       {
         'evaluated_at' => @generated_at.iso8601(6), 'timezone' => 'UTC',
-        'definition' => 'Age is measured from stored event/reference times, not ingestion time. Negative age identifies future timestamps. Timezone-free dates are interpreted as UTC. No freshness SLA or ingestion watermark is available.',
+        'definition' => 'Давность рассчитывается по сохранённому времени событий или справочных записей, а не по времени загрузки данных. Отрицательная давность означает временные метки из будущего. Даты без часового пояса интерпретируются как UTC. Нормативы актуальности и отметка последней загрузки данных отсутствуют.',
         'sources' => {
           'operations_history' => source_freshness(@history_rows),
           'operations_queue' => source_freshness(@pending_operations),
           'routing_decisions' => source_freshness(@decisions),
           'routing_attempts' => source_freshness(@details[:attempts]),
           'provider_skip_reasons' => source_freshness(@details[:stored_skips]),
-          'providers' => { 'as_of' => nil, 'reason' => 'Full snapshot/target/limit timestamp is not stored.' }
+          'providers' => { 'as_of' => nil, 'reason' => 'Время полного снимка состояния, целевых значений и лимитов не сохраняется.' }
         },
         'provider_metric_windows' => @providers.to_h do |provider|
           time = timestamp(provider['stats_calculated_at'])
@@ -690,12 +690,12 @@ module RoutingAnalytics
           }]
         end,
         'blocks' => {
-          'distribution_status_latency_segments' => { 'source' => 'operations_history + routing_decisions; decision wins on duplicate operation_id', 'window' => observation_window(@records), 'outcome_provenance' => 'History status plus simulated_result from decisions; live versus sample origin is not stored.' },
-          'pending_queue' => { 'source' => 'operations_queue excluding IDs present in history or decisions', 'window' => observation_window(unprocessed_pending_operations(latest_routing_events)) },
-          'routing_coverage_cascades' => { 'source' => 'queue, raw decisions and raw attempts; all retained rows', 'decision_window' => observation_window(@decisions) },
-          'skip_reasons' => { 'source' => 'See skip_reason_sources; legacy skip_reasons remains their deduplicated union.', 'window' => observation_window(@details[:stored_skips] + @details[:attempts].select { |row| row['decision'] == 'skipped' }) },
-          'provider_state_utilization_recommendations' => { 'source' => 'Current stored provider fields; snapshot freshness is unknown. Recalculated metrics have separate windows above.', 'as_of' => nil, 'recommendation_period' => period_label(latest_day_records(@records)) },
-          'period_comparison' => { 'source' => 'Same deduplicated operations; UTC windows are explicit in period_comparison.' }
+          'distribution_status_latency_segments' => { 'source' => 'operations_history и routing_decisions; при совпадении operation_id решение имеет приоритет', 'window' => observation_window(@records), 'outcome_provenance' => 'Статус из истории и simulated_result из решений; сведения о реальном или демонстрационном происхождении данных не сохраняются.' },
+          'pending_queue' => { 'source' => 'operations_queue без идентификаторов, присутствующих в истории или решениях', 'window' => observation_window(unprocessed_pending_operations(latest_routing_events)) },
+          'routing_coverage_cascades' => { 'source' => 'Очередь, исходные решения и исходные попытки; все сохранённые строки', 'decision_window' => observation_window(@decisions) },
+          'skip_reasons' => { 'source' => 'См. skip_reason_sources; существующий показатель skip_reasons остаётся объединением этих источников без дубликатов.', 'window' => observation_window(@details[:stored_skips] + @details[:attempts].select { |row| row['decision'] == 'skipped' }) },
+          'provider_state_utilization_recommendations' => { 'source' => 'Текущие сохранённые поля провайдеров; актуальность снимка неизвестна. Для пересчитанных метрик выше указаны отдельные временные окна.', 'as_of' => nil, 'recommendation_period' => period_label(latest_day_records(@records)) },
+          'period_comparison' => { 'source' => 'Та же выборка операций без дубликатов; временные окна по UTC явно указаны в period_comparison.' }
         }
       }
     end
@@ -721,10 +721,10 @@ module RoutingAnalytics
           result['provider_state'].fetch(provider.fetch('payment_system'))['minute_stats'] = stats
         end
         result['source']['definitions'] = {
-          'provider_snapshot' => 'Full provider snapshot time is unknown; stats_calculated_at dates only recalculated metrics.',
-          'minute_stats' => 'Legacy key for persisted provider metrics. Analysis window ends at stats_calculated_at; stats_window_sec = null means all history, otherwise a rolling window in seconds. requests_last_minute always uses 60 seconds; conversion_24h uses 24 hours. Not recomputed by this report.',
-          'in_progress' => 'Provider statistics updates do not change stored in_progress_count/amount; these are provider workload snapshot fields.',
-          'skip_reasons' => 'Distinct operation/provider/reason combinations across routing_attempts and provider_skip_reasons; the latter may contain imported reference expectations.'
+          'provider_snapshot' => 'Время полного снимка состояния провайдеров неизвестно; stats_calculated_at указывает время только для пересчитанных метрик.',
+          'minute_stats' => 'Существующий ключ для сохранённых метрик провайдера. Окно анализа заканчивается в stats_calculated_at; stats_window_sec = null означает всю историю, иначе используется скользящее окно в секундах. requests_last_minute всегда использует 60 секунд; conversion_24h — 24 часа. При формировании этого отчёта метрики не пересчитываются.',
+          'in_progress' => 'Обновление статистики провайдеров не меняет сохранённые in_progress_count/amount; это поля снимка текущей нагрузки провайдера.',
+          'skip_reasons' => 'Уникальные сочетания операции, провайдера и причины из routing_attempts и provider_skip_reasons; последний источник может содержать импортированные справочные ожидания.'
         }
         details = @source.detail_inputs
         result.merge!(CanonicalReportDetails.new(**inputs, details: details).sections(generated_at: generated_at))
