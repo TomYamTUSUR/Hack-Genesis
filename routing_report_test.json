@@ -4,10 +4,10 @@
     "from": "2026-07-29T08:00:00+03:00",
     "to": "2026-07-30T09:09:30+03:00"
   },
-  "generated_at": "2026-09-06T18:18:14+07:00",
+  "generated_at": "2026-09-06T22:14:49+07:00",
   "source": {
     "type": "sqlite",
-    "database": "C:/Users/rakim/AppData/Local/Temp/menu-app-20260906-30700-zmjnvn/operations.db",
+    "database": "C:/Users/rakim/AppData/Local/Temp/menu-app-20260906-30472-b08bwz/operations.db",
     "integrity_check": "ok",
     "foreign_key_definitions": 9,
     "table_rows": {
@@ -3280,7 +3280,7 @@
     }
   },
   "freshness": {
-    "evaluated_at": "2026-09-06T11:18:14.311991Z",
+    "evaluated_at": "2026-09-06T15:14:49.675604Z",
     "timezone": "UTC",
     "definition": "Age is measured from stored event/reference times, not ingestion time. Negative age identifies future timestamps. Timezone-free dates are interpreted as UTC. No freshness SLA or ingestion watermark is available.",
     "sources": {
@@ -3290,7 +3290,7 @@
         "invalid_or_missing_timestamps": 0,
         "rows": 110,
         "timestamp_field": "created_at",
-        "last_observation_age_sec": 3301724.31,
+        "last_observation_age_sec": 3315919.68,
         "future_timestamp_count": 0,
         "completeness_verified": false
       },
@@ -3300,13 +3300,13 @@
         "invalid_or_missing_timestamps": 0,
         "rows": 10,
         "timestamp_field": "created_at",
-        "last_observation_age_sec": 3301724.31,
+        "last_observation_age_sec": 3315919.68,
         "future_timestamp_count": 0,
         "completeness_verified": false
       },
       "routing_decisions": {
-        "from": "2026-09-06T11:18:14.290292Z",
-        "to": "2026-09-06T11:18:14.290292Z",
+        "from": "2026-09-06T15:14:49.652334Z",
+        "to": "2026-09-06T15:14:49.652334Z",
         "invalid_or_missing_timestamps": 0,
         "rows": 10,
         "timestamp_field": "created_at",
@@ -3315,8 +3315,8 @@
         "completeness_verified": false
       },
       "routing_attempts": {
-        "from": "2026-09-06T11:18:14.290292Z",
-        "to": "2026-09-06T11:18:14.290292Z",
+        "from": "2026-09-06T15:14:49.652334Z",
+        "to": "2026-09-06T15:14:49.652334Z",
         "invalid_or_missing_timestamps": 0,
         "rows": 24,
         "timestamp_field": "created_at",
@@ -3325,8 +3325,8 @@
         "completeness_verified": false
       },
       "provider_skip_reasons": {
-        "from": "2026-09-06T11:18:14.290292Z",
-        "to": "2026-09-06T11:18:14.290292Z",
+        "from": "2026-09-06T15:14:49.652334Z",
+        "to": "2026-09-06T15:14:49.652334Z",
         "invalid_or_missing_timestamps": 0,
         "rows": 17,
         "timestamp_field": "created_at",
@@ -3402,16 +3402,16 @@
       "routing_coverage_cascades": {
         "source": "queue, raw decisions and raw attempts; all retained rows",
         "decision_window": {
-          "from": "2026-09-06T11:18:14.290292Z",
-          "to": "2026-09-06T11:18:14.290292Z",
+          "from": "2026-09-06T15:14:49.652334Z",
+          "to": "2026-09-06T15:14:49.652334Z",
           "invalid_or_missing_timestamps": 0
         }
       },
       "skip_reasons": {
         "source": "See skip_reason_sources; legacy skip_reasons remains their deduplicated union.",
         "window": {
-          "from": "2026-09-06T11:18:14.290292Z",
-          "to": "2026-09-06T11:18:14.290292Z",
+          "from": "2026-09-06T15:14:49.652334Z",
+          "to": "2026-09-06T15:14:49.652334Z",
           "invalid_or_missing_timestamps": 0
         }
       },

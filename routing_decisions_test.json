@@ -15,7 +15,7 @@
             "volume_share": 0.9638041384452868,
             "priority": 0.5,
             "range_fit": 0.5858585858585859,
-            "conversion": 1.0,
+            "conversion": 0.5,
             "intensity": 1.0,
             "turnover": 0.275
           },
@@ -25,7 +25,7 @@
       }
     ],
     "simulated_result": "approved",
-    "latency_sec": 52,
+    "latency_sec": 0,
     "explanation": {
       "eligibility": [
         {
@@ -147,7 +147,7 @@
             "volume_share": 0.9638041384452868,
             "priority": 0.5,
             "range_fit": 0.5858585858585859,
-            "conversion": 1.0,
+            "conversion": 0.5,
             "intensity": 1.0,
             "turnover": 0.275
           },
@@ -161,7 +161,7 @@
             "volume_share": 0.5358851674641149,
             "priority": 1.0,
             "range_fit": 0.0,
-            "conversion": 0.6666666666666664,
+            "conversion": 1.0,
             "intensity": 1.0,
             "turnover": 0.5
           },
@@ -175,7 +175,7 @@
             "volume_share": 0.02957807742496743,
             "priority": 0.0,
             "range_fit": 0.0,
-            "conversion": 0.0,
+            "conversion": 0.5,
             "intensity": 1.0,
             "turnover": 0.5
           },
@@ -256,7 +256,7 @@
             "volume_share": 0.9594085689591307,
             "priority": 1.0,
             "range_fit": 0.08080808080808077,
-            "conversion": 1.0,
+            "conversion": 0.5,
             "intensity": 0.9333333333333333,
             "turnover": 0.27125
           },
@@ -266,7 +266,7 @@
       }
     ],
     "simulated_result": "approved",
-    "latency_sec": 52,
+    "latency_sec": 0,
     "explanation": {
       "eligibility": [
         {
@@ -390,7 +390,7 @@
             "volume_share": 0.9594085689591307,
             "priority": 1.0,
             "range_fit": 0.08080808080808077,
-            "conversion": 1.0,
+            "conversion": 0.5,
             "intensity": 0.9333333333333333,
             "turnover": 0.27125
           },
@@ -404,7 +404,7 @@
             "volume_share": 0.03586862575626626,
             "priority": 0.0,
             "range_fit": 0.0,
-            "conversion": 0.0,
+            "conversion": 0.5,
             "intensity": 1.0,
             "turnover": 0.5
           },
@@ -526,7 +526,7 @@
             "volume_share": 0.055461473327688415,
             "priority": 1.0,
             "range_fit": 0.999989999899999,
-            "conversion": 1.0,
+            "conversion": 0.5,
             "intensity": 1.0,
             "turnover": 0.5
           },
@@ -536,7 +536,7 @@
       }
     ],
     "simulated_result": "approved",
-    "latency_sec": 29,
+    "latency_sec": 0,
     "explanation": {
       "eligibility": [
         {
@@ -663,7 +663,7 @@
             "volume_share": 0.055461473327688415,
             "priority": 1.0,
             "range_fit": 0.999989999899999,
-            "conversion": 1.0,
+            "conversion": 0.5,
             "intensity": 1.0,
             "turnover": 0.5
           },
@@ -784,7 +784,7 @@
             "volume_share": 0.0,
             "priority": 1.0,
             "range_fit": 0.0,
-            "conversion": 1.0,
+            "conversion": 0.5,
             "intensity": 0.96,
             "turnover": 0.5
           },
@@ -794,7 +794,7 @@
       }
     ],
     "simulated_result": "approved",
-    "latency_sec": 29,
+    "latency_sec": 0,
     "explanation": {
       "eligibility": [
         {
@@ -920,7 +920,7 @@
             "volume_share": 0.0,
             "priority": 1.0,
             "range_fit": 0.0,
-            "conversion": 1.0,
+            "conversion": 0.5,
             "intensity": 0.96,
             "turnover": 0.5
           },
@@ -1010,7 +1010,7 @@
       }
     ],
     "simulated_result": "approved",
-    "latency_sec": 38,
+    "latency_sec": 76,
     "explanation": {
       "eligibility": [
         {
@@ -1148,7 +1148,7 @@
             "volume_share": 0.0,
             "priority": 0.0,
             "range_fit": 0.0,
-            "conversion": 0.0,
+            "conversion": 0.5,
             "intensity": 0.96,
             "turnover": 0.5
           },
@@ -1239,7 +1239,7 @@
       }
     ],
     "simulated_result": "approved",
-    "latency_sec": 38,
+    "latency_sec": 76,
     "explanation": {
       "eligibility": [
         {
@@ -1378,7 +1378,7 @@
             "volume_share": 0.0011811023622047556,
             "priority": 0.0,
             "range_fit": 0.0,
-            "conversion": 0.0,
+            "conversion": 0.5,
             "intensity": 1.0,
             "turnover": 0.5
           },
@@ -1496,7 +1496,7 @@
             "volume_share": 0.9505346119929454,
             "priority": 1.0,
             "range_fit": 0.012121212121212088,
-            "conversion": 1.0,
+            "conversion": 0.5,
             "intensity": 1.0,
             "turnover": 0.25925
           },
@@ -1506,7 +1506,7 @@
       }
     ],
     "simulated_result": "approved",
-    "latency_sec": 52,
+    "latency_sec": 0,
     "explanation": {
       "eligibility": [
         {
@@ -1632,7 +1632,7 @@
             "volume_share": 0.9505346119929454,
             "priority": 1.0,
             "range_fit": 0.012121212121212088,
-            "conversion": 1.0,
+            "conversion": 0.5,
             "intensity": 1.0,
             "turnover": 0.25925
           },
@@ -1754,7 +1754,7 @@
             "volume_share": 0.021521135452021,
             "priority": 1.0,
             "range_fit": 0.0,
-            "conversion": 1.0,
+            "conversion": 0.5,
             "intensity": 1.0,
             "turnover": 0.5
           },
@@ -1764,7 +1764,7 @@
       }
     ],
     "simulated_result": "approved",
-    "latency_sec": 29,
+    "latency_sec": 0,
     "explanation": {
       "eligibility": [
         {
@@ -1891,7 +1891,7 @@
             "volume_share": 0.021521135452021,
             "priority": 1.0,
             "range_fit": 0.0,
-            "conversion": 1.0,
+            "conversion": 0.5,
             "intensity": 1.0,
             "turnover": 0.5
           },
@@ -1981,7 +1981,7 @@
       }
     ],
     "simulated_result": "approved",
-    "latency_sec": 38,
+    "latency_sec": 76,
     "explanation": {
       "eligibility": [
         {
@@ -2119,7 +2119,7 @@
             "volume_share": 0.0052375891908303385,
             "priority": 0.0,
             "range_fit": 0.0,
-            "conversion": 0.0,
+            "conversion": 0.5,
             "intensity": 0.96,
             "turnover": 0.5
           },
@@ -2240,7 +2240,7 @@
             "volume_share": 0.008998790078644847,
             "priority": 1.0,
             "range_fit": 0.0,
-            "conversion": 1.0,
+            "conversion": 0.5,
             "intensity": 1.0,
             "turnover": 0.5
           },
@@ -2250,7 +2250,7 @@
       }
     ],
     "simulated_result": "approved",
-    "latency_sec": 29,
+    "latency_sec": 0,
     "explanation": {
       "eligibility": [
         {
@@ -2376,7 +2376,7 @@
             "volume_share": 0.008998790078644847,
             "priority": 1.0,
             "range_fit": 0.0,
-            "conversion": 1.0,
+            "conversion": 0.5,
             "intensity": 1.0,
             "turnover": 0.5
           },
