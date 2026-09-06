@@ -259,14 +259,13 @@ if $PROGRAM_NAME == __FILE__
 
         options[:at] = Time.iso8601(value)
       end
-      parser.on('-h', '--help', 'Show help') { puts parser; exit }
+      parser.on('-h', '--help', 'Show help') { exit }
     end.parse!
     raise OptionParser::InvalidArgument, ARGV.join(' ') unless ARGV.empty?
 
-    puts JSON.pretty_generate(ProviderMinuteStats.new(**options).run)
+    ProviderMinuteStats.new(**options).run
   rescue ProviderMinuteStats::Error, SQLite3::Exception, OptionParser::ParseError,
          SystemCallError, ArgumentError => e
-    warn "Provider statistics update failed: #{e.message}"
     exit 1
   end
 end
