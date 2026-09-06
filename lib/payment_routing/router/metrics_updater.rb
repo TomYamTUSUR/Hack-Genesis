@@ -6,26 +6,36 @@ module PaymentRouting
     # Provider/ProviderActuals неизменяемы - в state кладутся новые экземпляры
     # (Provider#with/ProviderActuals#with), не мутация.
     #
-    # count_share_actual/volume_share_actual - доли от ОБЩЕГО количества/объёма
-    # по всем рейтингуемым провайдерам, поэтому один одобренный платёж сдвигает
-    # долю не только у выбранного провайдера, а у всех сразу (меняется
-    # знаменатель) - см. recalculate_shares!. rated_payment_systems передаётся
-    # отдельно от provider, т.к. выбранным может быть fallback-провайдер, не
-    # входящий в рейтинг (тогда пересчёт долей не нужен вовсе).
+    # Доли используют тот же общий пул, что HistoricalActualsProvider: все
+    # провайдеры, включая fallback. Завершённые выплаты не занимают ёмкость.
     class MetricsUpdater
+      def start_attempt(state:, provider:, operation:)
+        current = state.provider(provider.payment_system)
+        state.record_request(provider.payment_system)
+        state.replace_provider(current.with(
+          in_progress_count: current.in_progress_count.to_i + 1,
+          in_progress_amount: current.in_progress_amount.to_f + operation.amount
+        ))
+      end
+
+      def finish_attempt(state:, provider:, operation:)
+        current = state.provider(provider.payment_system)
+        state.replace_provider(current.with(
+          in_progress_count: current.in_progress_count - 1,
+          in_progress_amount: current.in_progress_amount - operation.amount
+        ))
+      end
+
       def apply(state:, provider:, operation:, simulated_result:, rated_payment_systems:)
-        state.replace_provider(updated_provider(provider, operation, simulated_result))
+        state.replace_provider(updated_provider(state.provider(provider.payment_system), operation, simulated_result))
         state.replace_actuals(provider.payment_system, updated_actuals(state.actuals(provider.payment_system), operation, simulated_result))
-        recalculate_shares!(state, rated_payment_systems) if approved?(simulated_result) && rated_payment_systems.include?(provider.payment_system)
+        recalculate_shares!(state) if approved?(simulated_result)
       end
 
       private
 
       def updated_provider(provider, operation, simulated_result)
-        overrides = {
-          in_progress_count: provider.in_progress_count + 1,
-          in_progress_amount: provider.in_progress_amount + operation.amount
-        }
+        overrides = {}
         overrides[:daily_approved_amount] = provider.daily_approved_amount + operation.amount if approved?(simulated_result)
         provider.with(**overrides)
       end
@@ -40,11 +50,8 @@ module PaymentRouting
         )
       end
 
-      # Пересчитывает count_share_actual/volume_share_actual КАЖДОГО
-      # рейтингуемого провайдера от новых общих итогов - не только у
-      # выбранного, доля остальных тоже сместилась из-за изменения знаменателя.
-      def recalculate_shares!(state, rated_payment_systems)
-        actuals_by_name = rated_payment_systems.to_h { |name| [name, state.actuals(name)] }
+      def recalculate_shares!(state)
+        actuals_by_name = state.actuals_by_provider
         total_count = actuals_by_name.values.sum(&:count_actual)
         total_volume = actuals_by_name.values.sum(&:volume_actual)
 

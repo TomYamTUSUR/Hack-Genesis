@@ -15,7 +15,7 @@ module PaymentRouting
 
       def initialize(state:, rated_payment_systems:, fallback_payment_system:, strategy_registry:, active_strategies:,
                      hard_filter_engine: HardFilter::Engine.new, provider_client: ProviderClient.new,
-                     outcome_simulator: OutcomeSimulator.new, metrics_updater: MetricsUpdater.new)
+                     outcome_simulator: OutcomeSimulator.new, metrics_updater: MetricsUpdater.new, clock: -> { Time.now })
         @state = state
         @rated_payment_systems = rated_payment_systems
         @fallback_payment_system = fallback_payment_system
@@ -25,6 +25,7 @@ module PaymentRouting
         @provider_client = provider_client
         @outcome_simulator = outcome_simulator
         @metrics_updater = metrics_updater
+        @clock = clock
       end
 
       def route_all(operations)
@@ -32,17 +33,19 @@ module PaymentRouting
       end
 
       def route(operation)
+        @state.advance_to(operation.created_at || @clock.call)
         attempts = []
-        eligible = filter_eligible(operation, attempts)
+        explanation = { "eligibility" => [], "ranking" => [] }
+        eligible = filter_eligible(operation, attempts, explanation)
 
         selected =
           if eligible.empty?
             fallback!(attempts, NO_ELIGIBLE_PROVIDER_REASON)
           else
-            attempt_ranked_candidates(eligible, operation, attempts) || fallback!(attempts, ALL_PROVIDERS_UNAVAILABLE_REASON)
+            attempt_ranked_candidates(eligible, operation, attempts, explanation) || fallback!(attempts, ALL_PROVIDERS_UNAVAILABLE_REASON)
           end
 
-        finalize(operation, selected, attempts)
+        finalize(operation, selected, attempts, explanation)
       end
 
       private
@@ -51,47 +54,61 @@ module PaymentRouting
         @rated_payment_systems.map { |name| @state.provider(name) }
       end
 
-      def filter_eligible(operation, attempts)
+      def filter_eligible(operation, attempts, explanation)
         results = @hard_filter_engine.call_all(
           providers: rated_providers, operation: operation, actuals_by_provider: @state.actuals_by_provider
         )
 
         eligible = []
         results.each do |provider, result|
+          explanation["eligibility"] << {
+            "provider" => provider.payment_system, "is_eligible" => result.eligible?,
+            "reasons" => result.reasons, "details" => result.details
+          }
           if result.eligible?
             eligible << provider
           else
-            # Одна попытка на провайдера (первая сработавшая причина), не одна
-            # на причину: так требует формат ответа в ТЗ (один "reason" на
-            # attempt) и первичный ключ eligible_providers (operation_id,
-            # payment_system_id) - без него вторая причина того же провайдера
-            # конфликтовала бы при записи через DatabaseWriter#log_operations.
-            # Все причины при этом никуда не теряются на уровне HardFilter -
-            # HardFilter::Result#reasons по-прежнему хранит их все, см. тесты.
-            attempts << Attempt.new(provider: provider.payment_system, decision: "skipped", reason: result.reasons.first)
+            attempts << Attempt.new(provider: provider.payment_system, decision: "skipped", reason: result.reasons.first,
+                                    details: result.details.merge("reasons" => result.reasons))
           end
         end
         eligible
       end
 
-      def attempt_ranked_candidates(eligible, operation, attempts)
-        ranked = ranked_candidates(eligible, operation)
+      def attempt_ranked_candidates(eligible, operation, attempts, explanation)
+        ranked = ranked_candidates(eligible, operation, explanation)
 
         ranked.each do |provider|
-          @provider_client.attempt(provider: provider, operation: operation)
+          @metrics_updater.start_attempt(state: @state, provider: provider, operation: operation)
+          begin
+            @provider_client.attempt(provider: provider, operation: operation)
+          ensure
+            @metrics_updater.finish_attempt(state: @state, provider: provider, operation: operation)
+          end
           reason = ranked.size == 1 ? ONLY_ELIGIBLE_PROVIDER_REASON : HIGHEST_SCORE_REASON
-          attempts << Attempt.new(provider: provider.payment_system, decision: "selected", reason: reason)
+          attempts << Attempt.new(provider: provider.payment_system, decision: "selected", reason: reason,
+                                  dispatched_at: @state.time,
+                                  details: explanation["ranking"].find { |row| row["provider"] == provider.payment_system })
           return provider
         rescue ProviderClient::UnavailableError
-          attempts << Attempt.new(provider: provider.payment_system, decision: "skipped", reason: PROVIDER_UNAVAILABLE_REASON)
+          attempts << Attempt.new(provider: provider.payment_system, decision: "skipped", reason: PROVIDER_UNAVAILABLE_REASON,
+                                  dispatched_at: @state.time, details: { "result" => "provider unavailable during dispatch" })
         end
         nil
       end
 
-      def ranked_candidates(eligible, operation)
+      def ranked_candidates(eligible, operation, explanation)
         weights_and_gamma = @weight_calculator.call(active_keys: @active_strategies)
         calculator = Rating::ProviderScoreCalculator.new(weights: weights_and_gamma[:weights], gamma: weights_and_gamma[:gamma])
-        calculator.rank(providers: eligible, actuals_by_provider: @state.actuals_by_provider, operation: operation).map(&:provider)
+        ranked = calculator.rank(providers: eligible, actuals_by_provider: @state.actuals_by_provider, operation: operation)
+        explanation.merge!(
+          "active_strategies" => @active_strategies.map(&:to_s),
+          "weights" => weights_and_gamma[:weights].transform_keys(&:to_s), "gamma" => weights_and_gamma[:gamma],
+          "selection_policy" => "descending weighted score times load factor; ties follow rated_providers order",
+          "ranking" => ranked.map { |row| { "provider" => row.provider.payment_system, "score" => row.score,
+                                           "norms" => row.breakdown.transform_keys(&:to_s), "load_factor" => row.load_factor } }
+        )
+        ranked.map(&:provider)
       end
 
       def fallback!(attempts, reason)
@@ -100,7 +117,13 @@ module PaymentRouting
         fallback_provider
       end
 
-      def finalize(operation, selected, attempts)
+      def finalize(operation, selected, attempts, explanation)
+        # Fallback keeps its existing selection policy; only accounting is shared.
+        if selected.payment_system == @fallback_payment_system
+          @state.record_request(selected.payment_system)
+          attempts.last.dispatched_at = @state.time
+          attempts.last.details = { "selection" => attempts.last.reason }
+        end
         simulated_result = @outcome_simulator.simulate(provider: selected, operation: operation)
         @metrics_updater.apply(
           state: @state, provider: selected, operation: operation, simulated_result: simulated_result,
@@ -112,7 +135,8 @@ module PaymentRouting
           selected_provider: selected.payment_system,
           attempts: attempts,
           simulated_result: simulated_result,
-          latency_sec: selected.avg_latency_sec || 0
+          latency_sec: selected.avg_latency_sec || 0,
+          explanation: explanation
         )
       end
     end

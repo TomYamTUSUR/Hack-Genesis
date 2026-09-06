@@ -25,7 +25,7 @@ module PaymentRouting
                 # avg_latency_sec - только для Router (latency_sec в итоговом решении).
                 # Опциональный (default nil), чтобы не ломать существующие вызовы
                 # Provider.new (ProviderRegistry передаёт реальное значение).
-                :avg_latency_sec
+                :avg_latency_sec, :daily_approved_date, :daily_utc_offset
 
     def initialize(payment_system:, priority:, conversion_24h:, traffic_percentage:,
                    volume_share_pct:, preferred_range:, requests_per_minute_limit:,
@@ -35,7 +35,7 @@ module PaymentRouting
                    daily_amount_limit:, daily_approved_amount:,
                    available_requisites:, banks:, exclude_banks:,
                    provider_margin_pct:, merchant_margin_pct:, allow_negative_agreement:,
-                   daily_turnover_max:, avg_latency_sec: nil)
+                   daily_turnover_max:, avg_latency_sec: nil, daily_approved_date: nil, daily_utc_offset: 0)
       @payment_system = payment_system
       @priority = priority
       @conversion_24h = conversion_24h
@@ -61,6 +61,8 @@ module PaymentRouting
       @allow_negative_agreement = allow_negative_agreement
       @daily_turnover_max = daily_turnover_max
       @avg_latency_sec = avg_latency_sec
+      @daily_approved_date = daily_approved_date
+      @daily_utc_offset = daily_utc_offset || 0
     end
 
     # Иммутабельное обновление: возвращает новый Provider с указанными полями
@@ -84,7 +86,7 @@ module PaymentRouting
         available_requisites: available_requisites, banks: banks, exclude_banks: exclude_banks,
         provider_margin_pct: provider_margin_pct, merchant_margin_pct: merchant_margin_pct,
         allow_negative_agreement: allow_negative_agreement, daily_turnover_max: daily_turnover_max,
-        avg_latency_sec: avg_latency_sec
+        avg_latency_sec: avg_latency_sec, daily_approved_date: daily_approved_date, daily_utc_offset: daily_utc_offset
       }
     end
   end

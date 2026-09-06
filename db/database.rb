@@ -12,7 +12,7 @@ module PaymentRouting
 
     # path: nil -> in-memory БД (используется тестами импортёров).
     def self.connect(path = DEFAULT_PATH)
-      path.nil? ? Sequel.sqlite : Sequel.sqlite(path)
+      path.nil? ? Sequel.sqlite : Sequel.sqlite(path, timeout: 5_000)
     end
 
     def self.create_schema!(db)
@@ -163,7 +163,25 @@ module PaymentRouting
         String :reason, text: true
       end
 
+      upgrade_schema!(db)
       db
+    end
+
+    # Additive migration: existing data and the order of original columns remain intact.
+    def self.upgrade_schema!(db)
+      additions = {
+        providers: { daily_approved_date: String, daily_utc_offset: Integer },
+        routing_decisions: { explanation: String },
+        routing_attempts: { details: String, dispatched_at: DateTime }
+      }
+      db.transaction do
+        additions.each do |table, fields|
+          columns = db.schema(table).map(&:first)
+          fields.each do |name, type|
+            db.alter_table(table) { add_column name, type } unless columns.include?(name)
+          end
+        end
+      end
     end
   end
 end

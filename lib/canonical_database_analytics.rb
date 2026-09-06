@@ -13,6 +13,12 @@ module RoutingAnalytics
       stats_calculated_at stats_window_sec
     ].freeze
 
+    ROUTING_COLUMNS = {
+      'providers' => %w[daily_approved_date daily_utc_offset],
+      'routing_decisions' => %w[explanation],
+      'routing_attempts' => %w[details dispatched_at]
+    }.freeze
+
     TABLE_COLUMNS = {
       'operations_queue' => %w[
         operation_id created_at amount bank card_brand
@@ -162,7 +168,7 @@ module RoutingAnalytics
 
       TABLE_COLUMNS.each do |table, expected_columns|
         actual_columns = rows("PRAGMA table_info(#{table})").map { |row| row['name'] }
-        optional_columns = table == 'providers' ? PROVIDER_STATS_COLUMNS : []
+        optional_columns = (table == 'providers' ? PROVIDER_STATS_COLUMNS : []) + ROUTING_COLUMNS.fetch(table, [])
         unless actual_columns.reject { |column| optional_columns.include?(column) } == expected_columns
           missing = expected_columns - actual_columns
           unexpected = actual_columns - expected_columns - optional_columns
@@ -217,7 +223,7 @@ module RoutingAnalytics
     def routing_events
       attempts_by_operation = attempts.group_by { |attempt| attempt['operation_id'] }
       rows(<<~SQL).map do |row|
-        SELECT d.operation_id, d.created_at AS decision_created_at,
+        SELECT d.*, d.created_at AS decision_created_at,
                d.simulated_result, d.latency_sec,
                selected.payment_system AS selected_provider,
                COALESCE(q.created_at, h.created_at, d.created_at) AS operation_created_at,
@@ -247,7 +253,8 @@ module RoutingAnalytics
             'selected_provider' => row['selected_provider'],
             'attempts' => attempts_by_operation.fetch(row['operation_id'], []),
             'simulated_result' => row['simulated_result'],
-            'latency_sec' => row['latency_sec']
+            'latency_sec' => row['latency_sec'],
+            'explanation' => row['explanation'] && JSON.parse(row['explanation'])
           }
         }
       end
@@ -255,8 +262,7 @@ module RoutingAnalytics
 
     def attempts
       normalized = rows(<<~SQL).map do |row|
-        SELECT a.operation_id, p.payment_system AS provider, a.decision, a.reason,
-               a.attempt_number
+        SELECT a.*, p.payment_system AS provider
         FROM routing_attempts a
         LEFT JOIN providers p ON p.payment_system_id = a.payment_system_id
         ORDER BY a.operation_id, a.attempt_number
@@ -266,7 +272,9 @@ module RoutingAnalytics
           'provider' => row['provider'],
           'decision' => row['decision'],
           'reason' => row['reason'],
-          'attempt_number' => row['attempt_number']
+          'attempt_number' => row['attempt_number'],
+          'details' => row['details'] && JSON.parse(row['details']),
+          'dispatched_at' => row['dispatched_at']
         }
       end
 
@@ -404,7 +412,7 @@ module RoutingAnalytics
       ['10000_50000', 10_000, 50_000], ['50000_100000', 50_000, 100_000],
       ['100000_plus', 100_000, nil]
     ].freeze
-    FAILURE_REASONS = %w[provider_timeout provider_rejected provider_expired payout_failed].freeze
+    FAILURE_REASONS = %w[provider_timeout provider_rejected provider_expired payout_failed provider_unavailable].freeze
     FALLBACK_REASONS = %w[
       fallback fallback_candidate fallback_selected self_provider_fallback
       fallback_to_self_provider fallback_to_spacepayments
@@ -430,6 +438,7 @@ module RoutingAnalytics
         'segments' => segments,
         'period_comparison' => period_comparison,
         'skip_reason_sources' => skip_reason_sources,
+        'routing_explanations' => @decisions.to_h { |row| [row['operation_id'], row['explanation'] && JSON.parse(row['explanation'])] },
         'freshness' => freshness
       }
     end

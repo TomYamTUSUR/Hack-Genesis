@@ -5,6 +5,7 @@ require 'fileutils'
 require 'json'
 require 'sqlite3'
 require 'time'
+require_relative '../db/database'
 
 module RoutingAnalytics
   class Error < StandardError; end
@@ -215,15 +216,14 @@ module RoutingAnalytics
 
     def routing_events
       attempts = rows(<<~SQL).group_by { |row| row['operation_id'] }
-        SELECT a.operation_id, p.payment_system AS provider, a.decision, a.reason,
-               a.attempt_number
+        SELECT a.*, p.payment_system AS provider
         FROM routing_attempts a
         LEFT JOIN providers p ON p.payment_system_id = a.payment_system_id
         ORDER BY a.operation_id, a.attempt_number
       SQL
 
       rows(<<~SQL).map do |row|
-        SELECT d.operation_id, d.created_at AS decision_created_at,
+        SELECT d.*, d.created_at AS decision_created_at,
                d.simulated_result, d.latency_sec,
                selected.payment_system AS selected_provider,
                COALESCE(h.created_at, q.created_at, d.created_at) AS operation_created_at,
@@ -255,11 +255,14 @@ module RoutingAnalytics
               {
                 'provider' => attempt['provider'],
                 'decision' => attempt['decision'],
-                'reason' => attempt['reason']
+                'reason' => attempt['reason'],
+                'details' => attempt['details'] && JSON.parse(attempt['details']),
+                'dispatched_at' => attempt['dispatched_at']
               }
             end,
             'simulated_result' => row['simulated_result'],
-            'latency_sec' => row['latency_sec']
+            'latency_sec' => row['latency_sec'],
+            'explanation' => row['explanation'] && JSON.parse(row['explanation'])
           }
         }
       end
@@ -326,89 +329,100 @@ module RoutingAnalytics
   # Writes routing results into an already-seeded database (see
   # PaymentRouting::Importers for seeding providers/history/queue from data/*).
   class DatabaseWriter < DatabaseBase
-    def initialize(path, protected_roots: [])
+    def initialize(path, protected_roots: [], db: nil)
       @path = File.expand_path(path)
       PathGuard.ensure_writable!(@path, protected_roots)
-      raise Error, "database does not exist: #{@path}" unless File.file?(@path)
+      raise Error, "database does not exist: #{@path}" unless db || File.file?(@path)
 
-      @database = SQLite3::Database.new(@path)
-      @database.results_as_hash = true
-      @database.busy_timeout = 5_000
-      @database.execute('PRAGMA foreign_keys = ON')
+      @owns_db = db.nil?
+      @db = db || PaymentRouting::Db.connect(@path)
       validate_schema!
-    rescue SQLite3::Exception => e
+      PaymentRouting::Db.upgrade_schema!(@db)
+    rescue Sequel::DatabaseError => e
       close
       raise Error, "unable to open database #{@path}: #{e.message}"
     end
 
+    def close
+      @db&.disconnect if @owns_db
+    end
+
+    # Passing the Router's Sequel connection joins its transaction, so decisions,
+    # history and provider state commit or roll back together.
     def log_operations(operations:, decisions:, logged_at: Time.now)
       validate_pairs!(operations, decisions)
       decisions_by_id = decisions.to_h { |decision| [decision['operation_id'], decision] }
+      logged_at = logged_at.iso8601(6)
 
-      @database.transaction do
+      @db.transaction do
         operations.each do |operation|
           decision = decisions_by_id.fetch(operation['operation_id'])
           operation_id = required!(operation, 'operation_id')
           provider_id = provider_id!(decision['selected_provider'])
-          created_at = operation['created_at'] || logged_at.iso8601
+          queued = @db[:operations_queue].where(operation_id: operation_id).first || {}
+          created_at = operation['created_at'] || queued[:created_at] || logged_at
+          created_at = created_at.iso8601(6) if created_at.respond_to?(:iso8601)
           status = decision['simulated_result'] || 'unknown'
 
-          upsert('operations_history', {
-            'operation_id' => operation_id,
-            'created_at' => created_at,
-            'amount' => required!(operation, 'amount'),
-            'bank' => required!(operation, 'bank'),
-            'card_brand' => operation['card_brand'],
-            'payment_system_id' => provider_id,
-            'status' => status,
-            'latency_sec' => decision['latency_sec']
-          }, %w[operation_id])
-          upsert('routing_decisions', {
-            'operation_id' => operation_id,
-            'selected_payment_system_id' => provider_id,
-            'simulated_result' => status,
-            'latency_sec' => decision['latency_sec'],
-            'created_at' => logged_at.iso8601
-          }, %w[operation_id])
+          upsert(:operations_history, {
+            operation_id: operation_id, created_at: created_at,
+            amount: required!(operation, 'amount'), bank: required!(operation, 'bank'),
+            card_brand: operation.key?('card_brand') ? operation['card_brand'] : queued[:card_brand],
+            payment_system_id: provider_id, status: status, latency_sec: decision['latency_sec']
+          }, [:operation_id])
+          upsert(:routing_decisions, {
+            operation_id: operation_id, selected_payment_system_id: provider_id,
+            simulated_result: status, latency_sec: decision['latency_sec'], created_at: logged_at,
+            explanation: decision['explanation'] && JSON.generate(decision['explanation'])
+          }, [:operation_id])
 
-          %w[routing_attempts eligible_providers provider_skip_reasons].each do |table|
-            @database.execute("DELETE FROM #{table} WHERE operation_id = ?", operation_id)
+          %i[routing_attempts eligible_providers provider_skip_reasons].each do |table|
+            @db[table].where(operation_id: operation_id).delete
           end
           decision['attempts'].each_with_index do |attempt, index|
             attempt_provider_id = provider_id!(attempt['provider'])
-            attempt_number = index + 1
-            @database.execute(<<~SQL, [operation_id, attempt_provider_id, attempt_number, attempt['decision'], attempt['reason'], logged_at.iso8601])
-              INSERT INTO routing_attempts
-                (operation_id, payment_system_id, attempt_number, decision, reason, created_at)
-              VALUES (?, ?, ?, ?, ?, ?)
-            SQL
-            @database.execute(<<~SQL, [operation_id, attempt_provider_id, attempt['decision'] == 'skipped' ? 0 : 1, logged_at.iso8601])
-              INSERT INTO eligible_providers
-                (operation_id, payment_system_id, is_eligible, checked_at)
-              VALUES (?, ?, ?, ?)
-            SQL
-            next unless attempt['decision'] == 'skipped'
-
-            @database.execute(<<~SQL, [operation_id, attempt_provider_id, attempt['reason'] || 'unknown', logged_at.iso8601])
-              INSERT INTO provider_skip_reasons
-                (operation_id, payment_system_id, reason, created_at)
-              VALUES (?, ?, ?, ?)
-            SQL
+            @db[:routing_attempts].insert(
+              operation_id: operation_id, payment_system_id: attempt_provider_id,
+              attempt_number: index + 1, decision: attempt['decision'], reason: attempt['reason'],
+              details: attempt['details'] && JSON.generate(attempt['details']),
+              dispatched_at: attempt['dispatched_at'], created_at: logged_at
+            )
+            store_skip(operation_id, attempt_provider_id, attempt['reason'] || 'unknown', logged_at) if attempt['decision'] == 'skipped'
           end
-          # operations_queue не чистится: routing_decisions/eligible_providers/
-          # provider_skip_reasons ссылаются на operation_id (см. ER-диаграмму) -
-          # удаление строки сломало бы эти FK. "Обработана" операция или нет,
-          # Analyzer определяет наличием записи в operations_history/routing_decisions
-          # (см. Analyzer#unprocessed_pending_operations), а не тем, осталась ли
-          # она физически в operations_queue.
+          # Legacy JSON without a filter trace has unknown eligibility. Dispatch
+          # outcomes must not manufacture results of checks that were not logged.
+          (decision.dig('explanation', 'eligibility') || []).each do |check|
+            id = provider_id!(check.fetch('provider'))
+            @db[:eligible_providers].insert(
+              operation_id: operation_id, payment_system_id: id,
+              is_eligible: check.fetch('is_eligible'), checked_at: logged_at
+            )
+            check.fetch('reasons', []).each { |reason| store_skip(operation_id, id, reason, logged_at) }
+          end
+          # Queue rows remain for foreign keys; OperationQueueLoader excludes
+          # IDs with history or decisions before dispatching them again.
         end
       end
       operations.length
-    rescue SQLite3::Exception => e
+    rescue Sequel::DatabaseError => e
       raise Error, "operation logging failed: #{e.message}"
     end
 
     private
+
+    def rows(sql, bindings = [])
+      @db.fetch(sql, *bindings).all.map { |row| row.transform_keys(&:to_s) }
+    end
+
+    def first_value(sql, bindings = [])
+      @db.fetch(sql, *bindings).single_value
+    end
+
+    def store_skip(operation_id, provider_id, reason, logged_at)
+      @db[:provider_skip_reasons].insert_conflict.insert(
+        operation_id: operation_id, payment_system_id: provider_id, reason: reason, created_at: logged_at
+      )
+    end
 
     def validate_pairs!(operations, decisions)
       operation_ids = operations.map { |operation| operation['operation_id'] }
@@ -421,7 +435,6 @@ module RoutingAnalytics
       unless missing.empty? && extra.empty?
         raise Error, "operation/decision mismatch; missing=#{missing.join(',')} extra=#{extra.join(',')}"
       end
-
       decisions.each do |decision|
         raise Error, 'routing decision must contain selected_provider' unless decision['selected_provider']
         raise Error, 'routing decision attempts must be an array' unless decision['attempts'].is_a?(Array)
@@ -429,7 +442,7 @@ module RoutingAnalytics
     end
 
     def provider_id!(payment_system)
-      id = first_value('SELECT payment_system_id FROM providers WHERE payment_system = ?', [payment_system])
+      id = @db[:providers].where(payment_system: payment_system).get(:payment_system_id)
       raise Error, "unknown provider: #{payment_system.inspect}" unless id
 
       id
@@ -443,15 +456,8 @@ module RoutingAnalytics
     end
 
     def upsert(table, values, conflict_columns)
-      columns = values.keys
-      updates = columns.reject { |column| conflict_columns.include?(column) }
-      sql = <<~SQL
-        INSERT INTO #{table} (#{columns.join(', ')})
-        VALUES (#{(['?'] * columns.length).join(', ')})
-        ON CONFLICT (#{conflict_columns.join(', ')}) DO UPDATE SET
-          #{updates.map { |column| "#{column} = excluded.#{column}" }.join(', ')}
-      SQL
-      @database.execute(sql, values.values)
+      updates = values.reject { |key, _| conflict_columns.include?(key) }
+      @db[table].insert_conflict(target: conflict_columns, update: updates).insert(values)
     end
   end
 

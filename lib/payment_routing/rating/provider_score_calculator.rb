@@ -2,7 +2,7 @@ module PaymentRouting
   module Rating
     # Результат ранжирования одного провайдера: итоговый Score и разбивка по
     # нормам (пригодится для объяснимости решения - attempts/details).
-    ScoreResult = Struct.new(:provider, :score, :breakdown, keyword_init: true)
+    ScoreResult = Struct.new(:provider, :score, :breakdown, :load_factor, keyword_init: true)
 
     # Блок распределения рейтинга: Score(p) = 100 * Σ(w_i * norm_i(p)) * LoadFactor(p)^gamma.
     # Ничего не знает про то, откуда взялись weights/gamma (это StrategyWeightCalculator).
@@ -35,7 +35,8 @@ module PaymentRouting
         utilization = @load_factor_calculator.utilization(provider: provider, actuals: pool.actuals_for(provider))
         load_factor = @load_factor_calculator.load_factor(utilization: utilization, gamma: @gamma)
 
-        ScoreResult.new(provider: provider, score: Constants::SCORE_SCALE * weighted_sum * load_factor, breakdown: breakdown)
+        ScoreResult.new(provider: provider, score: Constants::SCORE_SCALE * weighted_sum * load_factor,
+                        breakdown: breakdown, load_factor: load_factor)
       end
 
       def default_norms

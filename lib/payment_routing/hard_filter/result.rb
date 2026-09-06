@@ -6,10 +6,11 @@ module PaymentRouting
     # db/database.rb), чтобы было видно все причины исключения сразу, а не
     # только первую попавшуюся.
     class Result
-      attr_reader :reasons
+      attr_reader :reasons, :details
 
-      def initialize(reasons:)
+      def initialize(reasons:, details: {})
         @reasons = reasons
+        @details = details
       end
 
       def eligible?

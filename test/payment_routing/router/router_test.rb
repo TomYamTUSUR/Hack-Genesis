@@ -86,7 +86,8 @@ module PaymentRouting
 
         router.route(@operation)
 
-        assert_equal before + 1, state.provider("vipay").in_progress_count
+        assert_equal before, state.provider("vipay").in_progress_count
+        assert_equal @operation.amount, state.provider("vipay").daily_approved_amount
       end
 
       private

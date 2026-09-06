@@ -23,11 +23,11 @@ module PaymentRouting
       end
 
       def min_conversion
-        @min_conversion ||= @providers.map(&:conversion_24h).min
+        @min_conversion ||= @providers.filter_map(&:conversion_24h).min
       end
 
       def max_conversion
-        @max_conversion ||= @providers.map(&:conversion_24h).max
+        @max_conversion ||= @providers.filter_map(&:conversion_24h).max
       end
     end
   end

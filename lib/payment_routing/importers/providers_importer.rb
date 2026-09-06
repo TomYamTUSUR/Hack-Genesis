@@ -1,4 +1,5 @@
 require "json"
+require "time"
 
 module PaymentRouting
   module Importers
@@ -13,7 +14,9 @@ module PaymentRouting
       end
 
       def import
-        raw_providers = JSON.parse(File.read(@providers_file))["providers"]
+        source = JSON.parse(File.read(@providers_file))
+        @snapshot_at = source["snapshot_at"] && Time.parse(source["snapshot_at"])
+        raw_providers = source["providers"]
         raw_providers.each { |raw| Upsert.by_key(@db[:providers], :payment_system, raw["payment_system"], attrs_for(raw)) }
         raw_providers.size
       end
@@ -30,6 +33,8 @@ module PaymentRouting
           limit_amount_max: raw["limit_amount_max"],
           daily_amount_limit: raw["daily_amount_limit"],
           daily_approved_amount: raw["daily_approved_amount"],
+          daily_approved_date: @snapshot_at&.strftime("%Y-%m-%d"),
+          daily_utc_offset: @snapshot_at&.utc_offset || 0,
           in_progress_count_limit: raw["in_progress_count_limit"],
           in_progress_count: raw["in_progress_count"],
           in_progress_amount_limit: raw["in_progress_amount_limit"],

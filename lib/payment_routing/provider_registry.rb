@@ -44,7 +44,8 @@ module PaymentRouting
         merchant_margin_pct: row[:merchant_margin_pct],
         allow_negative_agreement: row[:allow_negative_agreement],
         daily_turnover_max: row[:daily_turnover_max],
-        avg_latency_sec: row[:avg_latency_sec]
+        avg_latency_sec: row[:avg_latency_sec],
+        daily_approved_date: row[:daily_approved_date], daily_utc_offset: row[:daily_utc_offset]
       )
     end
 

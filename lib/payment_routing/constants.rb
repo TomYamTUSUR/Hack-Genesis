@@ -19,6 +19,7 @@ module PaymentRouting
     # Границы, в которые клиппится нормированный компонент рейтинга.
     NORM_MIN = 0.0
     NORM_MAX = 1.0
+    NEUTRAL_NORM = 0.5
 
     # Границы, в которые клиппится относительное отклонение (rd) до перевода в norm.
     RELATIVE_DEVIATION_MIN = -1.0

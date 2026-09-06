@@ -24,7 +24,16 @@ module PaymentRouting
 
       def call(provider:, operation:, actuals:)
         reasons = @rules.filter_map { |rule| rule.call(provider: provider, operation: operation, actuals: actuals) }
-        Result.new(reasons: reasons)
+        fields = %i[status limit_amount_min limit_amount_max daily_amount_limit daily_approved_amount
+                    in_progress_count in_progress_count_limit in_progress_amount in_progress_amount_limit
+                    banks exclude_banks available_requisites provider_margin_pct merchant_margin_pct
+                    allow_negative_agreement requests_per_minute_limit daily_turnover_max]
+        details = {
+          "operation" => { "amount" => operation.amount, "bank" => operation.bank },
+          "provider" => fields.to_h { |field| [field.to_s, provider.public_send(field)] },
+          "actuals" => { "rpm_used" => actuals.rpm_used, "turnover_actual" => actuals.turnover_actual }
+        }
+        Result.new(reasons: reasons, details: details)
       end
 
       # providers: [Provider]; actuals_by_provider: Hash{String (payment_system) => ProviderActuals}

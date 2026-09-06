@@ -14,15 +14,16 @@ module PaymentRouting
   # turnover_actual — в тех же единицах, что и Provider#daily_turnover_min (рубли).
   # rpm_used — число заявок провайдеру за последнюю минуту истории (любого статуса).
   class ProviderActuals
-    attr_reader :count_share_actual, :volume_share_actual, :count_actual, :volume_actual, :turnover_actual, :rpm_used
+    attr_reader :count_share_actual, :volume_share_actual, :count_actual, :volume_actual, :turnover_actual, :rpm_used, :request_times
 
-    def initialize(count_share_actual:, volume_share_actual:, count_actual:, volume_actual:, turnover_actual:, rpm_used:)
+    def initialize(count_share_actual:, volume_share_actual:, count_actual:, volume_actual:, turnover_actual:, rpm_used:, request_times: nil)
       @count_share_actual = count_share_actual
       @volume_share_actual = volume_share_actual
       @count_actual = count_actual
       @volume_actual = volume_actual
       @turnover_actual = turnover_actual
       @rpm_used = rpm_used
+      @request_times = request_times
     end
 
     # См. Provider#with - тот же приём для Router::MetricsUpdater.
@@ -34,7 +35,7 @@ module PaymentRouting
       {
         count_share_actual: count_share_actual, volume_share_actual: volume_share_actual,
         count_actual: count_actual, volume_actual: volume_actual,
-        turnover_actual: turnover_actual, rpm_used: rpm_used
+        turnover_actual: turnover_actual, rpm_used: rpm_used, request_times: request_times
       }
     end
   end

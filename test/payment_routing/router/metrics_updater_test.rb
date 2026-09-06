@@ -19,12 +19,12 @@ module PaymentRouting
         )
       end
 
-      def test_in_progress_always_increments
+      def test_terminal_outcome_does_not_add_in_progress_work
         apply("rejected")
 
         updated = @state.provider("vipay")
-        assert_equal 3, updated.in_progress_count
-        assert_equal 60_000, updated.in_progress_amount
+        assert_equal 2, updated.in_progress_count
+        assert_equal 50_000, updated.in_progress_amount
       end
 
       def test_daily_approved_amount_and_turnover_only_increment_when_approved
@@ -70,13 +70,13 @@ module PaymentRouting
         assert_equal 42, @state.actuals("vipay").count_share_actual
       end
 
-      def test_shares_are_not_recalculated_for_the_fallback_provider
+      def test_shares_include_approved_fallback_operations
         @state.replace_actuals("vipay", actuals(count_share_actual: 42, volume_share_actual: 42))
         @rated_payment_systems = []
 
         apply("approved")
 
-        assert_equal 42, @state.actuals("vipay").count_share_actual
+        assert_equal 100, @state.actuals("vipay").count_share_actual
       end
     end
   end

@@ -21,7 +21,7 @@ module PaymentRouting
 
       assert actuals.key?("quickpay")
       assert_equal 0.0, actuals["quickpay"].count_share_actual
-      assert_equal 0.0, actuals["quickpay"].turnover_actual
+      assert_equal 1_100_000, actuals["quickpay"].turnover_actual
     end
 
     def test_count_and_volume_shares_across_providers_sum_to_roughly_a_hundred_percent

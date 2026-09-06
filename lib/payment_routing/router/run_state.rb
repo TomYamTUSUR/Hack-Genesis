@@ -7,6 +7,8 @@ module PaymentRouting
     # мутирует существующие - так следующая операция в этой же очереди видит
     # уже изменившуюся картину, а не статичный снимок на начало прогона.
     class RunState
+      attr_reader :time
+
       def initialize(providers:, actuals_by_provider:)
         @providers_by_name = providers.to_h { |provider| [provider.payment_system, provider] }
         @actuals_by_name = actuals_by_provider.dup
@@ -34,6 +36,37 @@ module PaymentRouting
 
       def replace_actuals(payment_system, actuals)
         @actuals_by_name[payment_system] = actuals
+      end
+
+      # Очередь симулируется по created_at; часовой пояс дневного счётчика
+      # берётся из исходного снимка провайдера и не зависит от часов машины.
+      def advance_to(time)
+        raise ArgumentError, "operation time moved backwards" if @time && time < @time
+
+        @time = time
+        providers.each do |provider|
+          day = time.getlocal(provider.daily_utc_offset).strftime("%Y-%m-%d")
+          previous_day = provider.daily_approved_date
+          if previous_day && day < previous_day
+            raise ArgumentError, "operation precedes daily snapshot for #{provider.payment_system}"
+          end
+          amount = previous_day && day > previous_day ? 0 : provider.daily_approved_amount.to_f
+          replace_provider(provider.with(daily_approved_date: day, daily_approved_amount: amount))
+          current = actuals(provider.payment_system)
+          replace_actuals(provider.payment_system, current.with(turnover_actual: amount))
+        end
+        @actuals_by_name.keys.each do |name|
+          current = actuals(name)
+          times = current.request_times || Array.new(current.rpm_used.to_i, time)
+          times = times.select { |at| at > time - Constants::RPM_WINDOW_SECONDS }
+          replace_actuals(name, current.with(request_times: times, rpm_used: times.count { |at| at <= time }))
+        end
+      end
+
+      def record_request(payment_system)
+        current = actuals(payment_system)
+        times = (current.request_times || []) + [time]
+        replace_actuals(payment_system, current.with(request_times: times, rpm_used: current.rpm_used + 1))
       end
     end
   end

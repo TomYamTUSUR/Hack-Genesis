@@ -19,7 +19,7 @@ module PaymentRouting
           p = provider(daily_turnover_min: nil)
           pool = rating_pool(p => actuals(turnover_actual: 0))
 
-          assert_equal 1.0, TurnoverNorm.new.call(provider: p, operation: operation, pool: pool)
+          assert_equal 0.5, TurnoverNorm.new.call(provider: p, operation: operation, pool: pool)
         end
       end
     end
