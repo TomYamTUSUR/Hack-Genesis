@@ -9,7 +9,7 @@ providers:
   payflow:
     preferred_range_min: 500
     preferred_range_max: 50000
-    volume_share_pct: 70.0
+    volume_share_pct: 65.0
     requests_per_minute_limit: 15
     daily_turnover_min: 2000000
   quickpay:

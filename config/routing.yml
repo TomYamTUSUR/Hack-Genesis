@@ -12,6 +12,7 @@ strategies_file: config/strategies.yml
 active_strategies:
   - count_share
   - volume_share
+  - priority
 
 # Все активные провайдеры
 
