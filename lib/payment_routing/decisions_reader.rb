@@ -1,11 +1,4 @@
 module PaymentRouting
-  # Восстанавливает итоговый JSON решений (формат из ТЗ - operation_id,
-  # selected_provider, attempts[], simulated_result, latency_sec) из БД
-  # (routing_decisions + routing_attempts), а не из Router'а в памяти.
-  # Тот же принцип, что и у RoutingAnalytics::CanonicalDatabaseAnalytics для
-  # routing_report_test.json: bin/route.rb только считает и пишет в БД через
-  # RoutingAnalytics::DatabaseWriter#log_operations, а этот класс - единственный
-  # путь превратить содержимое БД обратно в JSON нужного формата.
   class DecisionsReader
     def initialize(db:)
       @db = db
@@ -44,8 +37,6 @@ module PaymentRouting
         .to_hash(:operation_id)
     end
 
-    # attempt_number хранит исходный порядок попыток Router'а - без него
-    # порядок строк из БД не гарантирован.
     def attempts_by_operation_id
       @db[:routing_attempts]
         .join(:providers, payment_system_id: :payment_system_id)

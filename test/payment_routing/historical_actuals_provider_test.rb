@@ -34,11 +34,9 @@ module PaymentRouting
       vipay_id = @db[:providers].where(payment_system: "vipay").first[:payment_system_id]
       payflow_id = @db[:providers].where(payment_system: "payflow").first[:payment_system_id]
 
-      # Последняя операция в истории задаёт "текущее" время окна - 12:00:00.
       insert_history(id: "op_1", provider_id: vipay_id, at: "2026-07-30T11:59:10+03:00", status: "approved")
       insert_history(id: "op_2", provider_id: vipay_id, at: "2026-07-30T11:59:30+03:00", status: "rejected")
       insert_history(id: "op_3", provider_id: payflow_id, at: "2026-07-30T11:59:50+03:00", status: "expired")
-      # За пределами минутного окна (ровно 61 секунда до последней операции) - не должна учитываться.
       insert_history(id: "op_old", provider_id: vipay_id, at: "2026-07-30T11:58:59+03:00", status: "approved")
       insert_history(id: "op_latest", provider_id: payflow_id, at: "2026-07-30T12:00:00+03:00", status: "approved")
 

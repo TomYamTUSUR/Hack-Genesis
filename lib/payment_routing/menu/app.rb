@@ -5,17 +5,8 @@ require_relative "data_manager"
 
 module PaymentRouting
   module Menu
-    # Интерактивное консольное меню поверх уже существующего движка - ничего
-    # нового не считает, только вызывает готовые классы (RoutingRun,
-    # CanonicalDatabaseAnalytics, Importers, YamlEditor) и показывает их
-    # результат. Каждый экран - метод, читающий одну строку ввода за раз:
-    # пустой ввод возвращает на экран выше (кроме главного меню - там no-op),
-    # успешное действие (переключение/ввод значения) показывает сообщение и
-    # возвращает на экран, с которого его вызвали (см. README/задание).
+    # Интерактивное консольное меню
     class App
-      # provider fields: label -> {key: колонка в providers, cast: приведение ввода,
-      # percentage: значение не может превышать 100 (в дополнение к общему запрету
-      # отрицательных чисел, который действует на все поля)
       PROVIDER_FIELDS = [
         { key: :preferred_range_min, cast: :integer },
         { key: :preferred_range_max, cast: :integer },
@@ -25,9 +16,6 @@ module PaymentRouting
         { key: :daily_turnover_max, cast: :integer }
       ].freeze
 
-      # Слово для сброса поля в "not set" на промпте ввода значения - не
-      # пустая строка (та уже означает "назад/отмена" во всём меню) и не "0"
-      # (легитимное значение для некоторых полей, например requests_per_minute_limit).
       CLEAR_KEYWORD = "clear"
 
       def initialize(database_path: Db::DEFAULT_PATH, config: RoutingConfig.new)
@@ -72,10 +60,6 @@ module PaymentRouting
 
       # ------------------------------------------------------------ 1. route
 
-      # Route -> routing_decisions_test.json -> routing_report_test.json
-      # (свой пункт меню для отчёта не нужен - формируется сразу тем же
-      # действием) -> если включён Clear mode, БД возвращается к исходным
-      # данным (data/* + business_parameters.yml), как будто прогона не было.
       def start_route
         missing = start_route_blockers
         unless missing.empty?
@@ -205,8 +189,6 @@ module PaymentRouting
 
       def provider_metrics_menu
         loop do
-          # self-provider (fallback) не рейтингуется и не пользуется этими
-          # полями (см. config/routing.yml#fallback_provider) - в настройке ему делать нечего.
           names = @db[:providers].order(:payment_system).select_map(:payment_system) - [@config.fallback_provider]
           if names.empty?
             finish_with_message(["No providers in the database - load data first (item 3 - Data)"])
@@ -227,12 +209,6 @@ module PaymentRouting
       end
 
       def provider_fields_menu(payment_system)
-        # Перед показом значений - подтягиваем business_parameters.yml в БД
-        # заново. Один вызов при старте App недостаточен: если providers
-        # загрузили уже ПОСЛЕ старта меню (через "Data"), тот единственный
-        # вызов ничего не находил (providers были ещё пусты) и не повторялся,
-        # поэтому здесь показывалось (not set) до первого ручного
-        # редактирования поля (оно само вызывает импорт, но только один раз).
         sync_business_parameters!
 
         loop do
@@ -330,13 +306,6 @@ module PaymentRouting
         press_key("Clear mode #{@clear_mode ? 'enabled' : 'disabled'}.")
       end
 
-      # Возвращает БД к исходным данным (data/* + business_parameters.yml) -
-      # вызывается сразу после успешного Route, пока меню продолжает работать
-      # на том же соединении (в отличие от прежнего файлового снапшота на
-      # выходе, здесь ничего не нужно переподключать). "Исходные" - то, что
-      # реально лежит в источниках, а не произвольное состояние БД на момент
-      # старта меню, поэтому таблицы сначала полностью очищаются, а затем
-      # переимпортируются, а не сравниваются построчно.
       def clear_mode_messages
         errors = [
           data_manager.clear_all!,
@@ -360,12 +329,6 @@ module PaymentRouting
 
       # ------------------------------------------------------------- helpers
 
-      # Переносит config/business_parameters.yml в БД - вызывается перед
-      # показом "Provider metrics" (см. provider_metrics_menu), а не один раз
-      # при старте App, чтобы всегда отражать актуальный YAML независимо от
-      # того, когда именно появились providers (при старте меню или позже,
-      # через "Data"). Если providers ещё пуста (данные не загружены вовсе) -
-      # синхронизировать нечего, пропускаем без ошибки.
       def sync_business_parameters!
         return if @db[:providers].empty?
 
@@ -404,8 +367,6 @@ module PaymentRouting
         Terminal.press_any_key
       end
 
-      # Экраны без вложенных списков (Start Route) после сообщения
-      # возвращаются сразу в главное меню - у них нет промежуточного уровня.
       def finish_with_message(lines)
         Terminal.clear_screen
         lines.each { |line| Terminal.puts(line) }

@@ -1,8 +1,6 @@
 module PaymentRouting
   module Rating
     module Norms
-      # Интерфейс norm_i(p): приводит один критерий стратегии к шкале [0,1].
-      # KEY связывает норм-калькулятор с весом, посчитанным StrategyWeightCalculator.
       class BaseNorm
         KEY = nil
 
@@ -24,7 +22,7 @@ module PaymentRouting
           (relative_deviation + 1) / 2.0
         end
 
-        # Общая для PriorityNorm/ConversionNorm min-max нормализация по пулу.
+        # Общая для PriorityNorm/ConversionNorm min-max нормализация
         def min_max_norm(value:, min:, max:)
           return Constants::SINGLE_CANDIDATE_NORM if min == max
 

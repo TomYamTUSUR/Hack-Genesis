@@ -1,11 +1,7 @@
 module PaymentRouting
   module HardFilter
     module Rules
-      # Проверка 8 ("Интенсивность", ТЗ 6.8): rate limit провайдера уже
-      # исчерпан, если текущее число запросов в минуту (actuals.rpm_used, см.
-      # HistoricalActualsProvider) достигло requests_per_minute_limit - при
-      # 7 из 7 обращений за минуту 8-е уже не должно пройти, поэтому >=, а не >.
-      # Лимит nil - ограничения нет.
+      # Проверка "Интенсивность": достгло ли текущее число запросов в минуту (actuals.rpm_used) границу requests_per_minute_limit
       class IntensityRule < BaseRule
         REASON = "rate_limit_exceeded"
 

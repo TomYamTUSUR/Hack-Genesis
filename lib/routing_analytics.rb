@@ -88,9 +88,6 @@ module RoutingAnalytics
     end
   end
 
-  # provider/history file loading lives in PaymentRouting::Importers (Sequel-based,
-  # see lib/payment_routing/importers) - this Loader only handles the JSON
-  # inputs specific to the analytics/logging CLIs (bin/log_operations.rb).
   class Loader
     class << self
       def json_array(path)
@@ -147,7 +144,6 @@ module RoutingAnalytics
     end
   end
 
-  # Read-only adapter from the normalized SQLite schema to Analyzer inputs.
   class DatabaseSource < DatabaseBase
     def initialize(path)
       @path = File.expand_path(path)
@@ -177,9 +173,6 @@ module RoutingAnalytics
 
     private
 
-    # snapshot_at/gateway/merchant have no columns in the canonical schema (see
-    # CanonicalDatabaseSource#provider_data) - kept nil here too so both
-    # adapters produce the same Analyzer input shape from the same schema.
     def provider_data
       providers = rows('SELECT * FROM providers ORDER BY priority, payment_system_id').map do |provider|
         provider['banks'] = parse_banks(provider['banks'])
@@ -326,8 +319,6 @@ module RoutingAnalytics
     end
   end
 
-  # Writes routing results into an already-seeded database (see
-  # PaymentRouting::Importers for seeding providers/history/queue from data/*).
   class DatabaseWriter < DatabaseBase
     def initialize(path, protected_roots: [], db: nil)
       @path = File.expand_path(path)
@@ -347,8 +338,6 @@ module RoutingAnalytics
       @db&.disconnect if @owns_db
     end
 
-    # Passing the Router's Sequel connection joins its transaction, so decisions,
-    # history and provider state commit or roll back together.
     def log_operations(operations:, decisions:, logged_at: Time.now)
       validate_pairs!(operations, decisions)
       decisions_by_id = decisions.to_h { |decision| [decision['operation_id'], decision] }
@@ -389,8 +378,6 @@ module RoutingAnalytics
             )
             store_skip(operation_id, attempt_provider_id, attempt['reason'] || 'unknown', logged_at) if attempt['decision'] == 'skipped'
           end
-          # Legacy JSON without a filter trace has unknown eligibility. Dispatch
-          # outcomes must not manufacture results of checks that were not logged.
           (decision.dig('explanation', 'eligibility') || []).each do |check|
             id = provider_id!(check.fetch('provider'))
             @db[:eligible_providers].insert(
@@ -399,8 +386,6 @@ module RoutingAnalytics
             )
             check.fetch('reasons', []).each { |reason| store_skip(operation_id, id, reason, logged_at) }
           end
-          # Queue rows remain for foreign keys; OperationQueueLoader excludes
-          # IDs with history or decisions before dispatching them again.
         end
       end
       operations.length
@@ -461,14 +446,7 @@ module RoutingAnalytics
     end
   end
 
-  # Recommendations use the latest observed day; routing coverage uses the retained log.
-  # Missing evidence never counts as a zero score, zero capacity, or a stale snapshot.
   class Recommendations
-    # Unspecified business thresholds are explicit defaults. Approval comparisons
-    # require 10 operations per cohort and a 15 percentage-point gap. A stable
-    # amount-band leader must beat every observed peer on two adjacent days.
-    # Frequent skips use distinct evaluated operations; dominance uses distinct skips.
-    # Score gaps are relative to the larger absolute score, not to score weights.
     THRESHOLDS = {
       min_operations: 10, share_gap_pp: 5, approval_gap_pp: 15, high_approval_pct: 90,
       low_traffic_pct: 5, daily_utilization_pct: 90, workload_utilization_pct: 80,
@@ -811,8 +789,6 @@ module RoutingAnalytics
       end
     end
 
-    # Supported saved rankings: arrays of provider/score entries or provider=>score maps.
-    # Never compare weights, individual score components, or inferred current ratings.
     def score_recommendations
       counts = Hash.new(0)
       @details.fetch(:decisions, []).each do |decision|

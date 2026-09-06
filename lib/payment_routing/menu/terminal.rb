@@ -2,8 +2,7 @@ require "io/console"
 
 module PaymentRouting
   module Menu
-    # Ввод/вывод консольного меню в одном месте - остальной код меню не знает
-    # про gets/print напрямую.
+    # Ввод/вывод консольного меню
     module Terminal
       module_function
 
@@ -17,7 +16,6 @@ module PaymentRouting
         Kernel.puts(text)
       end
 
-      # nil на EOF (закрытый stdin) - обрабатывается как пустой ввод (возврат назад).
       def read_line
         line = $stdin.gets
         line&.strip || ""

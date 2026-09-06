@@ -2,7 +2,6 @@ module PaymentRouting
   module Strategies
     # Блок стратегий: по списку активных ключей считает вес w_i каждой из
     # зарегистрированных стратегий и показатель степени gamma для LoadFactor.
-    # Ничего не знает о провайдерах/операциях - чистая функция конфига.
     class StrategyWeightCalculator
       INTENSITY_KEY = :intensity
 

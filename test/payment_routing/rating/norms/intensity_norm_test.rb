@@ -23,9 +23,6 @@ module PaymentRouting
         end
 
         def test_norm_ignores_in_progress_load_unlike_the_universal_load_factor
-          # По ключевому параметру стратегии (rpm) провайдер почти свободен,
-          # хотя in_progress почти на пределе - в отличие от LoadFactor, эта
-          # норма не должна на это реагировать (см. LoadFactorCalculator#utilization).
           p = provider(requests_per_minute_limit: 15, in_progress_count: 9, in_progress_count_limit: 10)
           pool = rating_pool(p => actuals(rpm_used: 1))
 

@@ -1,12 +1,5 @@
 #!/usr/bin/env ruby
-# Импортирует data/*.json,csv в SQLite (db/operations.db). Отдельный процесс от
-# runtime-логики (strategies/rating) - её код к БД не обращается вообще.
-#
-# Использование:
-#   bundle exec ruby bin/import_data.rb                    # всё, в порядке зависимостей
-#   bundle exec ruby bin/import_data.rb providers history  # только перечисленные источники
-#
-# providers должен импортироваться до history - ей нужен payment_system_id.
+# Импортирует data/*.json,csv в SQLite
 
 require_relative "../lib/payment_routing"
 require_relative "../db/database"
@@ -20,9 +13,6 @@ require_relative "../lib/payment_routing/importers/operations_history_importer"
 module PaymentRouting
   module Importers
     class Cli
-      # Порядок задаёт и очерёдность зависимостей (providers - первым,
-      # business_parameters - сразу за ним, т.к. только обновляет уже
-      # созданные строки), и список допустимых имён источников для CLI-аргументов.
       IMPORT_ORDER = %w[providers business_parameters queue history].freeze
 
       def initialize(db:, config:)

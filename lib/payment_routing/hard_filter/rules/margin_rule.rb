@@ -1,9 +1,7 @@
 module PaymentRouting
   module HardFilter
     module Rules
-      # Проверка 6 ("Маржа", ТЗ 6.6): провайдер не должен запрашивать маржу выше
-      # мерчантской, если только договор явно не разрешает это
-      # (allow_negative_agreement: true снимает проверку целиком).
+      # Проверка "Маржа": provider_margin не должен быть выше merchant_margin
       class MarginRule < BaseRule
         REASON = "margin_not_acceptable"
 

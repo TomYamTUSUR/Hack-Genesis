@@ -15,8 +15,6 @@ class ProviderMinuteStatsTest < Minitest::Test
 
   def setup
     @directory = Dir.mktmpdir('provider-minute-stats-')
-    # Только providers - operations_history тестам нужна с нуля, своя
-    # (контролируемые моменты времени), поэтому историю из data/ не грузим.
     @path = SeededDatabase.seed(File.join(@directory, 'operations.db'), queue: false, history: false)
     @db = SQLite3::Database.new(@path)
     @db.results_as_hash = true
@@ -41,8 +39,6 @@ class ProviderMinuteStatsTest < Minitest::Test
     ProviderMinuteStats.new(database: @path, at: at).run
   end
 
-  # in_progress_count/amount больше не пишутся в БД (см. bin/update_provider_minute_stats.rb) -
-  # значения минуты сравниваем по отчёту, а не по колонкам providers.
   def stats(report, name)
     row = report.fetch('providers').find { |r| r['payment_system'] == name }
     [row['requests_last_minute'], row.dig('periods', 'minute', 'amount')]
@@ -58,8 +54,6 @@ class ProviderMinuteStatsTest < Minitest::Test
     operation('recent', at: '2026-09-05T11:59:30Z', amount: 500)
     result = run_stats
     before = tables_snapshot
-    # 'persistence' легитимно отличается между первым запуском (мигрирует
-    # SHARE_COLUMNS) и вторым (они уже на месте) - сравниваем сам расчёт.
     without_persistence = ->(report) { report.reject { |key, _| key == 'persistence' } }
     assert_equal without_persistence.call(result), without_persistence.call(run_stats)
     assert_equal before, tables_snapshot
@@ -142,8 +136,6 @@ class ProviderMinuteStatsTest < Minitest::Test
     result = run_stats
     assert_includes result.dig('persistence', 'columns'), 'requests_last_minute'
     assert_equal 1, @db.get_first_value("SELECT requests_last_minute FROM providers WHERE payment_system = 'vipay'")
-    # requests_last_minute уже существовала - её самой заново не добавляют
-    # (не дублируется в DDL); SHARE_COLUMNS по-прежнему законно добавляются.
     providers_ddl = @db.get_first_value("SELECT sql FROM sqlite_master WHERE name = 'providers'")
     assert_equal 1, providers_ddl.scan('requests_last_minute').size
     assert_includes requests_last_minute_ddl, 'requests_last_minute'

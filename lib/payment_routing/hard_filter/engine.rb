@@ -1,10 +1,6 @@
 module PaymentRouting
   module HardFilter
-    # Прогоняет провайдера через весь набор hard-constraints для конкретной
-    # операции (см. TASK_SPEC.md, раздел 6, и rules/). Провайдеры, прошедшие
-    # Engine, дальше попадают в Rating::RatingPool - блок стратегий/рейтинга
-    # работает только с ними (ТЗ, раздел 3: "Hard Constraints всегда
-    # применяются ДО выбора стратегии").
+    # Прогоняет провайдера через весь набор hard-constraints для конкретной операции
     class Engine
       RULES = [
         Rules::StatusRule.new,
@@ -36,11 +32,6 @@ module PaymentRouting
         Result.new(reasons: reasons, details: details)
       end
 
-      # providers: [Provider]; actuals_by_provider: Hash{String (payment_system) => ProviderActuals}
-      # (тот же формат, что отдаёт HistoricalActualsProvider#load).
-      # Возвращает Hash{Provider => Result} - по одному результату на каждого
-      # переданного провайдера, эту же форму ожидает eligible_providers/
-      # provider_skip_reasons при записи в БД.
       def call_all(providers:, operation:, actuals_by_provider:)
         providers.to_h { |provider| [provider, call(provider: provider, operation: operation, actuals: actuals_by_provider.fetch(provider.payment_system))] }
       end

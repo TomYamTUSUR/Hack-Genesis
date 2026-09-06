@@ -2,9 +2,6 @@ require_relative "../../test_helper"
 
 module PaymentRouting
   module Rating
-    # Интеграционный тест на реальных данных, загруженных в БД - показывает, что
-    # смена активной стратегии (solo) меняет победителя ранжирования, как и
-    # задумано формулой (её ключевой критерий получает вес 0.70).
     class ProviderScoreCalculatorTest < Minitest::Test
       include TestFactories
 
@@ -14,8 +11,6 @@ module PaymentRouting
 
         @providers = ProviderRegistry.new(db: db, rated_providers: config.rated_providers).load
 
-        # Нейтральные actuals: каждый провайдер точно на своей целевой доле/обороте,
-        # чтобы deviation-нормы не искажали сравнение конкретно проверяемой стратегии.
         @actuals_by_provider = @providers.to_h do |p|
           [p.payment_system, ProviderActuals.new(
             count_share_actual: p.traffic_percentage,

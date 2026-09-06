@@ -1,6 +1,3 @@
-# Пути нужны только для первичного импорта data/* в БД (см. bin/import_data.rb,
-# lib/payment_routing/importers) - сам рейтинг/стратегии эти файлы не читают,
-# они работают только с db/operations.db.
 data:
   providers_file: data/providers.json
   operations_history_file: data/operations_history.csv
@@ -9,22 +6,19 @@ data:
 
 strategies_file: config/strategies.yml
 
-# Ключи стратегий, активных в Router прямо сейчас (см. config/strategies.yml).
-# 1 ключ -> solo-веса, 2+ -> combo-веса (см. StrategyWeightCalculator).
+# Ключи стратегий, активных в Router прямо сейчас 
+# 1 ключ -> solo-веса, 2+ -> combo-веса 
+
 active_strategies:
   - count_share
   - volume_share
 
-# payment_system'ы, которые участвуют в рейтинге. Явный список вместо неявного
-# "все активные провайдеры" - у providers.json также есть self-provider
-# (fallback), который в рейтинге не участвует; hard-constraints (HardFilter)
-# его не отличают от обычных провайдеров - он проходит их как любой другой,
-# исключить нужно по имени/списку, а не по правилу.
+# Все активные провайдеры
+
 rated_providers:
   - vipay
   - payflow
   - quickpay
 
-# self-provider: единственный кандидат, когда rated_providers пуст после
-# hard-constraints или все они технически недоступны в момент обращения.
+# self-provider: резервный вариант, когда rated_providers пуст после hard-constraints или все они технически недоступны в момент обращения.
 fallback_provider: spacepayments

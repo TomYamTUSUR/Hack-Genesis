@@ -3,10 +3,7 @@ require "time"
 
 module PaymentRouting
   module Importers
-    # Читает data/providers.json 1:1 в таблицу providers. Поля, которых нет в
-    # файле (volume_share_pct, requests_per_minute_limit, daily_turnover_min/max),
-    # этот импортёр не трогает вовсе - они остаются как есть (null при первой
-    # вставке), их дополняет отдельный блок, а не парсер.
+    # Читает data/providers.json в таблицу providers
     class ProvidersImporter
       def initialize(db:, providers_file:)
         @db = db

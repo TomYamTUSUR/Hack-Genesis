@@ -2,7 +2,7 @@ require "json"
 
 module PaymentRouting
   module Importers
-    # Читает data/operations_queue_*.json 1:1 в таблицу operations_queue.
+    # Читает data/operations_queue_*.json в таблицу operations_queue.
     class OperationsQueueImporter
       def initialize(db:, queue_file:)
         @db = db

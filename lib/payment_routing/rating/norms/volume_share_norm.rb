@@ -1,7 +1,7 @@
 module PaymentRouting
   module Rating
     module Norms
-      # Стратегия 2: доля по объёму (рубли), а не по количеству операций.
+      # Стратегия "Доля по объёму (рубли)"
       class VolumeShareNorm < BaseNorm
         KEY = :volume_share
 

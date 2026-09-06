@@ -1,8 +1,5 @@
 #!/usr/bin/env ruby
-# Интерактивное консольное меню поверх движка - альтернатива ручному вызову
-# bin/route.rb/bin/import_data.rb/bin/build_report.rb и правке config/*.yml
-# руками. Ничего не считает само, только вызывает уже существующие классы.
-# Использование: bundle exec ruby bin/menu.rb [--database PATH]
+# Интерактивное консольное меню
 
 require "json"
 require "optparse"

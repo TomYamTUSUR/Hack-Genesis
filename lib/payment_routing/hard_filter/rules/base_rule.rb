@@ -1,9 +1,7 @@
 module PaymentRouting
   module HardFilter
     module Rules
-      # Интерфейс одной hard-constraint проверки: провайдер либо проходит
-      # (call возвращает nil), либо нет (call возвращает REASON - короткий код
-      # причины, который Engine кладёт в provider_skip_reasons.reason).
+      # Интерфейс одной hard-constraint проверки + возврат причины, если не подходит
       class BaseRule
         REASON = nil
 

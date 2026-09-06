@@ -1,9 +1,5 @@
 #!/usr/bin/env ruby
-# Строит обязательный routing_report_test.json из результатов реального
-# прогона (запустите bin/route.rb перед этим) - переиспользует уже готовый
-# RoutingAnalytics::CanonicalDatabaseAnalytics (bin/analyze_db.rb), просто
-# кладёт отчёт под требуемым именем в корень репозитория.
-# Использование: bundle exec ruby bin/build_report.rb [--database PATH] [--output PATH]
+# Строит routing_report_test.json
 
 require "optparse"
 require_relative "../lib/canonical_database_analytics"

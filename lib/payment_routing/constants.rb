@@ -1,6 +1,4 @@
 module PaymentRouting
-  # Именованные числовые константы формулы рейтинга — ни одно из этих чисел
-  # не должно встречаться литералом внутри strategies/ или rating/.
   module Constants
     # Вес, который получает единственная активная стратегия (solo-режим).
     SOLO_TARGET_WEIGHT = 0.70
@@ -25,13 +23,11 @@ module PaymentRouting
     RELATIVE_DEVIATION_MIN = -1.0
     RELATIVE_DEVIATION_MAX = 1.0
 
-    # Значение utilization/нормы по умолчанию, когда её нельзя посчитать
-    # (лимит не задан, пул из одного провайдера, деление на ноль и т.п.).
+    # Значение нормы по умолчанию когда её нельзя посчитать
     UNDEFINED_UTILIZATION = 0.0
     SINGLE_CANDIDATE_NORM = 1.0
 
-    # Ширина скользящего окна для "текущей" интенсивности (rpm_used), см.
-    # HistoricalActualsProvider - совпадает с окном requests_per_minute_limit.
+    # Ширина скользящего окна для интенсивности
     RPM_WINDOW_SECONDS = 60
   end
 end

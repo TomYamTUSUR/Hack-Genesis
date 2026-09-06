@@ -1,7 +1,7 @@
 module PaymentRouting
   module Rating
     module Norms
-      # Стратегия 3: очередь в каскаде. Меньший priority - выше норма.
+      # Стратегия "Очередь в каскаде". Меньший priority - выше норма.
       class PriorityNorm < BaseNorm
         KEY = :priority
 

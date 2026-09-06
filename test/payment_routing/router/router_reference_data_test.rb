@@ -2,9 +2,6 @@ require_relative "../../test_helper"
 
 module PaymentRouting
   module Router
-    # Прогоняет Router по всем 10 реальным операциям очереди и сверяет с
-    # data/reference_decisions.json - в отличие от router_test.rb (синтетика),
-    # здесь честные данные из БД и настоящий HardFilter/Rating/Strategies.
     class RouterReferenceDataTest < Minitest::Test
       include TestFactories
 
@@ -43,8 +40,6 @@ module PaymentRouting
       def test_selected_provider_is_always_among_the_eligible_ones
         @reference.fetch("eligible_providers").each do |operation_id, eligible|
           decision = @decisions_by_operation_id.fetch(operation_id)
-          # spacepayments - fallback, допустим только если эталон не даёт ни
-          # одного подходящего провайдера (в текущих 10 операциях такого нет).
           assert_includes eligible, decision.selected_provider
         end
       end

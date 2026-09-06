@@ -1,9 +1,5 @@
 module PaymentRouting
-  # Строит [Provider] из таблицы providers (db/operations.db) - единственный
-  # источник данных о провайдерах для strategies/rating, файлы не читает.
-  #
-  # rated_providers - явный список payment_system, которые вообще участвуют
-  # в рейтинге (self-provider/fallback туда не входит - см. config/routing.yml).
+  # Строит [Provider] из таблицы providers (db/operations.db)
   class ProviderRegistry
     def initialize(db:, rated_providers:)
       @db = db
@@ -49,24 +45,12 @@ module PaymentRouting
       )
     end
 
-    # preferred_range_min/max - приоритетный диапазон для стратегии "по сумме
-    # чека" (см. Rating::Norms::RangeFitNorm). limit_amount_min/max сюда не
-    # подставляется - это отдельный hard-constraint (допуск провайдера к
-    # операции), а не ориентир для рейтинга. Пока preferred_range не заполнен
-    # (null) - у провайдера просто нет предпочтения по сумме (RangeFitNorm
-    # относится к этому нейтрально).
     def preferred_range_for(row)
       return nil if row[:preferred_range_min].nil? || row[:preferred_range_max].nil?
 
       AmountRange.new(min: row[:preferred_range_min], max: row[:preferred_range_max])
     end
 
-    # daily_turnover_min (soft-goal) и daily_turnover_max (hard-constraint,
-    # см. описание задания) - согласованные ограничения оборота. Значения
-    # приходят из конфигурации бизнеса, а не из data/providers.json, поэтому
-    # опечатку в них (отрицательное число, потолок выше daily_amount_limit,
-    # min выше max - недостижимое обязательство) нужно ловить сразу при
-    # загрузке, а не давать ей молча испортить рейтинг/фильтрацию.
     def validate_turnover_bounds!(row)
       daily_amount_limit = row[:daily_amount_limit]
 

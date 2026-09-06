@@ -1,14 +1,5 @@
 #!/usr/bin/env ruby
-# CLI-обёртка над PaymentRouting::RoutingRun (см. её же комментарий про
-# транзакцию и идемпотентность) - сам прогон вынесен в lib, чтобы им
-# одинаково пользовались и этот скрипт, и Menu::App ("Start Route").
-# После успешного прогона дополнительно собирает обязательный
-# routing_decisions_test.json из БД (DecisionsReader) - тот же путь, что и
-# отдельный bin/build_decisions.rb, который остаётся самостоятельным скриптом
-# для пересборки JSON без повторного роутинга.
-#
-# providers/history должны быть уже импортированы (bundle exec ruby bin/import_data.rb).
-# Использование: bundle exec ruby bin/route.rb [--database PATH] [--output PATH]
+# Обёртка над PaymentRouting::RoutingRun
 
 require "json"
 require "optparse"

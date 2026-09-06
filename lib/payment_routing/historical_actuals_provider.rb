@@ -1,9 +1,7 @@
 require "time"
 
 module PaymentRouting
-  # Считает "фактические" показатели провайдера (count/volume-share, оборот,
-  # текущая интенсивность) из таблицы operations_history (db/operations.db),
-  # а не из CSV напрямую.
+  # Считает "фактические" показатели провайдера (count/volume-share, оборот, текущая интенсивность) из таблицы operations_history
   class HistoricalActualsProvider
     APPROVED_STATUS = "approved"
 
@@ -22,7 +20,6 @@ module PaymentRouting
                Sequel[:operations_history][:created_at].as(:created_at)
              ).all
 
-      # Доли одобренных выплат считаются среди всех провайдеров, включая fallback.
       approved_rows = rows.select { |row| row[:status] == APPROVED_STATUS }
       counts = Hash.new(0)
       volumes = Hash.new(0.0)
@@ -36,9 +33,6 @@ module PaymentRouting
       requests = request_times(rows)
       window_end = at || requests.values.flatten.max || Time.now
 
-      # Все провайдеры, не только те, у кого есть approved-история - иначе
-      # провайдер без единого approved-платежа выпал бы из результата, а
-      # RatingPool#actuals_for упал бы на нём с KeyError при следующем ранжировании.
       @db[:providers].each_with_object({}) do |provider, result|
         payment_system = provider[:payment_system]
         times = requests.fetch(payment_system, [])
@@ -47,8 +41,6 @@ module PaymentRouting
           volume_share_actual: MathUtils.percentage_of(volumes[payment_system], total_volume),
           count_actual: counts[payment_system],
           volume_actual: volumes[payment_system],
-          # Снимок содержит текущий дневной оборот; история может быть неполной
-          # и относиться к другим суткам. RunState сбрасывает снимок при смене дня.
           turnover_actual: provider[:daily_approved_amount].to_f,
           rpm_used: times.count { |time| time > window_end - Constants::RPM_WINDOW_SECONDS && time <= window_end },
           request_times: times
@@ -58,8 +50,6 @@ module PaymentRouting
 
     private
 
-    # Новые решения имеют полный журнал обращений (включая технические отказы).
-    # Для старой истории без такого журнала одна строка означает одно обращение.
     def request_times(history)
       attempts = if @db.schema(:routing_attempts).any? { |name, _| name == :dispatched_at }
                    @db[:routing_attempts].exclude(dispatched_at: nil)

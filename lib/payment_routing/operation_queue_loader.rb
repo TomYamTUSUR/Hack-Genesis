@@ -1,7 +1,5 @@
 module PaymentRouting
-  # Строит [Operation] из таблицы operations_queue (db/operations.db) -
-  # единственный путь превращения заявки в доменный объект для strategies/rating
-  # и будущего Router'а. Файлы не читает.
+  # Строит [Operation] из таблицы operations_queue (db/operations.db)
   class OperationQueueLoader
     def initialize(db:)
       @db = db

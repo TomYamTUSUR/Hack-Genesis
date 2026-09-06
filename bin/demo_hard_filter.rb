@@ -1,23 +1,9 @@
 #!/usr/bin/env ruby
-# Демонстрация HardFilter (lib/payment_routing/hard_filter) - по одному
-# сценарию на каждую из 9 проверок из ТЗ, плюс сценарий "всё в порядке" и
-# сценарий с несколькими одновременными нарушениями (показывает, что Engine
-# копит все причины, а не только первую - см. HardFilter::Result).
-#
-# Специально не читает db/operations.db - его пока может не быть (see README:
-# `bundle exec ruby db/create_tables.rb` создаёт пустую схему, провайдеров
-# заполняет отдельный импорт). Один и тот же Engine потом можно натравить на
-# ProviderRegistry.load + HistoricalActualsProvider.load вместо этих
-# синтетических Provider/Operation - интерфейс (provider:, operation:, actuals:)
-# не меняется.
 
 require_relative "../lib/payment_routing"
 
 module PaymentRouting
   class HardFilterDemo
-    # "Здоровый" провайдер, который проходит все 9 проверок - каждый сценарий
-    # ниже переопределяет только то, что нужно для нарушения конкретного правила,
-    # чтобы было видно эффект именно этого правила.
     def self.healthy_provider(overrides = {})
       Provider.new(
         **{

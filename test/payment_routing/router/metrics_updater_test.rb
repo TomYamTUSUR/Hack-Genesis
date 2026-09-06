@@ -54,8 +54,6 @@ module PaymentRouting
 
         apply("approved")
 
-        # vipay: (3+1)=4 из 5 = 80%; payflow: 1 из 5 = 20% - знаменатель
-        # изменился для ОБОИХ провайдеров, не только для выбранного.
         assert_in_delta 80.0, @state.actuals("vipay").count_share_actual
         assert_in_delta 20.0, @state.actuals("payflow").count_share_actual
         assert_in_delta 80.0, @state.actuals("vipay").volume_share_actual, 0.01

@@ -1,7 +1,7 @@
 module PaymentRouting
   module Rating
     module Norms
-      # Стратегия 1: доля по количеству заявок. Провайдер, недобирающий свою
+      # Стратегия "Доля по количеству заявок". Провайдер, недобирающий свою
       # traffic_percentage, получает норму ближе к 1 (его приоритет растёт).
       class CountShareNorm < BaseNorm
         KEY = :count_share

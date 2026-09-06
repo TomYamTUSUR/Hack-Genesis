@@ -2,7 +2,7 @@ require "json"
 require "yaml"
 
 module PaymentRouting
-  # Корень репозитория — от него разрешаются относительные пути в config/routing.yml.
+  # Корень репозитория
   def self.root
     File.expand_path("..", __dir__)
   end

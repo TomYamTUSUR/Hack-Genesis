@@ -11,9 +11,6 @@ module PaymentRouting
           requests_per_minute_limit: nil, daily_turnover_min: nil,
           in_progress_count: 0, in_progress_count_limit: nil,
           in_progress_amount: 0, in_progress_amount_limit: nil,
-          # HardFilter: значения по умолчанию нейтральны - ничего не исключают,
-          # чтобы существующие тесты (rating/strategies), которым hard-constraints
-          # не важны, не завязывались на них.
           status: "active", limit_amount_min: nil, limit_amount_max: nil,
           daily_amount_limit: nil, daily_approved_amount: 0,
           available_requisites: 1, banks: [], exclude_banks: false,
@@ -44,9 +41,6 @@ module PaymentRouting
       )
     end
 
-    # In-memory БД с реальными data/* поверх схемы - для тестов, которым нужен
-    # настоящий ProviderRegistry/HistoricalActualsProvider/OperationQueueLoader
-    # (они читают только БД, файлы не читают).
     def seeded_db
       db = Db.connect(nil)
       Db.create_schema!(db)

@@ -1,15 +1,9 @@
 module PaymentRouting
   module Menu
-    # Действия пункта меню "Data": Update (insert-or-update, не дублирует),
-    # Replace (очищает целевую таблицу и грузит файл заново), Clear (очищает
-    # все таблицы БД). Список файлов - те же три источника, что использует
-    # bin/import_data.rb, без business_parameters - это не файл из data/, у
-    # него свой пункт меню ("Provider metrics").
+    # Действия пункта меню "Data"
     class DataManager
       Source = Struct.new(:key, :label, :table, keyword_init: true)
 
-      # Порядок для полной очистки: дочерние таблицы раньше родительских -
-      # иначе SQLite (FK ON DELETE NO ACTION) откажет в удалении.
       CLEAR_ORDER = %i[
         routing_attempts eligible_providers provider_skip_reasons
         routing_decisions operations_history

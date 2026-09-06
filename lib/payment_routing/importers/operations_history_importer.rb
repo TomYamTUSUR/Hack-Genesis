@@ -3,7 +3,6 @@ require "csv"
 module PaymentRouting
   module Importers
     # Читает data/operations_history.csv в таблицу operations_history.
-    # Требует, чтобы providers уже были импортированы (payment_system -> id).
     class OperationsHistoryImporter
       include ProviderLookup
 

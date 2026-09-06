@@ -3,7 +3,6 @@
 require_relative 'routing_analytics'
 
 module RoutingAnalytics
-  # Read-only adapter for the canonical schema and its minute-stat extensions.
   class CanonicalDatabaseSource
     PROVIDER_STATS_COLUMNS = %w[
       requests_last_minute actual_count_share_pct actual_volume_share_pct
@@ -100,7 +99,6 @@ module RoutingAnalytics
       @database&.close unless @database&.closed?
     end
 
-    # All report sections must see the same committed database state.
     def snapshot
       @database.transaction { yield }
     rescue SQLite3::Exception => e
@@ -133,8 +131,6 @@ module RoutingAnalytics
       SQL
     end
 
-    # Raw records retain attempt order and provenance; routing_events also contains
-    # synthesized reference skips and must not be used to evaluate real cascades.
     def detail_inputs
       {
         decisions: rows('SELECT * FROM routing_decisions ORDER BY operation_id'),
@@ -388,8 +384,6 @@ module RoutingAnalytics
     end
   end
 
-  # Additional diagnostics share the main analyzer's operation deduplication:
-  # a decision replaces history for the same operation, and pending rows stay out.
   class CanonicalReportDetails < Analyzer
     AMOUNT_BANDS = [
       ['0_1000', 0, 1000], ['1000_10000', 1000, 10_000],
@@ -565,7 +559,7 @@ module RoutingAnalytics
       }
     end
 
-    # Normalize explicit offsets to UTC; timezone-free SQLite dates are treated as UTC.
+    # Normalize explicit offsets to UTC
     def timestamp(value)
       return nil if value.nil? || value.to_s.strip.empty?
 

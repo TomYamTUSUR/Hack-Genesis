@@ -2,9 +2,6 @@ require_relative "../../test_helper"
 
 module PaymentRouting
   module Router
-    # Провайдер-заглушка для проверки перехода к следующему кандидату при
-    # отказе: бросает UnavailableError для перечисленных payment_system,
-    # остальным отвечает как обычно (см. ProviderClient).
     class FailingProviderClient
       def initialize(fails_for:)
         @fails_for = fails_for
