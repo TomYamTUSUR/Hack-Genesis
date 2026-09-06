@@ -1,14 +1,5 @@
 module PaymentRouting
   module Router
-    # Пишет финальное состояние RunState обратно в таблицу providers - без
-    # этого шага изменения (in_progress_count/amount, daily_approved_amount),
-    # накопленные MetricsUpdater за время прогона, видны только внутри
-    # процесса и теряются к следующему запуску bin/route.rb.
-    #
-    # count_share_actual/volume_share_actual/turnover_actual/rpm_used в БД не
-    # пишутся - это не колонки providers, а производные "фактические"
-    # показатели, каждый раз заново считаемые HistoricalActualsProvider из
-    # operations_history.
     class StateWriter
       def initialize(db:)
         @db = db

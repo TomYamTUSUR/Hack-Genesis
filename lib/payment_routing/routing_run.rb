@@ -1,14 +1,4 @@
 module PaymentRouting
-  # Один полный прогон очереди: перенос business_parameters.yml в БД -> чтение
-  # providers -> Router по всем необработанным операциям -> запись состояния и
-  # решений в БД - одной транзакцией (см. RoutingAnalytics::DatabaseWriter#log_operations:
-  # "Passing the Router's Sequel connection joins its transaction"). Используется
-  # и bin/route.rb (CLI), и Menu::App (пункт "Start Route") - чтобы не дублировать
-  # эту последовательность в двух местах.
-  #
-  # OperationQueueLoader сам исключает operation_id, для которых уже есть
-  # operations_history/routing_decisions - повторный вызов без новых операций
-  # является штатным идемпотентным no-op (processed: false), а не ошибкой.
   class RoutingRun
     Result = Struct.new(:processed, :decisions, keyword_init: true)
 

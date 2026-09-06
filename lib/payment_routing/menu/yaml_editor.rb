@@ -2,10 +2,6 @@ require "yaml"
 
 module PaymentRouting
   module Menu
-    # Точечные правки трёх конфигов проекта построчно, а не через YAML.dump -
-    # обычный YAML round-trip стирает объясняющие комментарии в этих файлах,
-    # которые для проекта важны. Каждый метод трогает только нужную строку
-    # (или добавляет одну новую), остальной файл остаётся байт-в-байт как был.
     module YamlEditor
       module_function
 
@@ -13,7 +9,6 @@ module PaymentRouting
         YAML.safe_load(File.read(routing_yml_path))["active_strategies"] || []
       end
 
-      # active_strategies: - key/- key2 списком под ключом верхнего уровня.
       def toggle_active_strategy(routing_yml_path, key)
         lines = File.readlines(routing_yml_path)
         start_index = lines.index { |line| line.start_with?("active_strategies:") }
@@ -33,8 +28,6 @@ module PaymentRouting
         YAML.safe_load(File.read(strategies_yml_path))["strategies"].to_h { |row| [row["key"], row["combo_coefficient"]] }
       end
 
-      # strategies: - key: <key> / combo_coefficient: <value> - находим блок
-      # "- key: <key>", в нём же правим следующую по тексту combo_coefficient:.
       def set_combo_coefficient(strategies_yml_path, key, value)
         lines = File.readlines(strategies_yml_path)
         key_index = lines.index { |line| line.strip == "- key: #{key}" }
@@ -52,8 +45,6 @@ module PaymentRouting
         YAML.safe_load(File.read(business_parameters_yml_path))["providers"] || {}
       end
 
-      # providers: <name>: <field>: value - создаёт блок провайдера и/или поле,
-      # если их ещё нет, сохраняя отступ остальных полей того же провайдера.
       def set_business_parameter(business_parameters_yml_path, provider, field, value)
         lines = File.readlines(business_parameters_yml_path)
         raise "providers not found in #{business_parameters_yml_path}" unless lines.any? { |line| line.start_with?("providers:") }

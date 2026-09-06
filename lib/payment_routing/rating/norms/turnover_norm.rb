@@ -1,9 +1,6 @@
 module PaymentRouting
   module Rating
     module Norms
-      # Стратегия 7: фин. обязательства (минимальный дневной оборот). Провайдер,
-      # не набравший daily_turnover_min, получает норму ближе к 1. Провайдер без
-      # такого обязательства получает нейтральные 0.5, ниже бонуса за недобор.
       class TurnoverNorm < BaseNorm
         KEY = :turnover
 

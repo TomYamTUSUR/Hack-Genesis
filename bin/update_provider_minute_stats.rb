@@ -7,28 +7,9 @@ require 'sqlite3'
 require 'time'
 require_relative '../lib/provider_minute_metrics'
 
-# One operations_history row is one recorded application to its provider.
-# All statuses count. This is not an HTTP request/retry counter: the existing
-# history contains only one provider per operation, not a complete request log.
-# Analysis window: all history through at by default, or (at - window_seconds, at].
-# SQLite timestamps include UTC offsets. Each run replaces the provider snapshot.
-# Per-minute request count/amount (all statuses) are report-only (see
-# 'requests_last_minute' and periods.minute in the JSON) - they are NOT written
-# to in_progress_count/in_progress_amount. Those columns mean concurrently
-# in-flight requests elsewhere in this project (hard-constraint capacity,
-# PaymentRouting::Rating load factor); a per-minute arrival count is a
-# different thing and would silently corrupt that meaning if persisted there.
-# Adds missing SHARE_COLUMNS. Writes requests_last_minute only if it already exists.
-# Updates conversion_24h over the last 24 hours and avg_latency_sec over the analysis
-# window (all known latencies, rounded to seconds). Missing observations produce NULL.
-# Daily created-operation totals are report-only; there is no completion time to
-# safely recalculate daily_approved_amount. Targets and limits are never updated.
-# Usage: ruby bin/update_provider_minute_stats.rb [--window-seconds N|all] [--at ISO8601] [--dry-run]
 class ProviderMinuteStats
   class Error < StandardError; end
 
-  # Дополнительные поля результата: 12 показателей и время/длина окна.
-  # Недостающие колонки создаются только при запуске с записью в базу.
   SHARE_COLUMNS = {
     'actual_count_share_pct' => 'REAL',
     'actual_volume_share_pct' => 'REAL',
@@ -42,14 +23,10 @@ class ProviderMinuteStats
     'expiration_rate_pct' => 'REAL',
     'approved_amount_pct' => 'REAL',
     'terminal_approval_rate_pct' => 'REAL',
-    # The calculation reference time (window end), including for --at replays.
     'stats_calculated_at' => 'TEXT',
     'stats_window_sec' => 'INTEGER'
   }.freeze
 
-  # database — существующая SQLite-база; at — конец окна (по умолчанию сейчас).
-  # window_seconds — положительное число секунд; nil означает всю историю до at.
-  # dry_run оставляет базу и её схему без изменений, но формирует полный отчёт.
   def initialize(database:, at: nil, dry_run: false, window_seconds: nil)
     unless window_seconds.nil? || (window_seconds.is_a?(Integer) && window_seconds.positive?)
       raise Error, 'window_seconds must be a positive integer or nil (all history)'
@@ -61,18 +38,14 @@ class ProviderMinuteStats
     @window_seconds = window_seconds
   end
 
-  # Один запуск: проверка данных, расчёт, необязательная запись и возврат Hash.
   def run
     raise Error, "Database does not exist: #{@path}" unless File.file?(@path)
 
-    # READWRITE не создаёт отсутствующую базу; READONLY запрещает запись в dry-run.
     flags = @dry_run ? SQLite3::Constants::Open::READONLY : SQLite3::Constants::Open::READWRITE
     database = SQLite3::Database.new(@path, flags: flags)
     database.busy_timeout = 5000
     database.execute('PRAGMA foreign_keys = ON')
     result = nil
-    # Расчёт и запись используют одну транзакцию. IMMEDIATE резервирует запись
-    # заранее; ошибка откатывает и обновления провайдеров, и добавление колонок.
     database.transaction(@dry_run ? :deferred : :immediate) do
       at = (@at || Time.now).getutc
       result = build_report(database, at: at)
@@ -81,7 +54,6 @@ class ProviderMinuteStats
       missing = fields - columns
       raise Error, "providers: missing columns #{missing.join(', ')}" unless missing.empty?
 
-      # Совместимость с базами, где счётчик запросов был добавлен отдельно.
       fields << 'requests_last_minute' if columns.include?('requests_last_minute')
       fields.concat(SHARE_COLUMNS.keys)
       columns_to_add = SHARE_COLUMNS.keys - columns
@@ -89,15 +61,12 @@ class ProviderMinuteStats
         columns_to_add.each do |column|
           database.execute("ALTER TABLE providers ADD COLUMN #{column} #{SHARE_COLUMNS.fetch(column)}")
         end
-        # Заменяем текущий снимок каждого провайдера, а не накапливаем значения.
-        # Порядок привязанных значений совпадает с порядком колонок в SET.
         result.fetch('providers').each do |row|
           assignments = fields.map { |field| "#{field} = ?" }.join(', ')
           database.execute("UPDATE providers SET #{assignments} WHERE payment_system_id = ?",
                            row.values_at(*fields, 'payment_system_id'))
         end
       end
-      # В dry-run показываем план записи: columns_to_add ещё не созданы.
       result['persistence'] = {
         'dry_run' => @dry_run, 'columns' => fields,
         'columns_to_add' => columns_to_add,
@@ -106,24 +75,16 @@ class ProviderMinuteStats
     end
     result
   ensure
-    # Освобождаем соединение и при успешном расчёте, и при исключении.
     database&.close
   end
 
-  # Интерфейс для вызова из Ruby: возвращает только показатели провайдеров.
-  # Переданное соединение не закрывается; данные и схема не изменяются.
   def calculate(database, at:)
     build_report(database, at: at).fetch('providers')
   end
 
-  # Формирует полный отчёт без записи. Временные окна строятся по created_at,
-  # статусы берутся из текущей истории, а не восстанавливаются на момент at.
   def build_report(database, at:)
     database.results_as_hash = true
     validate_source!(database)
-    # Fail before publishing misleading zeroes for unparseable source dates.
-    # Проверяем даты во всей истории: некорректная дата не должна незаметно
-    # исключить операцию из выборки и привести к ложным нулевым показателям.
     invalid = database.get_first_value(<<~SQL)
       SELECT operation_id FROM operations_history
       WHERE created_at IS NULL OR julianday(created_at) IS NULL
@@ -131,8 +92,7 @@ class ProviderMinuteStats
     SQL
     raise Error, "Invalid or missing operations_history.created_at: #{invalid}" if invalid
 
-    # Загружаем объединение основного окна и вспомогательных периодов.
-    # При расчёте за всё время нижней границы нет; будущие операции исключены.
+    # Загружаем объединение основного окна и вспомогательных периодов
     start_at = @window_seconds && (at - [@window_seconds, 86_400].max).getutc.iso8601(6)
     end_at = at.getutc.iso8601(6)
     invalid = database.get_first_value(<<~SQL, [start_at, start_at, end_at])
@@ -146,8 +106,6 @@ class ProviderMinuteStats
     SQL
     raise Error, "Missing provider or invalid amount/latency for operation: #{invalid}" if invalid
 
-    # Один раз загружаем общую выборку для всех периодов. julianday приводит
-    # даты с разными UTC-сдвигами к сопоставимым числовым значениям.
     history = database.execute(<<~SQL, [start_at, start_at, end_at])
       SELECT operation_id, payment_system_id, amount, status, bank, latency_sec,
              julianday(created_at) AS created_jd
@@ -157,7 +115,6 @@ class ProviderMinuteStats
     SQL
     providers = database.execute('SELECT * FROM providers ORDER BY payment_system_id')
     windows = period_windows(at.getutc)
-    # Для каждого периода выбираем строки с учётом включённости его границ.
     cohorts = windows.to_h do |name, window|
       lower = database.get_first_value('SELECT julianday(?)', [window['start']])
       upper = database.get_first_value('SELECT julianday(?)', [window['end']])
@@ -167,11 +124,8 @@ class ProviderMinuteStats
       end
       [name, selected]
     end
-    # Общие итоги периода служат знаменателями долей отдельных провайдеров.
     totals = cohorts.transform_values { |rows| ProviderMinuteMetrics.summary(rows) }
     groups = cohorts.transform_values { |rows| rows.group_by { |row| row['payment_system_id'] } }
-    # Обрабатываем всех провайдеров, включая неактивных и не имеющих операций.
-    # Пустая выборка даёт нули для количества/суммы и nil для неопределимых метрик.
     rows = providers.map do |provider|
       id = provider.fetch('payment_system_id')
       metrics = groups.to_h do |name, grouped|
@@ -181,14 +135,10 @@ class ProviderMinuteStats
       analysis = metrics.fetch('analysis')
       previous = metrics.fetch('previous_minute')
       day = metrics.fetch('last_24h')
-      # Конверсия сохраняется как доля 0..1 за сутки; показатели основного окна
-      # выражаются в процентах. Все статусы входят в знаменатель конверсии.
       conversion = day['count'].zero? ? nil : day.dig('statuses', 'approved', 'count').to_f / day['count']
       targets = ProviderMinuteMetrics.targets(provider, minute)
       targets['count_share_gap_pp'] = ProviderMinuteMetrics.target_gap(analysis['count_share_pct'], provider['traffic_percentage'])
       targets['amount_share_gap_pp'] = ProviderMinuteMetrics.target_gap(analysis['amount_share_pct'], provider['volume_share_pct'])
-      # Выполнение цели = фактическая доля / целевая доля * 100.
-      # Оно может превышать 100%; при отсутствующей или нулевой цели будет nil.
       targets['count_target_fulfillment_pct'] = ProviderMinuteMetrics.percentage(
         analysis['count_share_pct'], provider['traffic_percentage']
       )
@@ -197,12 +147,9 @@ class ProviderMinuteStats
       )
       {
         'payment_system_id' => id, 'payment_system' => provider.fetch('payment_system'),
-        # Эти in_progress_* — только JSON-совместимость: минутный поток;
-        # одноимённые поля providers скрипт не обновляет.
         'requests_last_minute' => minute['count'], 'in_progress_count' => minute['count'],
         'in_progress_amount' => minute['amount'], 'conversion_24h' => conversion,
         'avg_latency_sec' => analysis.dig('latency', 'avg_sec')&.round,
-        # Детализация периодов, изменений и банков остаётся только в JSON.
         'periods' => metrics,
         'minute_change' => {
           'count_delta' => minute['count'] - previous['count'],
@@ -245,8 +192,6 @@ class ProviderMinuteStats
 
   private
 
-  # Сопоставляем поля расчётных структур с колонками providers.
-  # *_gap_pp — разность в процентных пунктах; *_pct — проценты.
   def share_attributes(analysis, targets, at)
     {
       'actual_count_share_pct' => analysis['count_share_pct'],
@@ -266,8 +211,6 @@ class ProviderMinuteStats
     }
   end
 
-  # Скользящие окна: (начало, конец]. Предыдущая минута не пересекается с текущей.
-  # Для календарного дня включаем полночь UTC: [00:00 UTC, конец].
   def period_windows(at)
     {
       'analysis' => [@window_seconds && at - @window_seconds, at, false],
@@ -281,8 +224,6 @@ class ProviderMinuteStats
     end
   end
 
-  # Минимальная схема для чтения. Поля назначения отдельно проверяются в run;
-  # остальные таблицы проекта (очередь, решения, попытки) здесь не используются.
   def validate_source!(database)
     {
       'providers' => %w[payment_system_id payment_system],
@@ -295,7 +236,6 @@ class ProviderMinuteStats
   end
 end
 
-# CLI запускается только при прямом вызове файла; require_relative загружает класс.
 if $PROGRAM_NAME == __FILE__
   options = { database: File.expand_path('../db/operations.db', __dir__) }
   begin
@@ -323,7 +263,6 @@ if $PROGRAM_NAME == __FILE__
     end.parse!
     raise OptionParser::InvalidArgument, ARGV.join(' ') unless ARGV.empty?
 
-    # Оба режима выводят JSON в stdout; ошибки идут отдельно в stderr с кодом 1.
     puts JSON.pretty_generate(ProviderMinuteStats.new(**options).run)
   rescue ProviderMinuteStats::Error, SQLite3::Exception, OptionParser::ParseError,
          SystemCallError, ArgumentError => e

@@ -1,8 +1,5 @@
 module PaymentRouting
   module Strategies
-    # Загружает полный список известных стратегий (и их combo-коэффициентов)
-    # из config/strategies.yml. Не знает про провайдеров и про то, какие
-    # стратегии активны сейчас - это дело StrategyWeightCalculator.
     class StrategyRegistry
       def initialize(strategies_file:)
         @strategies_file = strategies_file

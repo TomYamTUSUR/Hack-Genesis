@@ -1,16 +1,9 @@
 require 'sequel'
 
 module PaymentRouting
-  # Подключение к SQLite и определение схемы - в одном месте, чтобы
-  # db/create_tables.rb (реальная БД) и тесты импортёров (in-memory БД)
-  # гарантированно работали с одной и той же схемой, а не с двумя копиями DDL.
-  #
-  # Таблицы и связи соответствуют ER-диаграмме (dbdiagram.io) - см. Ref-строки
-  # в комментариях у каждого foreign_key.
   module Db
     DEFAULT_PATH = File.join(__dir__, 'operations.db')
 
-    # path: nil -> in-memory БД (используется тестами импортёров).
     def self.connect(path = DEFAULT_PATH)
       path.nil? ? Sequel.sqlite : Sequel.sqlite(path, timeout: 5_000)
     end
@@ -55,9 +48,6 @@ module PaymentRouting
         Float :requests_per_minute_limit
         Integer :daily_turnover_min
         Integer :daily_turnover_max
-        # Приоритетный диапазон суммы для стратегии "по сумме чека" (см. RangeFitNorm) -
-        # не приходит из data/providers.json, дополняется отдельным блоком. Пока null,
-        # ProviderRegistry подставляет вместо него limit_amount_min/max.
         Integer :preferred_range_min
         Integer :preferred_range_max
 
@@ -67,7 +57,6 @@ module PaymentRouting
       end
 
       # Таблица operations_history
-      # Ref: operations_history.payment_system_id > providers.payment_system_id
       db.create_table? :operations_history do
         String :operation_id, primary_key: true
         DateTime :created_at, null: false
@@ -84,12 +73,8 @@ module PaymentRouting
       end
 
       # Таблица routing_decisions
-      # Ref: routing_decisions.operation_id > operations_queue.operation_id
-      # Ref: routing_decisions.selected_payment_system_id > providers.payment_system_id
       db.create_table? :routing_decisions do
         foreign_key :operation_id, :operations_queue, key: :operation_id, type: String, primary_key: true
-        # Обязательные поля по формату ответа (см. ТЗ, "Формат результата роутинга"):
-        # выбранный провайдер и симулированный результат должны быть у каждого решения.
         foreign_key :selected_payment_system_id, :providers, key: :payment_system_id, null: false
         String :simulated_result, null: false
         Integer :latency_sec, null: false
@@ -100,8 +85,6 @@ module PaymentRouting
       end
 
       # Таблица routing_attempts
-      # Ref: routing_attempts.operation_id > routing_decisions.operation_id
-      # Ref: routing_attempts.payment_system_id > providers.payment_system_id
       db.create_table? :routing_attempts do
         primary_key :attempt_id
         foreign_key :operation_id, :routing_decisions, key: :operation_id, type: String, null: false
@@ -122,8 +105,6 @@ module PaymentRouting
       end
 
       # Таблица eligible_providers
-      # Ref: eligible_providers.operation_id > operations_queue.operation_id
-      # Ref: eligible_providers.payment_system_id > providers.payment_system_id
       db.create_table? :eligible_providers do
         foreign_key :operation_id, :operations_queue, key: :operation_id, type: String, null: false
         foreign_key :payment_system_id, :providers, key: :payment_system_id, null: false
@@ -138,8 +119,6 @@ module PaymentRouting
       end
 
       # Таблица provider_skip_reasons
-      # Ref: provider_skip_reasons.operation_id > operations_queue.operation_id
-      # Ref: provider_skip_reasons.payment_system_id > providers.payment_system_id
       db.create_table? :provider_skip_reasons do
         primary_key :skip_reason_id
         foreign_key :operation_id, :operations_queue, key: :operation_id, type: String, null: false
@@ -155,8 +134,6 @@ module PaymentRouting
       end
 
       # Таблица reference_decisions
-      # Ref: reference_decisions.operation_id > operations_queue.operation_id
-      # Ref: reference_decisions.required_payment_system_id > providers.payment_system_id
       db.create_table? :reference_decisions do
         foreign_key :operation_id, :operations_queue, key: :operation_id, type: String, primary_key: true
         foreign_key :required_payment_system_id, :providers, key: :payment_system_id, null: false
@@ -167,7 +144,6 @@ module PaymentRouting
       db
     end
 
-    # Additive migration: existing data and the order of original columns remain intact.
     def self.upgrade_schema!(db)
       additions = {
         providers: { daily_approved_date: String, daily_utc_offset: Integer },

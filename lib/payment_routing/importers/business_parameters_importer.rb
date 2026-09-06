@@ -2,15 +2,6 @@ require "yaml"
 
 module PaymentRouting
   module Importers
-    # Дополняет уже существующие строки providers полями, которых нет в
-    # data/providers.json (preferred_range_min/max, volume_share_pct,
-    # requests_per_minute_limit, daily_turnover_min/max) - значениями из
-    # config/business_parameters.yml. Список провайдеров, которых касается
-    # обновление, берётся из БД (providers уже должна быть заполнена
-    # ProvidersImporter'ом) - YAML лишь поставляет значения для части из них.
-    # Провайдер из providers без записи в YAML просто не трогается (поля
-    # остаются как есть, обычно nil); имя в YAML, которого нет в providers -
-    # ошибка (опечатка или забыли импортировать providers), не молчаливый no-op.
     class BusinessParametersImporter
       def initialize(db:, business_parameters_file:)
         @db = db

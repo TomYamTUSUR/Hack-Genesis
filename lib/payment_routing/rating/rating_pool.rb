@@ -1,9 +1,5 @@
 module PaymentRouting
   module Rating
-    # Контекст ранжирования: провайдеры, уже прошедшие hard-constraints, вместе
-    # с их ProviderActuals. Даёт норм-калькуляторам min/max по пулу (нужно
-    # PriorityNorm/ConversionNorm; при min == max BaseNorm#min_max_norm сам
-    # возвращает нейтральную норму, в том числе для пула из одного провайдера).
     class RatingPool
       def initialize(providers:, actuals_by_provider:)
         @providers = providers

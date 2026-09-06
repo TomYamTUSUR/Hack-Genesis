@@ -1,11 +1,7 @@
 module PaymentRouting
   module Rating
-    # Результат ранжирования одного провайдера: итоговый Score и разбивка по
-    # нормам (пригодится для объяснимости решения - attempts/details).
     ScoreResult = Struct.new(:provider, :score, :breakdown, :load_factor, keyword_init: true)
 
-    # Блок распределения рейтинга: Score(p) = 100 * Σ(w_i * norm_i(p)) * LoadFactor(p)^gamma.
-    # Ничего не знает про то, откуда взялись weights/gamma (это StrategyWeightCalculator).
     class ProviderScoreCalculator
       def initialize(weights:, gamma:, load_factor_calculator: LoadFactorCalculator.new, norms: nil)
         @weights = weights

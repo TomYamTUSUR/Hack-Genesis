@@ -1,11 +1,5 @@
 module PaymentRouting
   module Router
-    # Изменяемое между операциями одного прогона состояние очереди - обёртка
-    # над Provider/ProviderActuals по payment_system. Provider/ProviderActuals
-    # сами неизменяемы (как и весь остальной проект): MetricsUpdater кладёт
-    # сюда НОВЫЕ экземпляры (см. Provider#with/ProviderActuals#with), а не
-    # мутирует существующие - так следующая операция в этой же очереди видит
-    # уже изменившуюся картину, а не статичный снимок на начало прогона.
     class RunState
       attr_reader :time
 
@@ -38,8 +32,6 @@ module PaymentRouting
         @actuals_by_name[payment_system] = actuals
       end
 
-      # Очередь симулируется по created_at; часовой пояс дневного счётчика
-      # берётся из исходного снимка провайдера и не зависит от часов машины.
       def advance_to(time)
         raise ArgumentError, "operation time moved backwards" if @time && time < @time
 

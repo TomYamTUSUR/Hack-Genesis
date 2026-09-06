@@ -1,11 +1,5 @@
 module PaymentRouting
   module Router
-    # Оркестратор: для одной операции - hard-constraints (HardFilter) -> если
-    # пул не пуст, ранжирование (Strategies+Rating) -> попытка кандидатов по
-    # порядку рейтинга, с переходом к следующему при отказе (ProviderClient) ->
-    # fallback на self-provider, если пул изначально пуст или все попытки
-    # исчерпаны -> обновление рантайм-состояния (MetricsUpdater) для
-    # следующей операции этой же очереди.
     class Router
       NO_ELIGIBLE_PROVIDER_REASON = "no_eligible_provider"
       ALL_PROVIDERS_UNAVAILABLE_REASON = "all_providers_unavailable"

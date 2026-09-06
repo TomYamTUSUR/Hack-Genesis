@@ -1,10 +1,6 @@
 module PaymentRouting
   module HardFilter
     module Rules
-      # Проверка 4 ("In-progress count/amount", ТЗ 6.4): текущая незавершённая
-      # нагрузка провайдера. Count - уже "битком" (>= лимита) исключает независимо
-      # от суммы операции; amount учитывает саму операцию, как DailyAmountLimitRule.
-      # Оба лимита nil-able - "без ограничения".
       class InProgressRule < BaseRule
         REASON = "in_progress_limit_exceeded"
 

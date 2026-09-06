@@ -60,11 +60,6 @@ class RoutingAnalyticsTest < Minitest::Test
         'bank' => 'sberbank',
         'payout_requisite' => { 'sbp' => { 'phone' => '79000000000' } }
       }
-      # routing_decisions.operation_id -> operations_queue.operation_id (см. ER-диаграмму) -
-      # операция должна быть в operations_queue до того, как на неё сошлётся
-      # решение; log_operations не удаляет её оттуда (см. комментарий в самом
-      # методе) - "обработанность" видна по наличию записи в
-      # operations_history/routing_decisions, а не по отсутствию в очереди.
       seed_db = SQLite3::Database.new(path)
       seed_db.execute(
         'INSERT INTO operations_queue (operation_id, created_at, amount, bank) VALUES (?, ?, ?, ?)',
@@ -104,8 +99,6 @@ class RoutingAnalyticsTest < Minitest::Test
       assert_equal 0, report.dig('distribution', 'vipay', 'count')
       assert_equal 1, report.dig('skip_reasons', 'provider_timeout')
       assert_equal 2, database.get_first_value('SELECT COUNT(*) FROM routing_attempts')
-      # operations_queue не чистится (см. комментарий в log_operations) - "не в
-      # ожидании" видно по report['pending_operations'] выше, а не по этой таблице.
       assert_equal 1, database.get_first_value('SELECT COUNT(*) FROM operations_queue')
       refute database.execute("SELECT name FROM sqlite_master WHERE sql LIKE '%phone%' AND name = 'operations_history'").any?
       database.close

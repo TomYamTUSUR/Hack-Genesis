@@ -1,9 +1,4 @@
 #!/usr/bin/env ruby
-# Строит обязательный routing_decisions_test.json из БД (routing_decisions +
-# routing_attempts), заполненной bin/route.rb - зеркалит bin/build_report.rb,
-# который так же строит routing_report_test.json из БД, а не из решений
-# Router'а в памяти.
-# Использование: bundle exec ruby bin/build_decisions.rb [--database PATH] [--output PATH]
 
 require "json"
 require "optparse"

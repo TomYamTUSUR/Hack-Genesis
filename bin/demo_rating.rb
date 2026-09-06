@@ -1,15 +1,9 @@
 #!/usr/bin/env ruby
-# Демонстрация блока стратегий + блока рейтинга на данных из db/operations.db
-# (запустите bin/import_data.rb заранее, если БД пустая или отсутствует).
-# Не участвует в hard-constraints - показывает только, как смена активной
-# стратегии меняет ранжирование провайдеров.
 
 require_relative "../lib/payment_routing"
 require_relative "../db/database"
 
 module PaymentRouting
-  # Прогоняет несколько наборов активных стратегий через реальные конфиги и
-  # печатает ранжирование с разбивкой по нормам - для наглядной проверки на чекпоинте.
   class RatingDemo
     SCENARIOS = [
       { label: "solo: приоритет (каскад)", active_keys: [:priority] },

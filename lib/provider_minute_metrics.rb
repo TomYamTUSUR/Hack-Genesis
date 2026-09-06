@@ -1,6 +1,5 @@
 # frozen_string_literal: true
 
-# Pure calculations over one explicitly bounded cohort of operations.
 module ProviderMinuteMetrics
   TERMINAL_STATUSES = %w[approved rejected expired].freeze
   AMOUNT_BANDS = [
@@ -96,8 +95,6 @@ module ProviderMinuteMetrics
       'requests_limit' => provider['requests_per_minute_limit'],
       'requests_limit_utilization_pct' => percentage(minute['count'], provider['requests_per_minute_limit']),
       'requests_limit_remaining' => remaining(provider['requests_per_minute_limit'], minute['count']),
-      # These are calculations from the supplied provider snapshot, not from
-      # this minute's cohort. No timestamp exists to prove snapshot freshness.
       'snapshot_daily_approved_amount' => provider['daily_approved_amount'],
       'snapshot_daily_limit_utilization_pct' => percentage(provider['daily_approved_amount'], provider['daily_amount_limit']),
       'snapshot_daily_limit_remaining' => remaining(provider['daily_amount_limit'], provider['daily_approved_amount']),

@@ -34,8 +34,6 @@ module PaymentRouting
         assert_equal 20.0, row[:requests_per_minute_limit]
       end
 
-      # Список, который реально трогается, берётся из providers (БД), а не из
-      # ключей YAML - провайдер из БД без записи в YAML просто не изменяется.
       def test_leaves_db_providers_without_a_yaml_entry_untouched
         import(<<~YAML)
           providers:

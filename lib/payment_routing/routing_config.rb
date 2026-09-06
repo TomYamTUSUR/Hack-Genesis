@@ -1,8 +1,4 @@
 module PaymentRouting
-  # Единственное место, которое знает про config/routing.yml.
-  # providers_file/operations_history_file/operations_queue_file нужны только
-  # bin/import_data.rb (первичная загрузка data/* в БД) - рейтинг и стратегии
-  # их не используют, они читают только db/operations.db.
   class RoutingConfig
     DEFAULT_CONFIG_FILE = File.join(PaymentRouting.root, "config", "routing.yml")
 

@@ -10,9 +10,6 @@ require "stringio"
 module PaymentRouting
   module Menu
     class AppTest < Minitest::Test
-      # Переопределяет один метод RoutingConfig, остальные делегирует реальному
-      # экземпляру - тестам нужен свой, записываемый config-файл лишь для
-      # одного из трёх (routing.yml/strategies.yml/business_parameters.yml).
       class ConfigOverride < SimpleDelegator
         def initialize(base, overrides)
           super(base)
@@ -28,9 +25,6 @@ module PaymentRouting
         end
       end
 
-      # Не Dir.mktmpdir с блоком: на Windows автоочистка иногда натыкается на
-      # ещё не отпущенный ОС файловый хэндл SQLite сразу после disconnect
-      # (не связано с GC/ссылками) - чистим сами и терпим один такой сбой.
       def with_app(config: RoutingConfig.new, **seed_options)
         dir = Dir.mktmpdir("menu-app-")
         path = SeededDatabase.seed(File.join(dir, "operations.db"), **seed_options)
@@ -45,9 +39,6 @@ module PaymentRouting
         end
       end
 
-      # Скармливает сценарий ввода приватному методу-экрану и возвращает то,
-      # что было напечатано - реальный ввод/вывод меню без раскрутки
-      # бесконечного App#run (выход из него - только Ctrl+C, по заданию).
       def script(app, screen, input_lines, *args)
         original_stdin = $stdin
         original_stdout = $stdout
@@ -101,9 +92,6 @@ module PaymentRouting
           refute_equal before.sort, toggled_on.sort
 
           script(app, :strategies_menu, ["1", "x", ""])
-          # toggle_active_strategy добавляет ключ в конец списка, а не на
-          # исходную позицию - раунд-трип восстанавливает набор, не порядок
-          # (порядок active_strategies не влияет на веса, см. StrategyWeightCalculator).
           assert_equal before.sort, YamlEditor.active_strategies(config.config_file).sort
         end
       end
@@ -141,19 +129,12 @@ module PaymentRouting
       def test_provider_metrics_shows_business_parameters_immediately_on_first_open
         with_app do |app, _path|
           output = script(app, :provider_fields_menu, [""], "vipay")
-          # daily_turnover_min: у vipay в business_parameters.yml его нет - это
-          # законное "(not set)", а не признак несинхронизированности; признак
-          # бага - если бы (not set) стояло и там, где значение реально задано.
           assert_match(/preferred_range_min: 50001/, output)
           assert_match(/volume_share_pct: 50/, output)
           assert_match(/requests_per_minute_limit: 20/, output)
         end
       end
 
-      # Воспроизводит именно тот баг, который был доложен: providers
-      # появляются в БД ПОСЛЕ старта App (через "Data"), а не до него - в
-      # этот момент разовая синхронизация при старте меню ничего не находила
-      # и не повторялась, поэтому здесь оставался (not set).
       def test_provider_metrics_syncs_business_parameters_even_when_providers_load_after_app_start
         with_app(providers: false, queue: false, history: false) do |app, _path|
           data_source_menu_output = script(app, :data_source_menu, ["1", "x", ""], :update)
@@ -268,9 +249,6 @@ module PaymentRouting
           assert_match(/Report written to/, output)
           assert_match(/Clear mode: database restored to original data/, output)
 
-          # Очередь и история снова в исходном состоянии - как будто прогона
-          # не было (при этом файлы решений/отчёта уже отражают то, что
-          # реально произошло за этот прогон, см. предыдущие assert выше).
           assert_equal 10, db[:operations_queue].count
           assert_equal 0, db[:routing_decisions].count
           assert_equal 0, db[:routing_attempts].count

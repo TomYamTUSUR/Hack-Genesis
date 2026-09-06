@@ -1,13 +1,5 @@
 module PaymentRouting
   module Rating
-    # u(p) и LoadFactor(p)^gamma - универсальный множитель рейтинга, учитывающий
-    # любое из трёх измерений загрузки (rpm, in-progress count/amount) сразу -
-    # чтобы не обращаться к провайдеру, упёршемуся в любой из своих лимитов.
-    #
-    # rpm_utilization отдельно нужен Norms::IntensityNorm: стратегия "по
-    # интенсивности" (rate limit) - про требования/минуту конкретно, а не про
-    # общую загрузку, поэтому её ключевая норма не должна зависеть от того,
-    # сколько у провайдера сейчас in-progress заявок.
     class LoadFactorCalculator
       def utilization(provider:, actuals:)
         ratios = [
@@ -34,8 +26,6 @@ module PaymentRouting
 
       private
 
-      # Лимит может отсутствовать (nil) или быть 0 - в обоих случаях эта
-      # составляющая нагрузки не участвует в u(p), а не считается "перегрузом".
       def ratio(used, limit)
         return nil if limit.nil? || limit.zero?
 

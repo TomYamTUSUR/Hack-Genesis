@@ -11,9 +11,6 @@ require_relative 'support/seeded_database'
 class CanonicalDatabaseAnalyticsTest < Minitest::Test
   def setup
     @directory = Dir.mktmpdir('canonical-database-analytics-')
-    # Строит настоящую БД из data/* тем же путём, что и bin/import_data.rb -
-    # так числа в этом тесте всегда соответствуют текущим data/*, а не
-    # рассинхронизированному заранее закоммиченному бинарнику.
     @database_path = SeededDatabase.seed(File.join(@directory, 'operations.db'))
   end
 

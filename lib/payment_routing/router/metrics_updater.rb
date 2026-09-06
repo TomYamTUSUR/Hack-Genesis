@@ -1,13 +1,5 @@
 module PaymentRouting
   module Router
-    # Обновляет RunState выбранного провайдера сразу после решения по одной
-    # операции - следующая операция той же очереди должна видеть уже
-    # изменившуюся картину, а не статичный снимок истории на начало прогона.
-    # Provider/ProviderActuals неизменяемы - в state кладутся новые экземпляры
-    # (Provider#with/ProviderActuals#with), не мутация.
-    #
-    # Доли используют тот же общий пул, что HistoricalActualsProvider: все
-    # провайдеры, включая fallback. Завершённые выплаты не занимают ёмкость.
     class MetricsUpdater
       def start_attempt(state:, provider:, operation:)
         current = state.provider(provider.payment_system)

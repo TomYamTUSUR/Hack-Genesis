@@ -1,7 +1,5 @@
 module PaymentRouting
   module Router
-    # Одна запись в attempts итогового решения - формат из ТЗ ("Формат
-    # результата роутинга"): provider, decision (selected/skipped), reason.
     Attempt = Struct.new(:provider, :decision, :reason, :details, :dispatched_at, keyword_init: true) do
       def to_h
         result = { "provider" => provider, "decision" => decision, "reason" => reason }
@@ -11,9 +9,6 @@ module PaymentRouting
       end
     end
 
-    # Итоговое решение по одной операции - ровно то, что требует ТЗ и что
-    # понимает RoutingAnalytics::DatabaseWriter#log_operations (тот же набор
-    # строковых ключей в to_h).
     class Decision
       attr_reader :operation_id, :selected_provider, :attempts, :simulated_result, :latency_sec, :explanation
 
