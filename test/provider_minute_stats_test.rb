@@ -6,7 +6,7 @@ require 'minitest/autorun'
 require 'open3'
 require 'rbconfig'
 require 'tmpdir'
-require_relative '../bin/update_provider_minute_stats'
+require_relative '../lib/provider_minute_stats'
 require_relative 'support/seeded_database'
 
 class ProviderMinuteStatsTest < Minitest::Test

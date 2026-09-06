@@ -1,3 +1,5 @@
+require_relative "../provider_minute_stats"
+
 module PaymentRouting
   # Один полный прогон очереди
   class RoutingRun
@@ -49,6 +51,8 @@ module PaymentRouting
         decisions = DecisionsReader.new(db: @db).load
         processed = true
       end
+
+      ProviderMinuteStats.new(database: @database_path).run if processed
 
       Result.new(processed: processed, decisions: decisions)
     end

@@ -1,7 +1,7 @@
 require_relative "../../test_helper"
 require_relative "../../support/seeded_database"
 require_relative "../../../lib/canonical_database_analytics"
-require_relative "../../../bin/update_provider_minute_stats"
+require_relative "../../../lib/provider_minute_stats"
 require "tmpdir"
 require "open3"
 require "rbconfig"
