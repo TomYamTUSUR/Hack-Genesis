@@ -8,7 +8,7 @@
 - `db/` — схема SQLite (`database.rb`) и скрипт её создания (`create_tables.rb`).
 - `config/` — `routing.yml` (пути к данным для импорта, список рейтингуемых провайдеров, `active_strategies`, `fallback_provider`), `strategies.yml` (коэффициенты стратегий), `business_parameters.yml` (регулируемые бизнес-величины по провайдерам — `preferred_range_min/max`, `volume_share_pct`, `requests_per_minute_limit`, `daily_turnover_min/max` — которых нет в `data/providers.json`; временный источник, см. комментарий в файле).
 - `data/` — исходные файлы для первичного импорта в БД (`providers.json`, `operations_history.csv`, `operations_queue_10.json`).
-- `bin/` — исполняемые скрипты: `import_data.rb` (импорт `data/*` + `config/business_parameters.yml` в БД), `route.rb` (сам заново переносит `config/business_parameters.yml` в БД, обрабатывает очередь через Router, журналирует решения и обновлённое состояние провайдеров в БД и сразу же собирает из неё `routing_decisions_test.json`), `build_decisions.rb` (пересобирает `routing_decisions_test.json` из уже заполненной БД самостоятельно, без повторного роутинга - на случай, если нужно только перечитать БД), `build_report.rb` (собирает обязательный `routing_report_test.json` из БД после `route.rb`), `demo_rating.rb` (демонстрация рейтинга на нескольких стратегиях), `demo_hard_filter.rb` (демонстрация hard-constraints на синтетических данных, БД не требует), `analyze_db.rb`/`log_operations.rb`/`update_provider_minute_stats.rb` (аналитика, см. `SCRIPTS.md`).
+- `bin/` — исполняемые скрипты: `menu.rb` (интерактивное консольное меню - альтернатива ручному вызову остальных скриптов и правке `config/*.yml`, см. ниже), `import_data.rb` (импорт `data/*` + `config/business_parameters.yml` в БД), `route.rb` (сам заново переносит `config/business_parameters.yml` в БД, обрабатывает очередь через Router, журналирует решения и обновлённое состояние провайдеров в БД и сразу же собирает из неё `routing_decisions_test.json`), `build_decisions.rb` (пересобирает `routing_decisions_test.json` из уже заполненной БД самостоятельно, без повторного роутинга - на случай, если нужно только перечитать БД), `build_report.rb` (собирает обязательный `routing_report_test.json` из БД после `route.rb`), `demo_rating.rb` (демонстрация рейтинга на нескольких стратегиях), `demo_hard_filter.rb` (демонстрация hard-constraints на синтетических данных, БД не требует), `analyze_db.rb`/`log_operations.rb`/`update_provider_minute_stats.rb` (аналитика, см. `SCRIPTS.md`).
 - `test/` — Minitest, зеркалирует структуру `lib/`.
 
 Рейтинг, стратегии и hard-constraints читают только БД (`db/operations.db`) — файлы в `data/`/`config/business_parameters.yml` участвуют один раз, на этапе импорта. `routing_decisions_test.json`/`routing_report_test.json` — обязательные артефакты по итогам обработки `data/operations_queue_10.json` (или другой очереди, импортированной в БД); оба всегда собираются из БД (`DecisionsReader`/`CanonicalDatabaseAnalytics`), а не напрямую из решений `Router`'а в памяти. `bin/route.rb` делает это для `routing_decisions_test.json` сам, сразу по окончании обработки очереди; `bin/build_report.rb` запускается отдельным шагом после него.
@@ -33,6 +33,18 @@ bundle exec ruby bin/route.rb           # обработать очередь, �
 bundle exec ruby bin/build_report.rb    # собрать routing_report_test.json из БД
 bundle exec rake test                   # тесты (или просто `rake test`, без bundler)
 ```
+
+### Консольное меню
+
+`bundle exec ruby bin/menu.rb [--database PATH]` — интерактивная альтернатива шагам выше: запуск роутинга, переключение активных стратегий, импорт/замена/очистка данных, редактирование бизнес-параметров провайдеров и весов стратегий, сборка отчёта - без ручных вызовов скриптов и правки `config/*.yml`.
+
+- **Start Route** — требует хотя бы одну активную стратегию и непустые `providers`/`operations_queue`/`operations_history`; иначе следующий экран объясняет, чего не хватает.
+- **Switch strategies** / **Strategies priority** — правят `config/routing.yml#active_strategies` и `config/strategies.yml#combo_coefficient` точечно (построчно), не трогая остальной файл и его комментарии.
+- **Data** → Update (добавляет/обновляет по естественному ключу, не дублирует) / Replace (очищает конкретную таблицу и грузит файл заново) / Clear (очищает всю БД).
+- **Provider metrics** — правки сначала попадают в `config/business_parameters.yml` (тем же точечным способом), затем сразу переносятся в БД через `BusinessParametersImporter`.
+- **Clear mode** — если включён на момент выхода из меню (Ctrl+C — единственный выход, пункта "выход" нет), БД возвращается к состоянию на момент запуска меню.
+
+Навигация: ввод номера открывает следующий уровень меню; пустой ввод (Enter) возвращает на уровень выше (на главном экране - ничего не делает); после переключения/ввода значения показывается сообщение и ожидание любой клавиши, затем возврат на экран, с которого действие было вызвано.
 
 Импорт можно делать по частям: `bundle exec ruby bin/import_data.rb providers history`.
 

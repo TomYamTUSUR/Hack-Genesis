@@ -6,7 +6,10 @@ module PaymentRouting
   class RoutingConfig
     DEFAULT_CONFIG_FILE = File.join(PaymentRouting.root, "config", "routing.yml")
 
+    attr_reader :config_file
+
     def initialize(config_file: DEFAULT_CONFIG_FILE)
+      @config_file = config_file
       @raw = YAML.safe_load(File.read(config_file))
     end
 
