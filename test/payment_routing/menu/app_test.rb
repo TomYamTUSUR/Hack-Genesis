@@ -25,7 +25,7 @@ module PaymentRouting
         end
       end
 
-      def with_app(config: RoutingConfig.new, **seed_options)
+      def with_app(config: ConfigOverride.new(RoutingConfig.new, operations_queue_file: SeededDatabase::QUEUE_FIXTURE), **seed_options)
         dir = Dir.mktmpdir("menu-app-")
         path = SeededDatabase.seed(File.join(dir, "operations.db"), **seed_options)
         app = App.new(database_path: path, config: config, output_dir: dir)

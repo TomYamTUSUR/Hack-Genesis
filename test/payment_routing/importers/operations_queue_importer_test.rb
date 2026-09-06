@@ -1,4 +1,5 @@
 require_relative "../../test_helper"
+require_relative "../../support/seeded_database"
 
 module PaymentRouting
   module Importers
@@ -6,7 +7,7 @@ module PaymentRouting
       def setup
         @db = Db.connect(nil)
         Db.create_schema!(@db)
-        @importer = OperationsQueueImporter.new(db: @db, queue_file: RoutingConfig.new.operations_queue_file)
+        @importer = OperationsQueueImporter.new(db: @db, queue_file: SeededDatabase::QUEUE_FIXTURE)
       end
 
       def test_imports_every_operation_from_the_queue_file

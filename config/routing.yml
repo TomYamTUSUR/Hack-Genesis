@@ -1,7 +1,7 @@
 data:
   providers_file: data/providers.json
   operations_history_file: data/operations_history.csv
-  operations_queue_file: data/operations_queue_10.json
+  operations_queue_file: data/operations_queue_90.json
   business_parameters_file: config/business_parameters.yml
 
 strategies_file: config/strategies.yml

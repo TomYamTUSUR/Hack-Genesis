@@ -1,3 +1,5 @@
+require_relative "seeded_database"
+
 module PaymentRouting
   module TestFactories
     module_function
@@ -48,7 +50,7 @@ module PaymentRouting
 
       Importers::ProvidersImporter.new(db: db, providers_file: config.providers_file).import
       Importers::BusinessParametersImporter.new(db: db, business_parameters_file: config.business_parameters_file).import
-      Importers::OperationsQueueImporter.new(db: db, queue_file: config.operations_queue_file).import
+      Importers::OperationsQueueImporter.new(db: db, queue_file: SeededDatabase::QUEUE_FIXTURE).import
       Importers::OperationsHistoryImporter.new(db: db, history_file: config.operations_history_file).import
 
       db

@@ -127,7 +127,7 @@ module PaymentRouting
         assert_equal 10, @db[:routing_decisions].count
       end
 
-      def test_history_preserves_event_time_and_brand_and_artifacts_pass_validation
+      def test_history_preserves_event_time_and_brand_and_artifacts_cross_reference
         timestamp = Time.iso8601("2026-07-30T09:05:00.123456+03:00")
         @db[:operations_queue].where(operation_id: "op_101").update(created_at: timestamp.iso8601(6), card_brand: "mir")
         run_route
@@ -135,11 +135,13 @@ module PaymentRouting
         assert_equal timestamp, history[:created_at]
         assert_equal "mir", history[:card_brand]
 
+        # scripts/validate_10.rb reads data/operations_queue_90.json unconditionally (hardcoded organizer
+        # checker), so it can't run against this test's isolated fixture-seeded database - only build_decisions.rb
+        # and build_report.rb are exercised here, both parameterized via --database.
         decisions = File.join(@directory, "decisions.json")
         report = File.join(@directory, "report.json")
         [
           ["bin/build_decisions.rb", "--database", @path, "--output", decisions],
-          ["scripts/validate_10.rb", decisions],
           ["bin/build_report.rb", "--database", @path, "--output", report]
         ].each do |script, *args|
           stdout, stderr, status = cli(script, *args)

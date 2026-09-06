@@ -13,7 +13,7 @@ module PaymentRouting
 
       def test_sources_lists_the_three_data_files
         labels = @manager.sources.map(&:label)
-        assert_equal %w[providers.json operations_queue_10.json operations_history.csv], labels
+        assert_equal %w[providers.json operations_queue_90.json operations_history.csv], labels
       end
 
       def test_update_imports_providers_without_duplicating_on_a_second_call

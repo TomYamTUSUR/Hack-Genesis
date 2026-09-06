@@ -8,7 +8,7 @@
 #
 # Проверяет:
 #   1. Структуру JSON
-#   2. Покрытие всех заявок из operations_queue_10.json
+#   2. Покрытие всех заявок из operations_queue_90.json
 #   3. Детерминированные кейсы (единственный допустимый провайдер)
 #   4. Что selected_provider входит в список eligible провайдеров
 #   5. Что hard-лимиты не нарушены
@@ -16,7 +16,7 @@
 require 'json'
 
 DATA_DIR = File.expand_path('../data', __dir__)
-QUEUE_FILENAME = 'operations_queue_10.json'
+QUEUE_FILENAME = 'operations_queue_90.json'
 
 def load_json(filename)
   JSON.parse(File.read(File.join(DATA_DIR, filename)))
