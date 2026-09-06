@@ -4,7 +4,6 @@
 # руками. Ничего не считает само, только вызывает уже существующие классы.
 # Использование: bundle exec ruby bin/menu.rb [--database PATH]
 
-require "fileutils"
 require "json"
 require "optparse"
 require_relative "../lib/payment_routing"

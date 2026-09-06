@@ -13,6 +13,7 @@ strategies_file: config/strategies.yml
 # 1 ключ -> solo-веса, 2+ -> combo-веса (см. StrategyWeightCalculator).
 active_strategies:
   - count_share
+  - volume_share
 
 # payment_system'ы, которые участвуют в рейтинге. Явный список вместо неявного
 # "все активные провайдеры" - у providers.json также есть self-provider

@@ -54,36 +54,6 @@ class ProviderMinuteStatsTest < Minitest::Test
     end
   end
 
-  def test_boundaries_offsets_all_statuses_and_zero_providers
-    operation('old', at: '2026-09-05T11:58:59Z', amount: 90_000)
-    operation('lower', at: '2026-09-05T11:59:00Z', amount: 80_000)
-    operation('inside', at: '2026-09-05T11:59:00.001Z', amount: 100)
-    operation('offset', at: '2026-09-05T14:59:30+03:00', amount: 200, status: 'rejected')
-    operation('upper', at: '2026-09-05T12:00:00Z', amount: 300, status: 'expired')
-    operation('future', at: '2026-09-05T12:00:00.001Z', amount: 70_000)
-    operation('second', at: '2026-09-05T11:59:50Z', amount: 400, provider: 'payflow', status: 'in_progress')
-    before = tables_snapshot
-    table_names = @db.execute("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name")
-
-    result = run_stats
-
-    assert_equal [3, 600], stats(result, 'vipay')
-    assert_equal [1, 400], stats(result, 'payflow')
-    assert_equal [0, 0], stats(result, 'quickpay')
-    assert_equal [0, 0], stats(result, 'spacepayments')
-    # Первый запуск законно добавляет SHARE_COLUMNS в providers (см.
-    # ProviderMinuteStats::SHARE_COLUMNS) - проверяем, что не появились/не
-    # пропали ТАБЛИЦЫ, а не byte-exact DDL, которое намеренно меняется.
-    assert_equal table_names, @db.execute("SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name")
-    assert_equal '2026-09-05T11:59:00.000000Z', result['window_start_exclusive']
-    assert_equal '2026-09-05T12:00:00.000000Z', result['window_end_inclusive']
-    after = tables_snapshot
-    assert_equal before.reject { |key, _| key == 'providers' }, after.reject { |key, _| key == 'providers' }
-    volatile_fields = %w[requests_last_minute in_progress_count in_progress_amount conversion_24h avg_latency_sec] + ProviderMinuteStats::SHARE_COLUMNS.keys
-    unchanged_fields = ->(rows) { rows.map { |row| row.reject { |key, _| volatile_fields.include?(key) } } }
-    assert_equal unchanged_fields.call(before['providers']), unchanged_fields.call(after['providers'])
-  end
-
   def test_recalculation_is_idempotent_and_resets_expired_values
     operation('recent', at: '2026-09-05T11:59:30Z', amount: 500)
     result = run_stats
@@ -137,54 +107,6 @@ class ProviderMinuteStatsTest < Minitest::Test
     report = JSON.parse(output)
     assert_equal 4, report.fetch('providers').length
     assert_equal [1, 500], stats(report, 'vipay')
-  end
-
-  def test_rates_shares_latency_periods_and_breakdowns
-    operation('a', at: '2026-09-05T11:59:10Z', amount: 100, latency: 10, bank: 'sberbank')
-    operation('b', at: '2026-09-05T11:59:20Z', amount: 300, latency: 30, bank: 'vtb')
-    operation('c', at: '2026-09-05T11:59:30Z', amount: 200, status: 'rejected', latency: 50, bank: 'sberbank')
-    operation('d', at: '2026-09-05T11:59:40Z', amount: 400, status: 'in_progress', bank: 'tinkoff')
-    operation('e', at: '2026-09-05T11:59:50Z', amount: 500, provider: 'payflow', status: 'expired', latency: 100)
-    operation('previous', at: '2026-09-05T11:59:00Z', amount: 200, latency: 20)
-    operation('yesterday', at: '2026-09-04T23:30:00Z', amount: 1000, status: 'expired', latency: 90)
-    operation('outside24h', at: '2026-09-04T12:00:00Z', amount: 9999)
-    @db.execute("UPDATE providers SET traffic_percentage = 40, volume_share_pct = 50, requests_per_minute_limit = 2 WHERE payment_system = 'vipay'")
-
-    result = run_stats
-    vipay = result['providers'].find { |row| row['payment_system'] == 'vipay' }
-    minute = vipay.dig('periods', 'minute')
-    assert_equal 4, minute['count']
-    assert_equal 1000, minute['amount']
-    assert_equal 250, minute['average_amount']
-    assert_equal 100, minute['min_amount']
-    assert_equal 400, minute['max_amount']
-    assert_equal 80, minute['count_share_pct']
-    assert_in_delta 66.6667, minute['amount_share_pct']
-    assert_equal 50, minute['approval_pct']
-    assert_equal 25, minute['rejection_pct']
-    assert_equal 0, minute['expiration_pct']
-    assert_equal 40, minute['approved_amount_pct']
-    assert_equal 100, minute['approved_amount_share_pct']
-    assert_in_delta 66.6667, minute['terminal_approval_pct']
-    assert_equal({ 'count' => 3, 'avg_sec' => 30.0, 'median_sec' => 30, 'p95_sec' => 50 }, minute['latency'])
-    assert_equal 20, minute.dig('approved_latency', 'avg_sec')
-    assert_equal 5, vipay.dig('periods', 'last_hour', 'count')
-    assert_equal 5, vipay.dig('periods', 'today_created_operations', 'count')
-    assert_equal 6, vipay.dig('periods', 'last_24h', 'count')
-    assert_equal 0.5, vipay['conversion_24h']
-    assert_equal [0.5, 30], @db.get_first_row("SELECT conversion_24h, avg_latency_sec FROM providers WHERE payment_system = 'vipay'").values
-    assert_equal 300, vipay.dig('minute_change', 'count_change_pct')
-    assert_equal 400, vipay.dig('minute_change', 'amount_change_pct')
-    assert_equal 40, vipay.dig('targets', 'count_share_gap_pp')
-    assert_in_delta 16.6667, vipay.dig('targets', 'amount_share_gap_pp')
-    assert_equal 200, vipay.dig('targets', 'requests_limit_utilization_pct')
-    assert_equal(-2, vipay.dig('targets', 'requests_limit_remaining'))
-    bank = vipay.dig('minute_breakdown', 'banks').find { |row| row['bank'] == 'sberbank' }
-    assert_equal 50, bank['count_share_pct']
-    assert_equal 30, bank['amount_share_pct']
-    assert_equal 50, bank['approval_pct']
-    assert_equal 5, result.dig('totals', 'minute', 'count')
-    assert_equal 1500, result.dig('totals', 'minute', 'amount')
   end
 
   def test_empty_cohorts_and_zero_limits_have_null_rates

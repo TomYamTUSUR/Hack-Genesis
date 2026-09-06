@@ -9,10 +9,10 @@
         "reason": "highest_score",
         "details": {
           "provider": "payflow",
-          "score": 43.91001942180744,
+          "score": 49.91423929293335,
           "norms": {
             "count_share": 0.8109243697478992,
-            "volume_share": 0.898651587646803,
+            "volume_share": 0.9638041384452868,
             "priority": 0.5,
             "range_fit": 0.5858585858585859,
             "conversion": 1.0,
@@ -141,10 +141,10 @@
       "ranking": [
         {
           "provider": "payflow",
-          "score": 43.91001942180744,
+          "score": 49.91423929293335,
           "norms": {
             "count_share": 0.8109243697478992,
-            "volume_share": 0.898651587646803,
+            "volume_share": 0.9638041384452868,
             "priority": 0.5,
             "range_fit": 0.5858585858585859,
             "conversion": 1.0,
@@ -154,22 +154,8 @@
           "load_factor": 0.5625
         },
         {
-          "provider": "quickpay",
-          "score": 19.216410658797376,
-          "norms": {
-            "count_share": 0.20588235294117652,
-            "volume_share": 0.02957807742496743,
-            "priority": 0.0,
-            "range_fit": 0.0,
-            "conversion": 0.0,
-            "intensity": 1.0,
-            "turnover": 0.5
-          },
-          "load_factor": 0.8711111111111112
-        },
-        {
           "provider": "vipay",
-          "score": 17.0410638896707,
+          "score": 17.05769772023642,
           "norms": {
             "count_share": 0.4117647058823529,
             "volume_share": 0.5358851674641149,
@@ -180,19 +166,34 @@
             "turnover": 0.5
           },
           "load_factor": 0.36
+        },
+        {
+          "provider": "quickpay",
+          "score": 10.255609855947604,
+          "norms": {
+            "count_share": 0.20588235294117652,
+            "volume_share": 0.02957807742496743,
+            "priority": 0.0,
+            "range_fit": 0.0,
+            "conversion": 0.0,
+            "intensity": 1.0,
+            "turnover": 0.5
+          },
+          "load_factor": 0.8711111111111112
         }
       ],
       "active_strategies": [
-        "count_share"
+        "count_share",
+        "volume_share"
       ],
       "weights": {
-        "count_share": 0.7,
-        "volume_share": 0.05,
-        "priority": 0.05,
-        "range_fit": 0.05,
-        "conversion": 0.05,
-        "intensity": 0.05,
-        "turnover": 0.05
+        "count_share": 0.5,
+        "volume_share": 0.5,
+        "priority": 0.0,
+        "range_fit": 0.0,
+        "conversion": 0.0,
+        "intensity": 0.0,
+        "turnover": 0.0
       },
       "gamma": 2,
       "selection_policy": "descending weighted score times load factor; ties follow rated_providers order"
@@ -249,10 +250,10 @@
         "reason": "highest_score",
         "details": {
           "provider": "payflow",
-          "score": 42.9558319197824,
+          "score": 49.285384635515925,
           "norms": {
             "count_share": 0.7929606625258799,
-            "volume_share": 0.8863439930855661,
+            "volume_share": 0.9594085689591307,
             "priority": 1.0,
             "range_fit": 0.08080808080808077,
             "conversion": 1.0,
@@ -383,10 +384,10 @@
       "ranking": [
         {
           "provider": "payflow",
-          "score": 42.9558319197824,
+          "score": 49.285384635515925,
           "norms": {
             "count_share": 0.7929606625258799,
-            "volume_share": 0.8863439930855661,
+            "volume_share": 0.9594085689591307,
             "priority": 1.0,
             "range_fit": 0.08080808080808077,
             "conversion": 1.0,
@@ -397,7 +398,7 @@
         },
         {
           "provider": "quickpay",
-          "score": 19.94559977285918,
+          "score": 11.030876955644914,
           "norms": {
             "count_share": 0.2173913043478261,
             "volume_share": 0.03586862575626626,
@@ -411,16 +412,17 @@
         }
       ],
       "active_strategies": [
-        "count_share"
+        "count_share",
+        "volume_share"
       ],
       "weights": {
-        "count_share": 0.7,
-        "volume_share": 0.05,
-        "priority": 0.05,
-        "range_fit": 0.05,
-        "conversion": 0.05,
-        "intensity": 0.05,
-        "turnover": 0.05
+        "count_share": 0.5,
+        "volume_share": 0.5,
+        "priority": 0.0,
+        "range_fit": 0.0,
+        "conversion": 0.0,
+        "intensity": 0.0,
+        "turnover": 0.0
       },
       "gamma": 2,
       "selection_policy": "descending weighted score times load factor; ties follow rated_providers order"
@@ -518,7 +520,7 @@
         "reason": "only_eligible_provider",
         "details": {
           "provider": "quickpay",
-          "score": 33.77929975005838,
+          "score": 12.371210838272653,
           "norms": {
             "count_share": 0.2285714285714286,
             "volume_share": 0.055461473327688415,
@@ -655,7 +657,7 @@
       "ranking": [
         {
           "provider": "quickpay",
-          "score": 33.77929975005838,
+          "score": 12.371210838272653,
           "norms": {
             "count_share": 0.2285714285714286,
             "volume_share": 0.055461473327688415,
@@ -669,16 +671,17 @@
         }
       ],
       "active_strategies": [
-        "count_share"
+        "count_share",
+        "volume_share"
       ],
       "weights": {
-        "count_share": 0.7,
-        "volume_share": 0.05,
-        "priority": 0.05,
-        "range_fit": 0.05,
-        "conversion": 0.05,
-        "intensity": 0.05,
-        "turnover": 0.05
+        "count_share": 0.5,
+        "volume_share": 0.5,
+        "priority": 0.0,
+        "range_fit": 0.0,
+        "conversion": 0.0,
+        "intensity": 0.0,
+        "turnover": 0.0
       },
       "gamma": 2,
       "selection_policy": "descending weighted score times load factor; ties follow rated_providers order"
@@ -775,7 +778,7 @@
         "reason": "only_eligible_provider",
         "details": {
           "provider": "quickpay",
-          "score": 27.952851330203444,
+          "score": 9.201877934272304,
           "norms": {
             "count_share": 0.21126760563380287,
             "volume_share": 0.0,
@@ -911,7 +914,7 @@
       "ranking": [
         {
           "provider": "quickpay",
-          "score": 27.952851330203444,
+          "score": 9.201877934272304,
           "norms": {
             "count_share": 0.21126760563380287,
             "volume_share": 0.0,
@@ -925,16 +928,17 @@
         }
       ],
       "active_strategies": [
-        "count_share"
+        "count_share",
+        "volume_share"
       ],
       "weights": {
-        "count_share": 0.7,
-        "volume_share": 0.05,
-        "priority": 0.05,
-        "range_fit": 0.05,
-        "conversion": 0.05,
-        "intensity": 0.05,
-        "turnover": 0.05
+        "count_share": 0.5,
+        "volume_share": 0.5,
+        "priority": 0.0,
+        "range_fit": 0.0,
+        "conversion": 0.0,
+        "intensity": 0.0,
+        "turnover": 0.0
       },
       "gamma": 2,
       "selection_policy": "descending weighted score times load factor; ties follow rated_providers order"
@@ -990,7 +994,7 @@
         "reason": "highest_score",
         "details": {
           "provider": "vipay",
-          "score": 18.536341948310138,
+          "score": 18.36341948310139,
           "norms": {
             "count_share": 0.4444444444444445,
             "volume_share": 0.5757455268389662,
@@ -1124,7 +1128,7 @@
       "ranking": [
         {
           "provider": "vipay",
-          "score": 18.536341948310138,
+          "score": 18.36341948310139,
           "norms": {
             "count_share": 0.4444444444444445,
             "volume_share": 0.5757455268389662,
@@ -1138,7 +1142,7 @@
         },
         {
           "provider": "quickpay",
-          "score": 18.215901234567898,
+          "score": 8.469135802469136,
           "norms": {
             "count_share": 0.19444444444444442,
             "volume_share": 0.0,
@@ -1152,16 +1156,17 @@
         }
       ],
       "active_strategies": [
-        "count_share"
+        "count_share",
+        "volume_share"
       ],
       "weights": {
-        "count_share": 0.7,
-        "volume_share": 0.05,
-        "priority": 0.05,
-        "range_fit": 0.05,
-        "conversion": 0.05,
-        "intensity": 0.05,
-        "turnover": 0.05
+        "count_share": 0.5,
+        "volume_share": 0.5,
+        "priority": 0.0,
+        "range_fit": 0.0,
+        "conversion": 0.0,
+        "intensity": 0.0,
+        "turnover": 0.0
       },
       "gamma": 2,
       "selection_policy": "descending weighted score times load factor; ties follow rated_providers order"
@@ -1169,7 +1174,7 @@
   },
   {
     "operation_id": "op_106",
-    "selected_provider": "quickpay",
+    "selected_provider": "vipay",
     "attempts": [
       {
         "provider": "payflow",
@@ -1213,28 +1218,28 @@
         }
       },
       {
-        "provider": "quickpay",
+        "provider": "vipay",
         "decision": "selected",
         "reason": "highest_score",
         "details": {
-          "provider": "quickpay",
-          "score": 19.068158055585517,
+          "provider": "vipay",
+          "score": 18.090184446122315,
           "norms": {
-            "count_share": 0.2054794520547945,
-            "volume_share": 0.0011811023622047556,
-            "priority": 0.0,
-            "range_fit": 0.0,
-            "conversion": 0.0,
-            "intensity": 1.0,
+            "count_share": 0.43493150684931503,
+            "volume_share": 0.5700787401574803,
+            "priority": 1.0,
+            "range_fit": 0.07996159923198465,
+            "conversion": 1.0,
+            "intensity": 0.95,
             "turnover": 0.5
           },
-          "load_factor": 0.8711111111111112
+          "load_factor": 0.36
         },
         "dispatched_at": "2026-07-30T09:07:30.000000+03:00"
       }
     ],
     "simulated_result": "approved",
-    "latency_sec": 29,
+    "latency_sec": 38,
     "explanation": {
       "eligibility": [
         {
@@ -1352,22 +1357,8 @@
       ],
       "ranking": [
         {
-          "provider": "quickpay",
-          "score": 19.068158055585517,
-          "norms": {
-            "count_share": 0.2054794520547945,
-            "volume_share": 0.0011811023622047556,
-            "priority": 0.0,
-            "range_fit": 0.0,
-            "conversion": 0.0,
-            "intensity": 1.0,
-            "turnover": 0.5
-          },
-          "load_factor": 0.8711111111111112
-        },
-        {
           "provider": "vipay",
-          "score": 18.340346583503774,
+          "score": 18.090184446122315,
           "norms": {
             "count_share": 0.43493150684931503,
             "volume_share": 0.5700787401574803,
@@ -1378,19 +1369,34 @@
             "turnover": 0.5
           },
           "load_factor": 0.36
+        },
+        {
+          "provider": "quickpay",
+          "score": 9.001215259051524,
+          "norms": {
+            "count_share": 0.2054794520547945,
+            "volume_share": 0.0011811023622047556,
+            "priority": 0.0,
+            "range_fit": 0.0,
+            "conversion": 0.0,
+            "intensity": 1.0,
+            "turnover": 0.5
+          },
+          "load_factor": 0.8711111111111112
         }
       ],
       "active_strategies": [
-        "count_share"
+        "count_share",
+        "volume_share"
       ],
       "weights": {
-        "count_share": 0.7,
-        "volume_share": 0.05,
-        "priority": 0.05,
-        "range_fit": 0.05,
-        "conversion": 0.05,
-        "intensity": 0.05,
-        "turnover": 0.05
+        "count_share": 0.5,
+        "volume_share": 0.5,
+        "priority": 0.0,
+        "range_fit": 0.0,
+        "conversion": 0.0,
+        "intensity": 0.0,
+        "turnover": 0.0
       },
       "gamma": 2,
       "selection_policy": "descending weighted score times load factor; ties follow rated_providers order"
@@ -1414,7 +1420,7 @@
             "limit_amount_min": 1000,
             "limit_amount_max": 100000,
             "daily_amount_limit": 5000000,
-            "daily_approved_amount": 3225000.0,
+            "daily_approved_amount": 3277000.0,
             "in_progress_count": 4,
             "in_progress_count_limit": 10,
             "in_progress_amount": 380000.0,
@@ -1433,8 +1439,8 @@
             "daily_turnover_max": 5000000
           },
           "actuals": {
-            "rpm_used": 0,
-            "turnover_actual": 3225000.0
+            "rpm_used": 1,
+            "turnover_actual": 3277000.0
           },
           "reasons": [
             "amount_below_minimum"
@@ -1455,7 +1461,7 @@
             "limit_amount_min": 1000,
             "limit_amount_max": 200000,
             "daily_amount_limit": 8000000,
-            "daily_approved_amount": 1305000.0,
+            "daily_approved_amount": 1253000.0,
             "in_progress_count": 1,
             "in_progress_count_limit": 15,
             "in_progress_amount": 50000.0,
@@ -1470,8 +1476,8 @@
             "daily_turnover_max": null
           },
           "actuals": {
-            "rpm_used": 1,
-            "turnover_actual": 1305000.0
+            "rpm_used": 0,
+            "turnover_actual": 1253000.0
           },
           "reasons": [
             "amount_below_minimum"
@@ -1484,10 +1490,10 @@
         "reason": "only_eligible_provider",
         "details": {
           "provider": "payflow",
-          "score": 42.637205117048865,
+          "score": 48.886295614811246,
           "norms": {
             "count_share": 0.7876447876447876,
-            "volume_share": 0.8614969135802468,
+            "volume_share": 0.9505346119929454,
             "priority": 1.0,
             "range_fit": 0.012121212121212088,
             "conversion": 1.0,
@@ -1519,7 +1525,7 @@
               "limit_amount_min": 1000,
               "limit_amount_max": 100000,
               "daily_amount_limit": 5000000,
-              "daily_approved_amount": 3225000.0,
+              "daily_approved_amount": 3277000.0,
               "in_progress_count": 4,
               "in_progress_count_limit": 10,
               "in_progress_amount": 380000.0,
@@ -1538,8 +1544,8 @@
               "daily_turnover_max": 5000000
             },
             "actuals": {
-              "rpm_used": 0,
-              "turnover_actual": 3225000.0
+              "rpm_used": 1,
+              "turnover_actual": 3277000.0
             }
           }
         },
@@ -1596,7 +1602,7 @@
               "limit_amount_min": 1000,
               "limit_amount_max": 200000,
               "daily_amount_limit": 8000000,
-              "daily_approved_amount": 1305000.0,
+              "daily_approved_amount": 1253000.0,
               "in_progress_count": 1,
               "in_progress_count_limit": 15,
               "in_progress_amount": 50000.0,
@@ -1611,8 +1617,8 @@
               "daily_turnover_max": null
             },
             "actuals": {
-              "rpm_used": 1,
-              "turnover_actual": 1305000.0
+              "rpm_used": 0,
+              "turnover_actual": 1253000.0
             }
           }
         }
@@ -1620,10 +1626,10 @@
       "ranking": [
         {
           "provider": "payflow",
-          "score": 42.637205117048865,
+          "score": 48.886295614811246,
           "norms": {
             "count_share": 0.7876447876447876,
-            "volume_share": 0.8614969135802468,
+            "volume_share": 0.9505346119929454,
             "priority": 1.0,
             "range_fit": 0.012121212121212088,
             "conversion": 1.0,
@@ -1634,16 +1640,17 @@
         }
       ],
       "active_strategies": [
-        "count_share"
+        "count_share",
+        "volume_share"
       ],
       "weights": {
-        "count_share": 0.7,
-        "volume_share": 0.05,
-        "priority": 0.05,
-        "range_fit": 0.05,
-        "conversion": 0.05,
-        "intensity": 0.05,
-        "turnover": 0.05
+        "count_share": 0.5,
+        "volume_share": 0.5,
+        "priority": 0.0,
+        "range_fit": 0.0,
+        "conversion": 0.0,
+        "intensity": 0.0,
+        "turnover": 0.0
       },
       "gamma": 2,
       "selection_policy": "descending weighted score times load factor; ties follow rated_providers order"
@@ -1667,7 +1674,7 @@
             "limit_amount_min": 1000,
             "limit_amount_max": 100000,
             "daily_amount_limit": 5000000,
-            "daily_approved_amount": 3225000.0,
+            "daily_approved_amount": 3277000.0,
             "in_progress_count": 4,
             "in_progress_count_limit": 10,
             "in_progress_amount": 380000.0,
@@ -1687,7 +1694,7 @@
           },
           "actuals": {
             "rpm_used": 0,
-            "turnover_actual": 3225000.0
+            "turnover_actual": 3277000.0
           },
           "reasons": [
             "bank_not_in_list"
@@ -1741,10 +1748,10 @@
         "reason": "only_eligible_provider",
         "details": {
           "provider": "quickpay",
-          "score": 27.44,
+          "score": 10.809957603391734,
           "norms": {
-            "count_share": 0.2,
-            "volume_share": 0.0,
+            "count_share": 0.22666666666666674,
+            "volume_share": 0.021521135452021,
             "priority": 1.0,
             "range_fit": 0.0,
             "conversion": 1.0,
@@ -1776,7 +1783,7 @@
               "limit_amount_min": 1000,
               "limit_amount_max": 100000,
               "daily_amount_limit": 5000000,
-              "daily_approved_amount": 3225000.0,
+              "daily_approved_amount": 3277000.0,
               "in_progress_count": 4,
               "in_progress_count_limit": 10,
               "in_progress_amount": 380000.0,
@@ -1796,7 +1803,7 @@
             },
             "actuals": {
               "rpm_used": 0,
-              "turnover_actual": 3225000.0
+              "turnover_actual": 3277000.0
             }
           }
         },
@@ -1854,7 +1861,7 @@
               "limit_amount_min": 1000,
               "limit_amount_max": 200000,
               "daily_amount_limit": 8000000,
-              "daily_approved_amount": 1305000.0,
+              "daily_approved_amount": 1253000.0,
               "in_progress_count": 1,
               "in_progress_count_limit": 15,
               "in_progress_amount": 50000.0,
@@ -1870,7 +1877,7 @@
             },
             "actuals": {
               "rpm_used": 0,
-              "turnover_actual": 1305000.0
+              "turnover_actual": 1253000.0
             }
           }
         }
@@ -1878,10 +1885,10 @@
       "ranking": [
         {
           "provider": "quickpay",
-          "score": 27.44,
+          "score": 10.809957603391734,
           "norms": {
-            "count_share": 0.2,
-            "volume_share": 0.0,
+            "count_share": 0.22666666666666674,
+            "volume_share": 0.021521135452021,
             "priority": 1.0,
             "range_fit": 0.0,
             "conversion": 1.0,
@@ -1892,16 +1899,17 @@
         }
       ],
       "active_strategies": [
-        "count_share"
+        "count_share",
+        "volume_share"
       ],
       "weights": {
-        "count_share": 0.7,
-        "volume_share": 0.05,
-        "priority": 0.05,
-        "range_fit": 0.05,
-        "conversion": 0.05,
-        "intensity": 0.05,
-        "turnover": 0.05
+        "count_share": 0.5,
+        "volume_share": 0.5,
+        "priority": 0.0,
+        "range_fit": 0.0,
+        "conversion": 0.0,
+        "intensity": 0.0,
+        "turnover": 0.0
       },
       "gamma": 2,
       "selection_policy": "descending weighted score times load factor; ties follow rated_providers order"
@@ -1957,10 +1965,10 @@
         "reason": "highest_score",
         "details": {
           "provider": "vipay",
-          "score": 18.876353543263043,
+          "score": 18.11881656852013,
           "norms": {
-            "count_share": 0.45723684210526316,
-            "volume_share": 0.585547290116897,
+            "count_share": 0.4407894736842105,
+            "volume_share": 0.5658114467891301,
             "priority": 1.0,
             "range_fit": 0.0,
             "conversion": 1.0,
@@ -1990,7 +1998,7 @@
               "limit_amount_min": 1000,
               "limit_amount_max": 100000,
               "daily_amount_limit": 5000000,
-              "daily_approved_amount": 3225000.0,
+              "daily_approved_amount": 3277000.0,
               "in_progress_count": 4,
               "in_progress_count_limit": 10,
               "in_progress_amount": 380000.0,
@@ -2010,7 +2018,7 @@
             },
             "actuals": {
               "rpm_used": 0,
-              "turnover_actual": 3225000.0
+              "turnover_actual": 3277000.0
             }
           }
         },
@@ -2067,7 +2075,7 @@
               "limit_amount_min": 1000,
               "limit_amount_max": 200000,
               "daily_amount_limit": 8000000,
-              "daily_approved_amount": 1347000.0,
+              "daily_approved_amount": 1295000.0,
               "in_progress_count": 1,
               "in_progress_count_limit": 15,
               "in_progress_amount": 50000.0,
@@ -2083,7 +2091,7 @@
             },
             "actuals": {
               "rpm_used": 1,
-              "turnover_actual": 1347000.0
+              "turnover_actual": 1295000.0
             }
           }
         }
@@ -2091,10 +2099,10 @@
       "ranking": [
         {
           "provider": "vipay",
-          "score": 18.876353543263043,
+          "score": 18.11881656852013,
           "norms": {
-            "count_share": 0.45723684210526316,
-            "volume_share": 0.585547290116897,
+            "count_share": 0.4407894736842105,
+            "volume_share": 0.5658114467891301,
             "priority": 1.0,
             "range_fit": 0.0,
             "conversion": 1.0,
@@ -2105,10 +2113,10 @@
         },
         {
           "provider": "quickpay",
-          "score": 17.591859649122807,
+          "score": 9.397716750253243,
           "norms": {
-            "count_share": 0.18421052631578944,
-            "volume_share": 0.0,
+            "count_share": 0.21052631578947367,
+            "volume_share": 0.0052375891908303385,
             "priority": 0.0,
             "range_fit": 0.0,
             "conversion": 0.0,
@@ -2119,16 +2127,17 @@
         }
       ],
       "active_strategies": [
-        "count_share"
+        "count_share",
+        "volume_share"
       ],
       "weights": {
-        "count_share": 0.7,
-        "volume_share": 0.05,
-        "priority": 0.05,
-        "range_fit": 0.05,
-        "conversion": 0.05,
-        "intensity": 0.05,
-        "turnover": 0.05
+        "count_share": 0.5,
+        "volume_share": 0.5,
+        "priority": 0.0,
+        "range_fit": 0.0,
+        "conversion": 0.0,
+        "intensity": 0.0,
+        "turnover": 0.0
       },
       "gamma": 2,
       "selection_policy": "descending weighted score times load factor; ties follow rated_providers order"
@@ -2152,7 +2161,7 @@
             "limit_amount_min": 1000,
             "limit_amount_max": 100000,
             "daily_amount_limit": 5000000,
-            "daily_approved_amount": 3235000.0,
+            "daily_approved_amount": 3287000.0,
             "in_progress_count": 4,
             "in_progress_count_limit": 10,
             "in_progress_amount": 380000.0,
@@ -2172,7 +2181,7 @@
           },
           "actuals": {
             "rpm_used": 1,
-            "turnover_actual": 3235000.0
+            "turnover_actual": 3287000.0
           },
           "reasons": [
             "bank_not_in_list"
@@ -2225,10 +2234,10 @@
         "reason": "only_eligible_provider",
         "details": {
           "provider": "quickpay",
-          "score": 27.123232323232322,
+          "score": 10.008108917364815,
           "norms": {
-            "count_share": 0.19480519480519476,
-            "volume_share": 0.0,
+            "count_share": 0.2207792207792208,
+            "volume_share": 0.008998790078644847,
             "priority": 1.0,
             "range_fit": 0.0,
             "conversion": 1.0,
@@ -2260,7 +2269,7 @@
               "limit_amount_min": 1000,
               "limit_amount_max": 100000,
               "daily_amount_limit": 5000000,
-              "daily_approved_amount": 3235000.0,
+              "daily_approved_amount": 3287000.0,
               "in_progress_count": 4,
               "in_progress_count_limit": 10,
               "in_progress_amount": 380000.0,
@@ -2280,7 +2289,7 @@
             },
             "actuals": {
               "rpm_used": 1,
-              "turnover_actual": 3235000.0
+              "turnover_actual": 3287000.0
             }
           }
         },
@@ -2337,7 +2346,7 @@
               "limit_amount_min": 1000,
               "limit_amount_max": 200000,
               "daily_amount_limit": 8000000,
-              "daily_approved_amount": 1347000.0,
+              "daily_approved_amount": 1295000.0,
               "in_progress_count": 1,
               "in_progress_count_limit": 15,
               "in_progress_amount": 50000.0,
@@ -2353,7 +2362,7 @@
             },
             "actuals": {
               "rpm_used": 0,
-              "turnover_actual": 1347000.0
+              "turnover_actual": 1295000.0
             }
           }
         }
@@ -2361,10 +2370,10 @@
       "ranking": [
         {
           "provider": "quickpay",
-          "score": 27.123232323232322,
+          "score": 10.008108917364815,
           "norms": {
-            "count_share": 0.19480519480519476,
-            "volume_share": 0.0,
+            "count_share": 0.2207792207792208,
+            "volume_share": 0.008998790078644847,
             "priority": 1.0,
             "range_fit": 0.0,
             "conversion": 1.0,
@@ -2375,16 +2384,17 @@
         }
       ],
       "active_strategies": [
-        "count_share"
+        "count_share",
+        "volume_share"
       ],
       "weights": {
-        "count_share": 0.7,
-        "volume_share": 0.05,
-        "priority": 0.05,
-        "range_fit": 0.05,
-        "conversion": 0.05,
-        "intensity": 0.05,
-        "turnover": 0.05
+        "count_share": 0.5,
+        "volume_share": 0.5,
+        "priority": 0.0,
+        "range_fit": 0.0,
+        "conversion": 0.0,
+        "intensity": 0.0,
+        "turnover": 0.0
       },
       "gamma": 2,
       "selection_policy": "descending weighted score times load factor; ties follow rated_providers order"
