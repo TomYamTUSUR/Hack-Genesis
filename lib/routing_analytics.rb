@@ -461,6 +461,423 @@ module RoutingAnalytics
     end
   end
 
+  # Recommendations use the latest observed day; routing coverage uses the retained log.
+  # Missing evidence never counts as a zero score, zero capacity, or a stale snapshot.
+  class Recommendations
+    # Unspecified business thresholds are explicit defaults. Approval comparisons
+    # require 10 operations per cohort and a 15 percentage-point gap. A stable
+    # amount-band leader must beat every observed peer on two adjacent days.
+    # Frequent skips use distinct evaluated operations; dominance uses distinct skips.
+    # Score gaps are relative to the larger absolute score, not to score weights.
+    THRESHOLDS = {
+      min_operations: 10, share_gap_pp: 5, approval_gap_pp: 15, high_approval_pct: 90,
+      low_traffic_pct: 5, daily_utilization_pct: 90, workload_utilization_pct: 80,
+      expired_pct: 20, p95_sec: 60, tail_ratio: 3, latency_gap_sec: 10,
+      status_latency_samples: 5, expired_latency_ratio: 2, min_requisites: 3,
+      min_skips: 5, frequent_skip_pct: 20, dominant_skip_pct: 50,
+      max_eligible_providers: 1, limited_eligibility_pct: 20,
+      close_score_gap_pct: 5, strong_score_gap_pct: 25,
+      fallback_rate_pct: 20, high_fallback_approval_pct: 80, low_fallback_approval_pct: 50,
+      statistics_max_age_sec: 300, snapshot_max_age_sec: 3600
+    }.freeze
+    AMOUNT_BANDS = [
+      ['от 0 до 1 000', 0, 1000], ['от 1 000 до 10 000', 1000, 10_000],
+      ['от 10 000 до 50 000', 10_000, 50_000], ['от 50 000 до 100 000', 50_000, 100_000],
+      ['от 100 000', 100_000, nil]
+    ].freeze
+    SKIP_LABELS = {
+      'bank_not_in_list' => 'банк не входит в список доступных',
+      'amount_exceeds_limit' => 'сумма превышает допустимый предел',
+      'daily_amount_limit_exceeded' => 'дневной лимит суммы исчерпан',
+      'provider_timeout' => 'превышено время ожидания провайдера',
+      'provider_rejected' => 'провайдер отклонил операцию',
+      'provider_expired' => 'истёк срок обработки операции',
+      'provider_unavailable' => 'провайдер недоступен',
+      'unknown' => 'причина не указана'
+    }.freeze
+
+    def initialize(providers:, records:, all_records:, report:, generated_at:, details: {}, snapshot_at: nil)
+      @providers = providers
+      @by_name = providers.to_h { |provider| [provider['payment_system'], provider] }
+      @by_id = providers.to_h { |provider| [provider['payment_system_id'], provider['payment_system']] }
+      @generated_at = generated_at.getutc
+      @report = report
+      @details = details
+      @snapshot_at = time(snapshot_at)
+      @scope_ids = records.to_h { |row| [row['operation_id'], true] }
+      @records = records.select { |row| valid_record?(row) }
+      @all_records = all_records.select { |row| valid_record?(row) }
+      @groups = @records.group_by { |row| row['payment_system'] }
+      @skip_groups = @details.fetch(:attempts, [])
+        .select { |row| @scope_ids.key?(row['operation_id']) && @by_id.key?(row['payment_system_id']) }
+        .group_by { |row| row['payment_system_id'] }
+      @result = []
+    end
+
+    def call
+      quality_recommendations
+      if @records.empty?
+        @result << 'Недостаточно операций для рекомендаций; накопить журнал новых решений.'
+      end
+      @providers.each { |provider| provider_recommendations(provider) }
+      skip_recommendations
+      eligibility_recommendations
+      segment_recommendations unless @records.empty?
+      score_recommendations
+      routing_recommendations
+      @result.uniq
+    end
+
+    private
+
+    def number(value)
+      parsed = Utils.number(value)
+      parsed if parsed&.finite?
+    end
+
+    def time(value)
+      return nil if value.nil? || value.to_s.strip.empty?
+
+      value = value.to_s.strip
+      value += ' UTC' unless value.match?(/(?:Z|UTC|[+-]\d{2}:?\d{2})\z/i)
+      Time.parse(value).getutc
+    rescue ArgumentError
+      nil
+    end
+
+    def valid_record?(row)
+      amount = number(row['amount'])
+      at = time(row['created_at'])
+      @by_name.key?(row['payment_system']) && amount && amount >= 0 && at && at <= @generated_at
+    end
+
+    def enough?(rows)
+      rows.length >= THRESHOLDS[:min_operations]
+    end
+
+    def approval(rows)
+      Utils.percentage(rows.count { |row| row['status'] == 'approved' }, rows.length)
+    end
+
+    def latency_values(rows)
+      rows.filter_map { |row| value = number(row['latency_sec']); value if value && value >= 0 }
+    end
+
+    def utilization(provider, used_key, limit_key)
+      used = number(provider[used_key])
+      limit = number(provider[limit_key])
+      Utils.percentage(used, limit) if used && used >= 0 && limit&.positive?
+    end
+
+    def stale?(provider)
+      calculated_at = time(provider['stats_calculated_at'])
+      (calculated_at && @generated_at - calculated_at > THRESHOLDS[:statistics_max_age_sec]) ||
+        (@snapshot_at && @generated_at - @snapshot_at > THRESHOLDS[:snapshot_max_age_sec])
+    end
+
+    def constrained?(provider)
+      daily = utilization(provider, 'daily_approved_amount', 'daily_amount_limit')
+      count = utilization(provider, 'in_progress_count', 'in_progress_count_limit')
+      amount = utilization(provider, 'in_progress_amount', 'in_progress_amount_limit')
+      requisites = number(provider['available_requisites'])
+      status = provider['status'].to_s.strip.downcase
+      (!status.empty? && status != 'active') || stale?(provider) ||
+        frequent_blocking_skips?(provider) ||
+        (daily && daily >= THRESHOLDS[:daily_utilization_pct]) ||
+        [count, amount].compact.any? { |value| value >= THRESHOLDS[:workload_utilization_pct] } ||
+        (requisites && requisites < THRESHOLDS[:min_requisites])
+    end
+
+    def degraded?(name)
+      rows = @groups.fetch(name, [])
+      peers = @records.reject { |row| row['payment_system'] == name }
+      latencies = latency_values(rows)
+      (enough?(rows) && Utils.percentage(rows.count { |row| row['status'] == 'expired' }, rows.length) >= THRESHOLDS[:expired_pct]) ||
+        (enough?(rows) && enough?(peers) && approval(peers) - approval(rows) >= THRESHOLDS[:approval_gap_pp]) ||
+        (enough?(latencies) && Utils.percentile(latencies, 0.95) > THRESHOLDS[:p95_sec])
+    end
+
+    def can_increase?(provider)
+      !@invalid_data && !constrained?(provider) && !degraded?(provider['payment_system'])
+    end
+
+    def frequent_blocking_skips?(provider)
+      rows = @skip_groups.fetch(provider['payment_system_id'], [])
+      evaluated = rows.map { |row| row['operation_id'] }.uniq.length
+      return false if evaluated < THRESHOLDS[:min_operations]
+
+      %w[bank_not_in_list daily_amount_limit_exceeded].any? do |reason|
+        count = rows.select { |row| row['decision'] == 'skipped' && row['reason'] == reason }
+          .map { |row| row['operation_id'] }.uniq.length
+        count >= THRESHOLDS[:min_skips] && Utils.percentage(count, evaluated) >= THRESHOLDS[:frequent_skip_pct]
+      end
+    end
+
+    def quality_recommendations
+      quality = @report.fetch('data_quality', {})
+      @invalid_data = %w[unknown_provider_count invalid_amount_count invalid_timestamp_count].any? { |key| quality[key].to_i.positive? }
+      @invalid_data ||= @report.dig('routing_coverage', 'unknown_selected_provider').to_i.positive?
+      @invalid_data ||= quality.fetch('database_orphans', {}).values.any? { |count| count.to_i.positive? }
+      if @invalid_data
+        @result << 'Есть неизвестные провайдеры, некорректные суммы, даты или нарушенные связи; не использовать затронутую выборку для автоматической оптимизации до исправления данных.'
+      end
+    end
+
+    def provider_recommendations(provider)
+      name = provider['payment_system']
+      rows = @groups.fetch(name, [])
+      state_recommendations(provider)
+      return if @records.empty?
+
+      count_share = Utils.percentage(rows.length, @records.length)
+      volume_share = Utils.percentage(rows.sum { |row| number(row['amount']) }, @records.sum { |row| number(row['amount']) })
+      target = number(provider['traffic_percentage'])
+      volume_target = number(provider['volume_share_pct'])
+      gap = target&.positive? ? count_share - target : nil
+      volume_gap = volume_target && volume_share ? volume_share - volume_target : nil
+      daily = utilization(provider, 'daily_approved_amount', 'daily_amount_limit')
+      increase = can_increase?(provider)
+
+      if daily && daily >= THRESHOLDS[:daily_utilization_pct] && gap && gap <= -THRESHOLDS[:share_gap_pp]
+        @result << "#{name}: дневной лимит использован на #{daily}%, доля количества ниже цели на #{Utils.clean_number(-gap)} п.п.; увеличить доступную ёмкость или снизить целевую долю."
+      elsif daily && daily >= THRESHOLDS[:daily_utilization_pct]
+        @result << "#{name}: дневной лимит использован на #{daily}%; временно снизить приоритет или вес провайдера до обновления лимита."
+      elsif gap && gap <= -THRESHOLDS[:share_gap_pp] && increase
+        @result << "#{name}: доля количества ниже цели на #{Utils.clean_number(-gap)} п.п.; повысить вес распределения по количеству среди допустимых провайдеров."
+      elsif gap && gap >= THRESHOLDS[:share_gap_pp]
+        @result << "#{name}: доля количества выше цели на #{Utils.clean_number(gap)} п.п.; снизить вес распределения по количеству среди допустимых провайдеров."
+      end
+      if volume_gap && volume_gap <= -THRESHOLDS[:share_gap_pp] && increase
+        @result << "#{name}: доля суммы ниже цели на #{Utils.clean_number(-volume_gap)} п.п.; повысить вес распределения по объёму для провайдера."
+      elsif volume_gap && volume_gap >= THRESHOLDS[:share_gap_pp]
+        @result << "#{name}: доля суммы выше цели на #{Utils.clean_number(volume_gap)} п.п.; снизить вес распределения по объёму."
+      end
+      if gap && gap.abs < THRESHOLDS[:share_gap_pp] && volume_gap && volume_gap.abs >= THRESHOLDS[:share_gap_pp]
+        @result << "#{name}: доля количества соответствует цели, но доля суммы отклонена на #{Utils.clean_number(volume_gap)} п.п.; проверить распределение по суммам: распределение по количеству не обеспечивает целевой объём."
+      end
+      performance_recommendations(provider, rows, count_share, gap, increase)
+    end
+
+    def state_recommendations(provider)
+      name = provider['payment_system']
+      count = utilization(provider, 'in_progress_count', 'in_progress_count_limit')
+      amount = utilization(provider, 'in_progress_amount', 'in_progress_amount_limit')
+      if count && count >= THRESHOLDS[:workload_utilization_pct]
+        @result << "#{name}: лимит количества операций в обработке использован на #{count}%; снизить входящий поток по количеству до освобождения доступной ёмкости."
+      end
+      if amount && amount >= THRESHOLDS[:workload_utilization_pct]
+        @result << "#{name}: лимит суммы операций в обработке использован на #{amount}%; ограничить крупные операции либо перераспределить объём на других провайдеров."
+      end
+      requisites = number(provider['available_requisites'])
+      if requisites && requisites < THRESHOLDS[:min_requisites]
+        @result << "#{name}: мало доступных реквизитов (#{Utils.clean_number(requisites)}); не увеличивать трафик до восстановления доступных реквизитов."
+      end
+      status = provider['status'].to_s.strip.downcase
+      if !status.empty? && status != 'active'
+        @result << "#{name}: провайдер неактивен; исключить из основного пула и использовать только после восстановления состояния."
+      end
+      if stale?(provider)
+        @result << "#{name}: данные провайдера устарели; не изменять веса автоматически, сначала обновить снимок состояния и статистику провайдера."
+      end
+    end
+
+    def performance_recommendations(provider, rows, count_share, gap, increase)
+      name = provider['payment_system']
+      if enough?(rows)
+        expired = Utils.percentage(rows.count { |row| row['status'] == 'expired' }, rows.length)
+        if expired >= THRESHOLDS[:expired_pct]
+          @result << "#{name}: доля операций с истёкшим сроком составляет #{expired}%; проверить время ожидания и обработки до увеличения трафика."
+        end
+        peers = @records.reject { |row| row['payment_system'] == name }
+        if enough?(peers) && approval(peers) - approval(rows) >= THRESHOLDS[:approval_gap_pp]
+          @result << "#{name}: успешность #{approval(rows)}% существенно ниже остальных провайдеров (#{approval(peers)}%); снизить вес показателя успешности или общий приоритет провайдера до восстановления успешности."
+        end
+        low_traffic = count_share < THRESHOLDS[:low_traffic_pct] || (gap && gap <= -THRESHOLDS[:share_gap_pp])
+        if approval(rows) >= THRESHOLDS[:high_approval_pct] && low_traffic && increase && number(provider['traffic_percentage'])&.positive?
+          @result << "#{name}: успешность высокая (#{approval(rows)}%), но трафика мало; рассмотреть увеличение веса провайдера, если ограничения и лимиты позволяют."
+        end
+      end
+      latencies = latency_values(rows)
+      if enough?(latencies)
+        p95 = Utils.percentile(latencies, 0.95)
+        p50 = Utils.median(latencies)
+        if p95 > THRESHOLDS[:p95_sec]
+          @result << "#{name}: 95-й перцентиль времени обработки составляет #{p95} с и превышает порог #{THRESHOLDS[:p95_sec]} с; ограничить новый трафик и проверить деградацию провайдера."
+        end
+        if p95 >= p50 * THRESHOLDS[:tail_ratio] && p95 - p50 >= THRESHOLDS[:latency_gap_sec]
+          @result << "#{name}: 95-й перцентиль времени обработки (#{p95} с) значительно выше медианы (#{p50} с); наблюдается длинный хвост времени обработки, проверить нестабильные или зависшие операции."
+        end
+      end
+      expired = latency_values(rows.select { |row| row['status'] == 'expired' })
+      approved = latency_values(rows.select { |row| row['status'] == 'approved' })
+      return unless [expired, approved].all? { |values| values.length >= THRESHOLDS[:status_latency_samples] }
+
+      expired_avg = expired.sum / expired.length
+      approved_avg = approved.sum / approved.length
+      if expired_avg >= approved_avg * THRESHOLDS[:expired_latency_ratio] && expired_avg - approved_avg >= THRESHOLDS[:latency_gap_sec]
+        @result << "#{name}: операции с истёкшим сроком обрабатываются значительно дольше одобренных; сократить время ожидания или раньше переключаться на резервный маршрут."
+      end
+    end
+
+    def skip_recommendations
+      @skip_groups.each do |id, rows|
+        evaluated = rows.map { |row| row['operation_id'] }.uniq.length
+        skips = rows.select { |row| row['decision'] == 'skipped' }
+          .uniq { |row| [row['operation_id'], row['reason']] }
+        counts = skips.map { |row| row['reason'] || 'unknown' }.tally
+        name = @by_id[id]
+        counts.sort.each do |reason, count|
+          next if count < THRESHOLDS[:min_skips]
+
+          label = SKIP_LABELS.fetch(reason) { "код причины «#{reason}»" }
+          if Utils.percentage(count, skips.length) >= THRESHOLDS[:dominant_skip_pct]
+            @result << "#{name}: среди пропусков доминирует причина «#{label}» (#{count}); скорректировать правила провайдера либо стратегию маршрутизации по этой причине."
+          end
+          next unless evaluated >= THRESHOLDS[:min_operations] && Utils.percentage(count, evaluated) >= THRESHOLDS[:frequent_skip_pct]
+
+          advice = case reason
+                   when 'bank_not_in_list'
+                     'не увеличивать глобальную долю провайдера; учитывать доступность по банкам'
+                   when 'amount_exceeds_limit'
+                     'перенаправлять крупные операции к провайдерам с большим диапазоном сумм'
+                   when 'daily_amount_limit_exceeded'
+                     'уменьшить целевую долю либо увеличить дневной лимит; дальнейшее повышение веса бессмысленно'
+                   end
+          @result << "#{name}: частые пропуски по причине «#{label}» (#{count} из #{evaluated} операций); #{advice}." if advice
+        end
+      end
+    end
+
+    def eligibility_recommendations
+      known_operations = (@details.fetch(:decisions, []).map { |row| row['operation_id'] } +
+        @details.fetch(:queue, []).map { |row| row['operation_id'] }).to_h { |id| [id, true] }
+      rows = @details.fetch(:eligibility, []).select { |row| known_operations.key?(row['operation_id']) }
+      # Only operations with recorded checks form the denominator; absent checks are unknown.
+      groups = rows.group_by { |row| row['operation_id'] }.reject do |id, checks|
+        id.nil? || checks.any? { |row| !@by_id.key?(row['payment_system_id']) || ![true, false, 1, 0, '1', '0'].include?(row['is_eligible']) }
+      end
+      return unless groups.length >= THRESHOLDS[:min_operations]
+
+      limited = groups.count do |_, checks|
+        checks.select { |row| [true, 1, '1'].include?(row['is_eligible']) && @by_id.key?(row['payment_system_id']) }
+          .map { |row| row['payment_system_id'] }.uniq.length <= THRESHOLDS[:max_eligible_providers]
+      end
+      share = Utils.percentage(limited, groups.length)
+      if share >= THRESHOLDS[:limited_eligibility_pct]
+        @result << "Для #{share}% операций с проверкой доступности имеется не более одного допустимого провайдера; высок риск отсутствия маршрута, расширить покрытие провайдеров и пересмотреть ограничения."
+      end
+    end
+
+    def segment_recommendations
+      @records.group_by { |row| row['bank'] }.each do |bank, rows|
+        next if bank.to_s.strip.empty?
+
+        compare_segment(rows) do |name, gap|
+          if gap <= -THRESHOLDS[:approval_gap_pp]
+            @result << "#{name}, банк «#{bank}»: успешность заметно ниже остальных провайдеров этого банка; снизить вес провайдера для данного банка."
+          elsif gap >= THRESHOLDS[:approval_gap_pp] && can_increase?(@by_name.fetch(name))
+            @result << "#{name}, банк «#{bank}»: успешность заметно выше остальных провайдеров этого банка при достаточной выборке; повысить предпочтение провайдера для данного банка."
+          end
+        end
+      end
+      latest_date = @records.map { |row| time(row['created_at']).to_date }.max
+      previous = @all_records.select { |row| time(row['created_at']).to_date == latest_date - 1 }
+      AMOUNT_BANDS.each do |label, lower, upper|
+        in_band = ->(row) { amount = number(row['amount']); amount >= lower && (upper.nil? || amount < upper) }
+        rows = @records.select(&in_band)
+        prior = previous.select(&in_band)
+        compare_segment(rows) do |name, gap|
+          if gap <= -THRESHOLDS[:approval_gap_pp]
+            @result << "#{name}, сумма #{label}: успешность заметно ниже остальных провайдеров; снизить приоритет для данного диапазона сумм."
+          elsif gap >= THRESHOLDS[:approval_gap_pp] && best_in_segment?(name, rows) && best_in_segment?(name, prior) && can_increase?(@by_name.fetch(name))
+            @result << "#{name}, сумма #{label}: провайдер лучший по успешности в двух соседних днях при достаточной выборке; повысить приоритет внутри данного диапазона."
+          end
+        end
+      end
+    end
+
+    def compare_segment(rows)
+      rows.group_by { |row| row['payment_system'] }.each do |name, own|
+        peers = rows.reject { |row| row['payment_system'] == name }
+        yield name, approval(own) - approval(peers) if enough?(own) && enough?(peers)
+      end
+    end
+
+    def best_in_segment?(name, rows)
+      groups = rows.group_by { |row| row['payment_system'] }
+      own = groups.delete(name) || []
+      enough?(own) && !groups.empty? && groups.values.all? do |peers|
+        enough?(peers) && approval(own) - approval(peers) >= THRESHOLDS[:approval_gap_pp]
+      end
+    end
+
+    # Supported saved rankings: arrays of provider/score entries or provider=>score maps.
+    # Never compare weights, individual score components, or inferred current ratings.
+    def score_recommendations
+      counts = Hash.new(0)
+      @details.fetch(:decisions, []).each do |decision|
+        explanation = decision['explanation']
+        explanation = JSON.parse(explanation) if explanation.is_a?(String)
+        next unless explanation.is_a?(Hash)
+
+        ranking = explanation['ranking'] || explanation['scores']
+        ranking = ranking.map { |name, score| { 'provider' => name, 'score' => score } } if ranking.is_a?(Hash)
+        next unless ranking.is_a?(Array)
+
+        scores = ranking.filter_map do |entry|
+          next unless entry.is_a?(Hash) && ![false, 0, '0'].include?(entry['is_eligible'])
+
+          name = entry['provider'] || entry['payment_system'] || @by_id[entry['payment_system_id']]
+          score = number(entry['score'] || entry['total_score'])
+          [name, score] if @by_name.key?(name) && score
+        end
+        next unless scores.length >= 2 && scores.map(&:first).uniq.length == scores.length
+
+        first, second = scores.sort_by { |_, score| -score }.first(2)
+        scale = [first.last.abs, second.last.abs].max
+        gap = scale.zero? ? 0 : 100.0 * (first.last - second.last) / scale
+        if gap <= THRESHOLDS[:close_score_gap_pct]
+          counts[:close] += 1
+        elsif gap >= THRESHOLDS[:strong_score_gap_pct] && first.first == @by_id[decision['selected_payment_system_id']] && can_increase?(@by_name.fetch(first.first))
+          counts[:strong] += 1
+        end
+      rescue JSON::ParserError
+        next
+      end
+      if counts[:close].positive?
+        @result << "Для #{counts[:close]} операций оценки двух лучших провайдеров почти одинаковы; решение имеет низкую уверенность, сильнее учитывать балансировку и целевую долю."
+      end
+      if counts[:strong].positive?
+        @result << "Для #{counts[:strong]} операций оценка выбранного провайдера значительно выше второй; сохранить выбор, имеется сильное основание для маршрута."
+      end
+    end
+
+    def routing_recommendations
+      coverage = number(@report.dig('routing_coverage', 'decision_coverage_pct'))
+      if coverage && coverage < 100
+        @result << "Решения покрывают #{coverage}% операций; проверить необработанные операции и журнал решений."
+      end
+      cascades = @report.fetch('attempt_cascades', {})
+      logs = number(cascades['attempt_log_coverage_pct'])
+      if logs && logs < 100
+        @result << "Журнал шагов покрывает #{logs}% решений; недостаточно данных для надёжного анализа резервных маршрутов и качества маршрутизации."
+      end
+      decisions = @report.dig('routing_coverage', 'with_decision').to_i
+      rate = number(@report.dig('routing_coverage', 'fallback_share_of_decisions_pct'))
+      if decisions >= THRESHOLDS[:min_operations] && rate && rate >= THRESHOLDS[:fallback_rate_pct]
+        @result << "Доля резервных маршрутов высокая (#{rate}%); проверить качество первого выбора и причины отказов до переключения на резерв."
+      end
+      return unless cascades['fallback_operations'].to_i >= THRESHOLDS[:min_operations]
+
+      approved = number(cascades['fallback_approval_pct'])
+      if approved && approved >= THRESHOLDS[:high_fallback_approval_pct]
+        @result << "Успешность резервных маршрутов высокая (#{approved}%); резерв эффективно восстанавливает операции, сохранить резервный маршрут."
+      elsif approved && approved < THRESHOLDS[:low_fallback_approval_pct]
+        @result << "Успешность резервных маршрутов низкая (#{approved}%); пересмотреть порядок резервных провайдеров."
+      end
+    end
+  end
+
   class Analyzer
     BASE_STATUSES = %w[approved rejected expired].freeze
 
@@ -481,9 +898,8 @@ module RoutingAnalytics
       distribution = distribution_for(records)
       utilization = utilization_for_providers
       recommendation_records = latest_day_records(records)
-      recommendation_distribution = distribution_for(recommendation_records)
 
-      {
+      result = {
         'period' => period_label(records),
         'window' => period_window(records),
         'generated_at' => generated_at.iso8601,
@@ -504,9 +920,19 @@ module RoutingAnalytics
         'projected_daily_utilization' => utilization,
         'provider_state' => provider_state,
         'data_quality' => data_quality(records, latest_events),
-        'recommendation_period' => period_label(recommendation_records),
-        'recommendations' => recommendations(recommendation_distribution, utilization)
+        'recommendation_period' => period_label(recommendation_records)
       }
+      result['recommendations'] = recommendations_for(result, generated_at: generated_at)
+      result
+    end
+
+    def recommendations_for(report, generated_at:, details: {})
+      records = combined_records(latest_routing_events)
+      Recommendations.new(
+        providers: @providers, records: latest_day_records(records), all_records: records,
+        report: report, generated_at: generated_at, details: details,
+        snapshot_at: @provider_data['snapshot_at']
+      ).call
     end
 
     private
@@ -794,27 +1220,6 @@ module RoutingAnalytics
       snapshot_time = Utils.parse_time(@provider_data['snapshot_at'])
       snapshot_after_history = snapshot_time && history_times.any? && snapshot_time.to_date > history_times.max.to_date
       database_orphans = @source_metadata['orphans'] || {}
-      orphan_count = database_orphans.values.sum(&:to_i)
-
-      warnings = []
-      warnings << "проверка целостности SQLite вернула #{@source_metadata['integrity_check']}" if @source_metadata['integrity_check'] && @source_metadata['integrity_check'] != 'ok'
-      warnings << 'в схеме SQLite не объявлены внешние ключи; ссылочная целостность контролируется приложением' if @source_metadata['foreign_key_definitions'].to_i.zero?
-      warnings << "обнаружено #{orphan_count} записей с нарушенными логическими связями" if orphan_count.positive?
-      warnings << "operations_history не отсортирован хронологически (обнаружено #{descents} переходов назад)" if descents.positive?
-      if bank_mismatches.positive?
-        warnings << "#{bank_mismatches} исторических назначений не соответствуют текущему снимку банков провайдеров; история используется для аналитики, а не для определения текущей доступности"
-      end
-      warnings << 'card_brand отсутствует у всех анализируемых операций' if records.any? && blank_card_brand == records.length
-      warnings << 'у провайдеров не задан requests_per_minute_limit; аналитика по ограничениям частоты запросов недоступна' if @providers.none? { |provider| !provider['requests_per_minute_limit'].nil? }
-      warnings << 'у провайдеров не задан volume_share_pct; отклонения от целевого распределения объёма недоступны' if @providers.none? { |provider| !provider['volume_share_pct'].nil? }
-      warnings << "история содержит #{duplicate_history_ids} повторяющихся значений operation_id" if duplicate_history_ids.positive?
-      warnings << "#{invalid_timestamps} операций имеют некорректное значение created_at" if invalid_timestamps.positive?
-      warnings << "#{invalid_amounts} операций имеют отсутствующую или отрицательную сумму" if invalid_amounts.positive?
-      warnings << "#{unknown_providers} операций ссылаются на неизвестного провайдера" if unknown_providers.positive?
-      warnings << "#{unknown_statuses} операций имеют статус, отличный от approved/rejected/expired" if unknown_statuses.positive?
-      if snapshot_after_history
-        warnings << 'целевые значения распределения трафика получены из снимка, сделанного после периода истории; поэтому отклонения от целей являются ориентировочными и не представляют собой SLA-показатели за тот же период'
-      end
 
       {
         'history_rows' => @history_rows.length,
@@ -834,8 +1239,7 @@ module RoutingAnalytics
         'database_integrity' => @source_metadata['integrity_check'],
         'database_table_rows' => @source_metadata['table_rows'] || {},
         'database_orphans' => database_orphans,
-        'foreign_key_definitions' => @source_metadata['foreign_key_definitions'],
-        'warnings' => warnings
+        'foreign_key_definitions' => @source_metadata['foreign_key_definitions']
       }
     end
 
@@ -849,41 +1253,6 @@ module RoutingAnalytics
       provider['exclude_banks'] ? banks.include?(record['bank']) : !banks.include?(record['bank'])
     end
 
-    def recommendations(distribution, utilization)
-      return ['Недостаточно операций для рекомендаций; накопить журнал новых решений'] if records_empty?(distribution)
-
-      result = []
-      @providers.each do |provider|
-        name = provider['payment_system']
-        target = Utils.number(provider['traffic_percentage'])
-        next unless target&.positive?
-
-        metrics = distribution.fetch(name)
-        deviation = Utils.number(metrics['deviation_pp'])
-        daily = utilization.fetch(name)
-        daily_pct = Utils.number(daily['utilization_pct'])
-
-        if daily_pct && daily_pct >= 90 && deviation && deviation <= -5
-          result << "#{name}: фактическая доля #{metrics['share_pct']}% ниже цели #{metrics['target_pct']}%, но дневной лимит использован на #{daily['utilization_pct']}%; сначала увеличить доступную ёмкость или снизить целевую долю"
-        elsif daily_pct && daily_pct >= 90
-          result << "#{name}: дневной лимит использован на #{daily['utilization_pct']}%; снизить приоритет до обновления лимита или состояния"
-        elsif deviation && deviation <= -5
-          result << "#{name}: фактическая доля #{metrics['share_pct']}% ниже цели #{metrics['target_pct']}%; повысить вес count-share среди допустимых провайдеров"
-        elsif deviation && deviation >= 5
-          result << "#{name}: фактическая доля #{metrics['share_pct']}% выше цели #{metrics['target_pct']}%; снизить вес count-share среди допустимых провайдеров"
-        end
-
-        expired_share = Utils.percentage(metrics['expired'], metrics['count'])
-        if metrics['count'] >= 10 && expired_share && expired_share >= 20
-          result << "#{name}: доля expired составляет #{expired_share}%; проверить таймауты и латентность до увеличения трафика"
-        end
-      end
-      result
-    end
-
-    def records_empty?(distribution)
-      distribution.values.sum { |metrics| metrics['count'].to_i }.zero?
-    end
   end
 
   class ReportWriter

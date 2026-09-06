@@ -145,8 +145,10 @@ module RoutingAnalytics
     def detail_inputs
       {
         decisions: rows('SELECT * FROM routing_decisions ORDER BY operation_id'),
+        queue: pending_operations,
         attempts: rows('SELECT * FROM routing_attempts ORDER BY operation_id, attempt_number, attempt_id'),
         references: rows('SELECT * FROM reference_decisions ORDER BY operation_id'),
+        eligibility: rows('SELECT * FROM eligible_providers ORDER BY operation_id, payment_system_id'),
         stored_skips: rows('SELECT * FROM provider_skip_reasons ORDER BY skip_reason_id')
       }
     end
@@ -772,7 +774,8 @@ module RoutingAnalytics
     def report(generated_at: Time.now)
       @source.snapshot do
         inputs = @source.analysis_inputs
-        result = Analyzer.new(**inputs).report(generated_at: generated_at)
+        analyzer = Analyzer.new(**inputs)
+        result = analyzer.report(generated_at: generated_at)
         result['skip_reasons'] = @source.skip_reason_counts
         providers = inputs.fetch(:provider_data).fetch('providers')
         providers.each do |provider|
@@ -788,18 +791,9 @@ module RoutingAnalytics
           'in_progress' => 'Provider statistics updates do not change stored in_progress_count/amount; these are provider workload snapshot fields.',
           'skip_reasons' => 'Distinct operation/provider/reason combinations across routing_attempts and provider_skip_reasons; the latter may contain imported reference expectations.'
         }
-        warnings = result.fetch('data_quality').fetch('warnings')
-        warnings << 'Время полного снимка providers неизвестно; цели и лимиты могут относиться к другому периоду, чем история. Рекомендации ориентировочные.'
-        if providers.any? { |provider| provider['stats_calculated_at'] }
-          warnings << 'Показатели providers сохранены отдельным пересчётом; окно указано в minute_stats: stats_window_sec = null означает всю историю до stats_calculated_at. Период может не совпадать с периодом отчёта; requests_last_minute и conversion_24h сохраняют минутное и суточное окна.'
-        end
-        if result.dig('source', 'table_rows', 'routing_decisions').zero?
-          warnings << 'routing_decisions пуста: отчёт описывает историю и очередь, фактические результаты новой маршрутизации отсутствуют.'
-        end
-        if result.dig('source', 'table_rows', 'provider_skip_reasons').positive?
-          warnings << 'skip_reasons включает provider_skip_reasons: импорт мог записать туда эталонные ожидания, а не фактические пропуски.'
-        end
-        result.merge!(CanonicalReportDetails.new(**inputs, details: @source.detail_inputs).sections(generated_at: generated_at))
+        details = @source.detail_inputs
+        result.merge!(CanonicalReportDetails.new(**inputs, details: details).sections(generated_at: generated_at))
+        result['recommendations'] = analyzer.recommendations_for(result, generated_at: generated_at, details: details)
         result
       end
     end
