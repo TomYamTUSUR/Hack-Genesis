@@ -47,9 +47,6 @@ module RoutingAnalytics
       ],
       'provider_skip_reasons' => %w[
         skip_reason_id operation_id payment_system_id reason created_at
-      ],
-      'reference_decisions' => %w[
-        operation_id required_payment_system_id reason
       ]
     }.freeze
 
@@ -74,10 +71,6 @@ module RoutingAnalytics
       'provider_skip_reasons' => [
         %w[operation_id operations_queue operation_id],
         %w[payment_system_id providers payment_system_id]
-      ],
-      'reference_decisions' => [
-        %w[operation_id operations_queue operation_id],
-        %w[required_payment_system_id providers payment_system_id]
       ]
     }.freeze
 
@@ -147,7 +140,6 @@ module RoutingAnalytics
         decisions: rows('SELECT * FROM routing_decisions ORDER BY operation_id'),
         queue: pending_operations,
         attempts: rows('SELECT * FROM routing_attempts ORDER BY operation_id, attempt_number, attempt_id'),
-        references: rows('SELECT * FROM reference_decisions ORDER BY operation_id'),
         eligibility: rows('SELECT * FROM eligible_providers ORDER BY operation_id, payment_system_id'),
         stored_skips: rows('SELECT * FROM provider_skip_reasons ORDER BY skip_reason_id')
       }
@@ -364,20 +356,10 @@ module RoutingAnalytics
           LEFT JOIN operations_queue q ON q.operation_id = s.operation_id
           WHERE s.operation_id IS NOT NULL AND q.operation_id IS NULL
         SQL
-        'skip_unknown_provider' => first_value(<<~SQL),
+        'skip_unknown_provider' => first_value(<<~SQL)
           SELECT COUNT(*) FROM provider_skip_reasons s
           LEFT JOIN providers p ON p.payment_system_id = s.payment_system_id
           WHERE s.payment_system_id IS NOT NULL AND p.payment_system_id IS NULL
-        SQL
-        'reference_without_queue_operation' => first_value(<<~SQL),
-          SELECT COUNT(*) FROM reference_decisions r
-          LEFT JOIN operations_queue q ON q.operation_id = r.operation_id
-          WHERE q.operation_id IS NULL
-        SQL
-        'reference_unknown_provider' => first_value(<<~SQL)
-          SELECT COUNT(*) FROM reference_decisions r
-          LEFT JOIN providers p ON p.payment_system_id = r.required_payment_system_id
-          WHERE r.required_payment_system_id IS NOT NULL AND p.payment_system_id IS NULL
         SQL
       }
     end
@@ -435,7 +417,6 @@ module RoutingAnalytics
       cascades = attempt_cascades
       {
         'routing_coverage' => routing_coverage(cascades),
-        'reference_comparison' => reference_comparison,
         'attempt_cascades' => cascades,
         'segments' => segments,
         'period_comparison' => period_comparison,
@@ -468,45 +449,6 @@ module RoutingAnalytics
         'fallback_operations' => cascades['fallback_operations'],
         'fallback_share_of_decisions_pct' => @decisions.empty? ? nil : Utils.percentage(cascades['fallback_operations'], decision_ids.length),
         'fallback_unclassified_operations' => cascades['unclassified_operations']
-      }
-    end
-
-    def reference_comparison
-      rows = @details.fetch(:references).map do |reference|
-        decision = @decisions_by_id[reference['operation_id']]
-        required = reference['required_payment_system_id']
-        actual = decision && decision['selected_payment_system_id']
-        outcome = if required.nil? || !@providers_by_id.key?(required)
-                    'invalid_reference'
-                  elsif decision.nil?
-                    'awaiting_decision'
-                  elsif required == actual
-                    'match'
-                  else
-                    'mismatch'
-                  end
-        {
-          'operation_id' => reference['operation_id'], 'outcome' => outcome,
-          'required_payment_system_id' => required, 'required_provider' => @providers_by_id[required],
-          'selected_payment_system_id' => actual, 'selected_provider' => @providers_by_id[actual],
-          'reference_reason' => reference['reason']
-        }
-      end
-      counts = rows.map { |row| row['outcome'] }.tally
-      matched = counts.fetch('match', 0)
-      mismatched = counts.fetch('mismatch', 0)
-      compared = matched + mismatched
-      {
-        'definition' => 'Compare provider IDs only for valid references with a recorded decision; missing decisions are not mismatches. Reference agreement does not validate all runtime constraints.',
-        'status' => rows.empty? ? 'no_references' : (compared.zero? ? 'no_comparable_decisions' : 'available'),
-        'reference_operations' => rows.length, 'compared_operations' => compared,
-        'matched' => matched, 'mismatched' => mismatched,
-        'awaiting_decision' => counts.fetch('awaiting_decision', 0),
-        'invalid_references' => counts.fetch('invalid_reference', 0),
-        'match_rate_pct' => Utils.percentage(matched, compared),
-        'comparison_coverage_pct' => Utils.percentage(compared, rows.length),
-        'mismatches' => rows.select { |row| row['outcome'] == 'mismatch' },
-        'uncompared' => rows.reject { |row| %w[match mismatch].include?(row['outcome']) }
       }
     end
 
@@ -737,7 +679,6 @@ module RoutingAnalytics
           'routing_decisions' => source_freshness(@decisions),
           'routing_attempts' => source_freshness(@details[:attempts]),
           'provider_skip_reasons' => source_freshness(@details[:stored_skips]),
-          'reference_decisions' => { 'rows' => @details[:references].length, 'as_of' => nil, 'reason' => 'No reference timestamp is stored.' },
           'providers' => { 'as_of' => nil, 'reason' => 'Full snapshot/target/limit timestamp is not stored.' }
         },
         'provider_metric_windows' => @providers.to_h do |provider|
@@ -757,7 +698,7 @@ module RoutingAnalytics
         'blocks' => {
           'distribution_status_latency_segments' => { 'source' => 'operations_history + routing_decisions; decision wins on duplicate operation_id', 'window' => observation_window(@records), 'outcome_provenance' => 'History status plus simulated_result from decisions; live versus sample origin is not stored.' },
           'pending_queue' => { 'source' => 'operations_queue excluding IDs present in history or decisions', 'window' => observation_window(unprocessed_pending_operations(latest_routing_events)) },
-          'routing_coverage_reference_comparison_cascades' => { 'source' => 'queue, raw decisions, raw attempts and references; all retained rows', 'decision_window' => observation_window(@decisions), 'reference_as_of' => nil },
+          'routing_coverage_cascades' => { 'source' => 'queue, raw decisions and raw attempts; all retained rows', 'decision_window' => observation_window(@decisions) },
           'skip_reasons' => { 'source' => 'See skip_reason_sources; legacy skip_reasons remains their deduplicated union.', 'window' => observation_window(@details[:stored_skips] + @details[:attempts].select { |row| row['decision'] == 'skipped' }) },
           'provider_state_utilization_recommendations' => { 'source' => 'Current stored provider fields; snapshot freshness is unknown. Recalculated metrics have separate windows above.', 'as_of' => nil, 'recommendation_period' => period_label(latest_day_records(@records)) },
           'period_comparison' => { 'source' => 'Same deduplicated operations; UTC windows are explicit in period_comparison.' }

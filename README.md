@@ -151,11 +151,3 @@ bundle exec rake test                   # тесты (или просто `rake 
 | reason | String | |
 | created_at | DateTime | |
 
-### 8. reference_decisions
-Эталонные решения для самопроверки (единственный допустимый провайдер по детерминированным кейсам).
-
-| Поле | Тип | Описание |
-|------|-----|----------|
-| operation_id | String | PK, FK → operations_queue |
-| required_payment_system_id | Integer | FK → providers |
-| reason | Text | |

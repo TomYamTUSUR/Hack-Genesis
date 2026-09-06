@@ -40,7 +40,7 @@ class CanonicalDatabaseAnalyticsTest < Minitest::Test
     assert_equal 40, report.dig('distribution', 'quickpay', 'count')
     assert_equal 68, report.dig('status_summary', 'approved', 'count')
     assert_equal 'ok', report.dig('data_quality', 'database_integrity')
-    assert_equal 11, report.dig('data_quality', 'foreign_key_definitions')
+    assert_equal 9, report.dig('data_quality', 'foreign_key_definitions')
     assert_equal 0, report.dig('data_quality', 'database_orphans').values.sum
     assert_nil report['provider_snapshot_at']
     assert_nil report['gateway']
@@ -72,7 +72,7 @@ class CanonicalDatabaseAnalyticsTest < Minitest::Test
       FileUtils.cp(@database_path, copy_path)
       copy = SQLite3::Database.new(copy_path)
       copy.execute('PRAGMA foreign_keys = OFF')
-      copy.execute('DROP TABLE reference_decisions')
+      copy.execute('DROP TABLE provider_skip_reasons')
       copy.close
       copy = nil
 

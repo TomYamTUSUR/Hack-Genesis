@@ -16,7 +16,7 @@ begin
   protected_roots = %w[data scripts db].map { |directory| File.join(project_root, directory) }
   OptionParser.new do |parser|
     parser.banner = 'Usage: ruby bin/analyze_db.rb [options]'
-    parser.separator 'Includes coverage, reference checks, cascades, bank/amount segments, UTC day comparison and freshness.'
+    parser.separator 'Includes coverage, cascades, bank/amount segments, UTC day comparison and freshness.'
     parser.separator 'Reads one database snapshot; persisted provider minute statistics are not recalculated.'
     parser.on('--database PATH', 'Canonical SQLite database') { |value| options[:database] = value }
     parser.on('--output PATH', 'Destination JSON report') { |value| options[:output] = value }

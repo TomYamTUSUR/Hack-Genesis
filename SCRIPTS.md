@@ -8,7 +8,7 @@
 
 ### `db/create_tables.rb`
 
-Тонкая обёртка над `db/database.rb` (`PaymentRouting::Db.connect` + `PaymentRouting::Db.create_schema!`) — единственное место, где описана схема, чтобы реальная БД и in-memory БД в тестах никогда не расходились. Создаёт SQLite-файл `db/operations.db`, если его ещё нет, и восемь таблиц:
+Тонкая обёртка над `db/database.rb` (`PaymentRouting::Db.connect` + `PaymentRouting::Db.create_schema!`) — единственное место, где описана схема, чтобы реальная БД и in-memory БД в тестах никогда не расходились. Создаёт SQLite-файл `db/operations.db`, если его ещё нет, и семь таблиц:
 
 - `providers` — провайдеры, их ограничения и метрики;
 - `operations_queue` — очередь заявок и реквизиты;
@@ -16,8 +16,7 @@
 - `routing_decisions` — выбранные провайдеры и результаты;
 - `routing_attempts` — последовательность попыток;
 - `eligible_providers` — допустимость провайдеров для заявки;
-- `provider_skip_reasons` — причины пропуска провайдеров;
-- `reference_decisions` — эталонные решения (для `scripts/validate_10.rb`, БД её не заполняет).
+- `provider_skip_reasons` — причины пропуска провайдеров.
 
 Включает внешние ключи (`PRAGMA foreign_keys = ON`) и выводит список таблиц. Использует `CREATE TABLE IF NOT EXISTS`: существующие таблицы и данные сохраняются, но структура уже созданных таблиц не обновляется. Исходные JSON и CSV этот скрипт не загружает. Аргументов командной строки нет.
 
@@ -68,7 +67,7 @@ bundle exec ruby bin/update_provider_minute_stats.rb --at 2026-07-29T08:01:00+03
 
 ### `bin/analyze_db.rb`
 
-Формирует аналитический JSON по канонической схеме из восьми таблиц. Использует `RoutingAnalytics::CanonicalDatabaseAnalytics`: строго проверяет точный набор таблиц, порядок и названия колонок, а также внешние ключи (`CanonicalDatabaseSource::TABLE_COLUMNS`/`EXPECTED_FOREIGN_KEYS`) — любое расхождение со схемой `db/database.rb` (лишняя/отсутствующая колонка, другой FK) останавливает отчёт с понятной ошибкой вместо тихого искажения цифр. Читает базу только на чтение и по умолчанию сохраняет `reports/routing_report_db.json`.
+Формирует аналитический JSON по канонической схеме из семи таблиц. Использует `RoutingAnalytics::CanonicalDatabaseAnalytics`: строго проверяет точный набор таблиц, порядок и названия колонок, а также внешние ключи (`CanonicalDatabaseSource::TABLE_COLUMNS`/`EXPECTED_FOREIGN_KEYS`) — любое расхождение со схемой `db/database.rb` (лишняя/отсутствующая колонка, другой FK) останавливает отчёт с понятной ошибкой вместо тихого искажения цифр. Читает базу только на чтение и по умолчанию сохраняет `reports/routing_report_db.json`.
 
 Для расчётов использует общий `RoutingAnalytics::Analyzer`. Объединяет причины пропуска из `provider_skip_reasons` и пропущенных `routing_attempts`, исключая дубли по операции, провайдеру и причине. Метаданные снимка, шлюза и мерчанта (`snapshot_at`/`gateway`/`merchant`) всегда `null` — для них нет колонок в канонической схеме.
 

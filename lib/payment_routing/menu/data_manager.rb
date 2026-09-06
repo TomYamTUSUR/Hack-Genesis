@@ -12,7 +12,7 @@ module PaymentRouting
       # иначе SQLite (FK ON DELETE NO ACTION) откажет в удалении.
       CLEAR_ORDER = %i[
         routing_attempts eligible_providers provider_skip_reasons
-        routing_decisions reference_decisions operations_history
+        routing_decisions operations_history
         operations_queue providers
       ].freeze
 

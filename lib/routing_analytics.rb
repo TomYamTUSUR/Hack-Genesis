@@ -115,7 +115,7 @@ module RoutingAnalytics
   class DatabaseBase
     REQUIRED_TABLES = %w[
       eligible_providers operations_history operations_queue provider_skip_reasons
-      providers reference_decisions routing_attempts routing_decisions
+      providers routing_attempts routing_decisions
     ].freeze
 
     attr_reader :path

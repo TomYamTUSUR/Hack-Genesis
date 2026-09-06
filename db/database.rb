@@ -154,15 +154,6 @@ module PaymentRouting
         index :created_at
       end
 
-      # Таблица reference_decisions
-      # Ref: reference_decisions.operation_id > operations_queue.operation_id
-      # Ref: reference_decisions.required_payment_system_id > providers.payment_system_id
-      db.create_table? :reference_decisions do
-        foreign_key :operation_id, :operations_queue, key: :operation_id, type: String, primary_key: true
-        foreign_key :required_payment_system_id, :providers, key: :payment_system_id, null: false
-        String :reason, text: true
-      end
-
       upgrade_schema!(db)
       db
     end
