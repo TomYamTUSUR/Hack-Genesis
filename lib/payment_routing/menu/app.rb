@@ -1,4 +1,6 @@
 require "json"
+require "open3"
+require "rbconfig"
 require_relative "terminal"
 require_relative "yaml_editor"
 require_relative "data_manager"
@@ -39,21 +41,23 @@ module PaymentRouting
           "=== Smart Payment Routing ===",
           "",
           "1. Start Route",
-          "2. Switch strategies",
-          "3. Data",
+          "2. Data",
+          "3. Switch strategies",
           "4. Provider metrics",
           "5. Strategies priority",
-          "6. Clear mode [#{@clear_mode ? 'enabled' : 'disabled'}]"
+          "6. Form excel analytics",
+          "7. Clear mode [#{@clear_mode ? 'enabled' : 'disabled'}]"
         ])
 
         case input
         when "" then nil # главное меню: пустой ввод ничего не делает
         when "1" then start_route
-        when "2" then strategies_menu
-        when "3" then data_menu
+        when "2" then data_menu
+        when "3" then strategies_menu
         when "4" then provider_metrics_menu
         when "5" then strategies_priority_menu
-        when "6" then toggle_clear_mode
+        when "6" then generate_excel_report
+        when "7" then toggle_clear_mode
         else invalid_choice
         end
       end
@@ -96,14 +100,14 @@ module PaymentRouting
 
       def start_route_blockers
         blockers = []
-        blockers << "select at least one strategy (item 2 - Switch strategies)" if active_strategies.empty?
-        blockers << "no data in providers - load it (item 3 - Data)" if @db[:providers].empty?
-        blockers << "no data in operations_queue - load it (item 3 - Data)" if @db[:operations_queue].empty?
-        blockers << "no data in operations_history - load it (item 3 - Data)" if @db[:operations_history].empty?
+        blockers << "select at least one strategy (item 3 - Switch strategies)" if active_strategies.empty?
+        blockers << "no data in providers - load it (item 2 - Data)" if @db[:providers].empty?
+        blockers << "no data in operations_queue - load it (item 2 - Data)" if @db[:operations_queue].empty?
+        blockers << "no data in operations_history - load it (item 2 - Data)" if @db[:operations_history].empty?
         blockers
       end
 
-      # --------------------------------------------------------- 2. strategies
+      # --------------------------------------------------------- 3. strategies
 
       def strategies_menu
         loop do
@@ -142,7 +146,7 @@ module PaymentRouting
         press_key(message.empty? ? "No valid items selected." : message.join("\n"))
       end
 
-      # ------------------------------------------------------------- 3. data
+      # ------------------------------------------------------------- 2. data
 
       def data_menu
         loop do
@@ -191,7 +195,7 @@ module PaymentRouting
         loop do
           names = @db[:providers].order(:payment_system).select_map(:payment_system) - [@config.fallback_provider]
           if names.empty?
-            finish_with_message(["No providers in the database - load data first (item 3 - Data)"])
+            finish_with_message(["No providers in the database - load data first (item 2 - Data)"])
             return
           end
 
@@ -299,7 +303,25 @@ module PaymentRouting
         press_key("combo_coefficient for #{key} updated: #{value}")
       end
 
-      # --------------------------------------------------------- 6. clear mode
+      # -------------------------------------------------- 6. excel analytics
+
+      def generate_excel_report
+        report_path = File.join(PaymentRouting.root, "routing_report_test.json")
+        unless File.file?(report_path)
+          finish_with_message(["routing_report_test.json not found - run Start Route first (item 1)"])
+          return
+        end
+
+        script = File.join(PaymentRouting.root, "bin", "generate_excel_report.rb")
+        stdout, stderr, status = Open3.capture3(RbConfig.ruby, script)
+        if status.success?
+          finish_with_message(["Excel analytics report generated.", *stdout.strip.lines.map(&:chomp)])
+        else
+          finish_with_message(["Error generating Excel report:", *stderr.strip.lines.map(&:chomp)])
+        end
+      end
+
+      # --------------------------------------------------------- 7. clear mode
 
       def toggle_clear_mode
         @clear_mode = !@clear_mode

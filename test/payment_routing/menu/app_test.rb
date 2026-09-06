@@ -267,6 +267,32 @@ module PaymentRouting
           assert_equal 110, db[:operations_history].count
         end
       end
+
+      def test_generate_excel_report_blocks_without_a_report
+        report_path = File.join(PaymentRouting.root, "routing_report_test.json")
+        backup = File.read(report_path, encoding: "UTF-8") if File.file?(report_path)
+        File.delete(report_path) if File.file?(report_path)
+
+        with_app do |app, _path|
+          output = script(app, :generate_excel_report, [])
+          assert_match(/routing_report_test\.json not found/, output)
+        end
+      ensure
+        File.write(report_path, backup, encoding: "UTF-8") if backup
+      end
+
+      def test_generate_excel_report_writes_the_xlsx_file
+        output_path = File.join(PaymentRouting.root, "routing_analytics.xlsx")
+        FileUtils.rm_f(output_path)
+
+        with_app do |app, _path|
+          output = script(app, :generate_excel_report, [])
+          assert_match(/Excel analytics report generated/, output)
+          assert File.file?(output_path)
+        end
+      ensure
+        FileUtils.rm_f(output_path)
+      end
     end
   end
 end
